@@ -1,0 +1,29 @@
+buildscript {
+    repositories{ maven{ url "$repos_host" } }
+	dependencies {
+		classpath "onight.osgi:zpp-gradle_1.8:3.3.1"
+		classpath "org.csc:chainapi:4.0.4"
+	 }
+}
+plugins {
+	id 'io.franzbecker.gradle-lombok' version '1.14'
+	id "com.google.protobuf" version "0.8.8"
+}
+apply plugin: 'zippo'
+
+version = '4.0.0'
+project.group='org.csc'
+
+dependencies {
+	//	 testCompile 'junit:junit:4.12'
+	compile ("org.fc.zippo:org.fc.zippo.oapi:4.0.0")
+	compile ("org.csc:chainapi:4.0.4")
+	compile ("org.csc:p22p:4.0.1")
+	compile ("org.csc:account.api:4.0.4")
+}
+
+jar {
+	manifest{
+		attributes( 'Import-Ignore':'org.spongycastle,com.google.common.cache')
+	}
+}
