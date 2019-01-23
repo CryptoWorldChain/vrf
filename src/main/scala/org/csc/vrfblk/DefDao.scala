@@ -9,7 +9,6 @@ import org.csc.account.api.IConfirmTxMap
 import org.csc.account.api.ITransactionHelper
 import org.csc.bcapi.EncAPI
 import org.csc.bcapi.backend.ODBSupport
-import org.csc.dposblk.pbgens.Dposblock.PModule
 import org.csc.p22p.core.PZPCtrl
 import org.fc.zippo.dispatcher.IActorDispatcher
 
@@ -24,53 +23,41 @@ import onight.tfw.ntrans.api.annotation.ActorRequire
 import onight.tfw.ojpa.api.DomainDaoSupport
 import onight.tfw.ojpa.api.annotations.StoreDAO
 import onight.tfw.ojpa.api.IJPAClient
+import org.csc.ckrand.pbgens.Ckrand.PModule
 
-abstract class PSMDPoSNet[T <: Message] extends SessionModules[T] with PBUtils with OLog {
-  override def getModule: String = PModule.DOB.name()
+abstract class PSMVRFNet[T <: Message] extends SessionModules[T] with PBUtils with OLog {
+  override def getModule: String = PModule.VRF.name()
 }
 
 @NActorProvider
 @Provides(specifications = Array(classOf[ActorService], classOf[IJPAClient]))
-class Daos extends PSMDPoSNet[Message] with ActorService {
+class Daos extends PSMVRFNet[Message] with ActorService {
 
-  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSDPoSDao])
+  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSVRFDao])
   @BeanProperty
-  var dposdb: ODBSupport = null
+  var vrfdb: ODBSupport = null
 
-  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSDPoSVoteDao])
+  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSVRFVoteDao])
   @BeanProperty
-  var dposvotedb: ODBSupport = null
+  var vrfvotedb: ODBSupport = null
 
-  //  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSBlkDao])
-  //  @BeanProperty
-  //  var blkdb: ODBSupport = null
-
-  def setDposdb(daodb: DomainDaoSupport) {
+  def setVrfdb(daodb: DomainDaoSupport) {
     if (daodb != null && daodb.isInstanceOf[ODBSupport]) {
-      dposdb = daodb.asInstanceOf[ODBSupport];
-      Daos.dpospropdb = dposdb;
+      vrfdb = daodb.asInstanceOf[ODBSupport];
+      Daos.vrfpropdb = vrfdb;
     } else {
       log.warn("cannot set dposdb ODBSupport from:" + daodb);
     }
   }
 
-  def setDposvotedb(daodb: DomainDaoSupport) {
+  def setVrfvotedb(daodb: DomainDaoSupport) {
     if (daodb != null && daodb.isInstanceOf[ODBSupport]) {
-      dposvotedb = daodb.asInstanceOf[ODBSupport];
-      Daos.dposvotedb = dposvotedb;
+      vrfvotedb = daodb.asInstanceOf[ODBSupport];
+      Daos.vrfvotedb = vrfvotedb;
     } else {
       log.warn("cannot set dposdb ODBSupport from:" + daodb);
     }
   }
-
-  //  def setBlkdb(daodb: DomainDaoSupport) {
-  //    if (daodb != null && daodb.isInstanceOf[ODBSupport]) {
-  //      blkdb = daodb.asInstanceOf[ODBSupport];
-  //      Daos.blkdb = blkdb;
-  //    } else {
-  //      log.warn("cannot set blkdb ODBSupport from:" + daodb);
-  //    }
-  //  }
 
   @ActorRequire(scope = "global", name = "pzpctrl")
   var pzp: PZPCtrl = null;
@@ -96,7 +83,7 @@ class Daos extends PSMDPoSNet[Message] with ActorService {
   }
   def setBcHelper(_bcHelper: IChainHelper) = {
     bcHelper = _bcHelper;
-    Daos.actdb = bcHelper;
+    Daos.chainHelper = bcHelper;
   }
   def getBcHelper: IChainHelper = {
     bcHelper
@@ -134,14 +121,14 @@ class Daos extends PSMDPoSNet[Message] with ActorService {
   }
 
   def setDdc(ddc: IActorDispatcher) = {
-    log.info("setDispatcher==" + ddc);
+    //    log.info("setDispatcher==" + ddc);
     this.ddc = ddc;
     Daos.ddc = ddc;
   }
 
   @ActorRequire(name = "ConfirmTxHashDB", scope = "global")
   var confirmMapDB: IConfirmTxMap = null; // 保存待打包block的交易
-  
+
   def getConfirmMapDB(): IConfirmTxMap = {
     return confirmMapDB;
   }
@@ -152,32 +139,28 @@ class Daos extends PSMDPoSNet[Message] with ActorService {
     Daos.confirmMapDB = ddc;
   }
 
-  
-  
 }
 
 object Daos extends OLog {
-  var dpospropdb: ODBSupport = null
-  var dposvotedb: ODBSupport = null
+  var vrfpropdb: ODBSupport = null
+  var vrfvotedb: ODBSupport = null
   //  var blkdb: ODBSupport = null
   var pzp: PZPCtrl = null;
-  var actdb:IChainHelper = null;
+  var chainHelper: IChainHelper = null;
   var blkHelper: IBlockHelper = null;
   var txHelper: ITransactionHelper = null;
   var enc: EncAPI = null;
   var ddc: IActorDispatcher = null;
-  var confirmMapDB: IConfirmTxMap  = null; // 保存待打包block的交易
+  var confirmMapDB: IConfirmTxMap = null; // 保存待打包block的交易
 
   def isDbReady(): Boolean = {
-    dpospropdb != null && dpospropdb.getDaosupport.isInstanceOf[ODBSupport] &&
-      dposvotedb != null && dposvotedb.getDaosupport.isInstanceOf[ODBSupport] &&
+    vrfpropdb != null && vrfpropdb.getDaosupport.isInstanceOf[ODBSupport] &&
+      vrfvotedb != null && vrfvotedb.getDaosupport.isInstanceOf[ODBSupport] &&
       blkHelper != null &&
       txHelper != null &&
       ddc != null &&
       confirmMapDB != null &&
-      pzp != null && actdb != null;
-       
-   
+      pzp != null && chainHelper!=null
   }
 }
 

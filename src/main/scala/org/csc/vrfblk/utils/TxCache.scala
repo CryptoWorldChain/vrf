@@ -12,8 +12,8 @@ import onight.oapi.scala.traits.OLog
 object TxCache extends OLog {
 
   val recentBlkTx: Cache[String, MultiTransaction] =
-    CacheBuilder.newBuilder().expireAfterWrite(DConfig.MAX_WAIT_BLK_EPOCH_MS, TimeUnit.SECONDS)
-      .maximumSize(DConfig.TX_MAX_CACHE_SIZE).build().asInstanceOf[Cache[String, MultiTransaction]]
+    CacheBuilder.newBuilder().expireAfterWrite(VConfig.MAX_WAIT_BLK_EPOCH_MS, TimeUnit.SECONDS)
+      .maximumSize(VConfig.TX_MAX_CACHE_SIZE).build().asInstanceOf[Cache[String, MultiTransaction]]
 
   def cacheTxs(txs: java.util.List[MultiTransaction]): Unit = {
     val s = txs.size() - 1;

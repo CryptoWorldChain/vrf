@@ -4,15 +4,15 @@ import org.csc.bcapi.backend.ODBDao;
 
 import onight.tfw.ojpa.api.ServiceSpec;
 
-public class ODSBlkDao extends ODBDao {
+public class ODSVRFDao extends ODBDao {
 
-	public ODSBlkDao(ServiceSpec serviceSpec) {
+	public ODSVRFDao(ServiceSpec serviceSpec) {
 		super(serviceSpec);
 	}
 
 	@Override
 	public String getDomainName() {
-		return "dpos.blk";
+		return "vrf.prop";
 	}
 
 	

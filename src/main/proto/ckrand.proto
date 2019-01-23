@@ -9,9 +9,9 @@ enum PCommand {
 	JIN = 0; //申请加入节点集群,follow up
 	INF = 1; //获取当前网络信息
 	
-	CBP = 2; //发送coinbase,prepare
+	CBN = 2; //发送coinbase,new
 	
-	CBC = 3; //发送coinbase,commit
+	CBW = 3; //发送coinbase,witness
 	
 	CBR = 4; //发送coinbase,reply
 	
@@ -37,7 +37,7 @@ enum VNodeState{
 	
 }
 
-message VDNode{
+message VNode{
 	string 		bcuid = 1;//节点
 	string 		co_address = 2;//拥有合约cws的地址, 联合账户地址
 	VNodeState	state = 3;		//@see VNodeState
@@ -52,24 +52,38 @@ message VDNode{
 	bytes		vrf_codes = 11;//
 	string		vrf_groups = 12;//
 	string		beacon_hash = 13;//
+	string		beacon_sign = 14;//
 }
 
+message GossipMiner{
+	string	bcuid = 1;
+	int32	cur_block = 2 ;
+	string	cur_block_hash = 3;
+}
+	
 //获取本地节点信息
 message PSNodeInfo{
 	string req_token = 1;//是否获取拓扑信息
+	VNode 	vn = 3;//交换一下我自己的节点信息
+	repeated GossipMiner murs = 4;
+	bool   is_query = 5;
+	
 	string message_id = 30;
+	
 }
 
-//加入的返回信息
 message PRetNodeInfo{
 	int32 ret_code = 1;//返回
 	string ret_message = 2;//返回信息
 
-	VDNode 	vn = 3;//交换一下我自己的节点信息
+	VNode 	vn = 3;//交换一下我自己的节点信息
 	int64	queue_bsbatch = 4; //待打块数量
 	int64	queue_confirm = 5; //待确认交易数量
 	int64	queue_wall = 6;    //待广播交易数量
 	string	extinfo = 7;
+	
+	repeated  GossipMiner  murs = 8;
+	
 	string 	message_id = 30;
 	string 	sign = 100;//对上述数据的签名结果
 }
@@ -127,6 +141,8 @@ message PBlockEntry{
 	int32 	block_height = 1;	//块高
 	string 	coinbase_bcuid = 2; //打块节点ID
 	int32	slice_id = 3;		//分片
+	string	blockhash = 4;
+	
 	bytes	block_header = 10;	//header
 	bytes 	block_miner = 11;   //Miner
 	string 	sign = 50;
@@ -134,7 +150,7 @@ message PBlockEntry{
 
 
 message PSSyncBlocks{
-	VDNode 	vn = 1;			//获取信息
+	VNode 	vn = 1;			//获取信息
 	int32 	start_id = 2;	//一般是取0
 	int32	end_id = 3;	    //分页截至
 	repeated int32 block_idx = 4;//byids

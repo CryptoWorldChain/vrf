@@ -4,15 +4,15 @@ import org.csc.bcapi.backend.ODBDao;
 
 import onight.tfw.ojpa.api.ServiceSpec;
 
-public class ODSDPoSVoteDao extends ODBDao {
+public class ODSVRFVoteDao extends ODBDao {
 
-	public ODSDPoSVoteDao(ServiceSpec serviceSpec) {
+	public ODSVRFVoteDao(ServiceSpec serviceSpec) {
 		super(serviceSpec);
 	}
 
 	@Override
 	public String getDomainName() {
-		return "dpos.vote";
+		return "vrf.vote";
 	}
 
 	

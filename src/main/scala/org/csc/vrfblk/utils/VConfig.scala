@@ -2,11 +2,18 @@ package org.csc.vrfblk.utils
 
 import onight.tfw.outils.conf.PropHelper
 
-object DConfig {
+object VConfig {
   val prop: PropHelper = new PropHelper(null);
 
-  val PROP_DOMAIN = "org.bc.dpos." //前缀
+  val PROP_DOMAIN = "org.bc.vrf." //前缀
+  
+  val GOSSIP_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "gossip.timeout.sec", 60); //2 seconds each block
 
+  val BLOCK_MAKE_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.timeout.sec", 60); //2 seconds each block
+
+  val SLICE_ID = prop.get(PROP_DOMAIN + "slice.id", 0); //2 seconds each block
+
+    
   //打块时间；按秒计算，（已经废弃，后面用毫秒取代）
   val _DBLK_EPOCH_SEC = prop.get(PROP_DOMAIN + "blk.epoch.sec", 1); //2 seconds each block
 

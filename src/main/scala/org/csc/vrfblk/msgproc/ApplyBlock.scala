@@ -1,0 +1,80 @@
+package org.csc.vrfblk.msgproc
+
+import org.csc.bcapi.crypto.BitMap
+import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
+import org.csc.p22p.action.PMNodeHelper
+import org.csc.p22p.utils.LogHelper
+import org.csc.vrfblk.tasks.BlockMessage
+import org.apache.commons.lang3.StringUtils
+import org.csc.vrfblk.tasks.VCtrl
+import java.util.concurrent.atomic.AtomicLong
+import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
+import org.csc.vrfblk.Daos
+import org.csc.vrfblk.utils.BlkTxCalc
+import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.StateChange
+import org.csc.vrfblk.utils.RandFunction
+
+case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+
+  val bestheight = new AtomicLong(0);
+
+  val emptyBlock = new AtomicLong(0);
+
+  def saveBlock(b: PBlockEntryOrBuilder, needBody: Boolean = false): (Int, Int) = {
+    if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
+      val startupApply = System.currentTimeMillis();
+      val vres = Daos.blkHelper.ApplyBlock(b.getBlockHeader, needBody);
+      if (vres.getTxHashsCount > 0) {
+        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight);
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+      } else if (vres.getCurrentNumber > 0) {
+        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
+        VCtrl.instance.updateBlockHeight(vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null)
+        if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
+          BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
+        }
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+      } else {
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+      }
+    } else {
+      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
+      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign)
+      (b.getBlockHeight, b.getBlockHeight)
+    }
+  }
+  def tryNotifyState() {
+    
+    val (hash, sign) =  RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
+    NodeStateSwither.offerMessage(new StateChange(sign,hash,pbo.getPrevBeaconHash));
+    
+  }
+  def proc() {
+    val cn = VCtrl.curVN();
+    if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
+      val (acceptHeight, blockWant) = saveBlock(pbo.getBlockEntry);
+      acceptHeight match {
+        case n if n > 0 && n < pbo.getBlockHeight =>
+          //                  ret.setResult(CoinbaseResult.CR_PROVEN)
+          log.info("newblock:UU,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",B=" + pbo.getBlockEntry.getSign
+            + ",TX=" + pbo.getTxcount);
+        case n if n > 0 =>
+          log.info("newblock:OK,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",B=" + pbo.getBlockEntry.getSign
+            + ",TX=" + pbo.getTxcount);
+          bestheight.set(n);
+          tryNotifyState();
+        case n @ _ =>
+          log.info("newblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",B=" + pbo.getBlockEntry.getSign
+            + ",TX=" + pbo.getTxcount);
+      }
+    }
+
+  }
+}
