@@ -25,6 +25,7 @@ import org.csc.ckrand.pbgens.Ckrand.GossipMiner
 import org.csc.p22p.node.PNode
 import org.csc.vrfblk.tasks.BeaconGossip
 import org.apache.commons.lang3.StringUtils
+import org.csc.vrfblk.utils.VConfig
 
 @NActorProvider
 @Instantiate
@@ -51,12 +52,16 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         })
         ret.setVn(VCtrl.curVN())
 
-        if (StringUtils.equals(pack.getFrom(),network.root.bcuid)|| StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
+        if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
+          VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
           BeaconGossip.offerMessage(pbo);
         } else {
           network.nodeByBcuid(pack.getFrom()) match {
             case network.noneNode =>
             case n: PNode =>
+              if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+                VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              }
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
               network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);
             case _ =>

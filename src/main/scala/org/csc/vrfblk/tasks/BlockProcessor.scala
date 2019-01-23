@@ -23,7 +23,7 @@ import onight.tfw.outils.serialize.UUIDGenerator
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
 import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
-import org.csc.vrfblk.msgproc.CreateNewBlock
+import org.csc.vrfblk.msgproc.MPCreateBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
 
 trait BlockMessage {
@@ -43,7 +43,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
     items.asScala.map(m => {
       //should wait
       m match {
-        case blkInfo: CreateNewBlock =>
+        case blkInfo: MPCreateBlock =>
           log.debug("get newblock info:" + blkInfo);
           val sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)

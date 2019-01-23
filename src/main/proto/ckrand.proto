@@ -67,9 +67,8 @@ message PSNodeInfo{
 	VNode 	vn = 3;//交换一下我自己的节点信息
 	repeated GossipMiner murs = 4;
 	bool   is_query = 5;
-	
+	int32  sugguest_start_sync_block_id = 6;
 	string message_id = 30;
-	
 }
 
 message PRetNodeInfo{

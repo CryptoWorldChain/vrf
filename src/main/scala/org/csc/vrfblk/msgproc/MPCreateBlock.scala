@@ -17,7 +17,7 @@ import onight.tfw.outils.serialize.UUIDGenerator
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.utils.TxCache
 
-case class CreateNewBlock(blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class MPCreateBlock(blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[MultiTransaction]) = {
     val txs = Daos.txHelper.getWaitBlockTx(

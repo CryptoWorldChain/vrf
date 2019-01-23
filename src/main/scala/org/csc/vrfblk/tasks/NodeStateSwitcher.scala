@@ -12,7 +12,9 @@ import org.csc.vrfblk.Daos
 import scala.util.Random
 import org.csc.vrfblk.utils.RandFunction
 import org.csc.ckrand.pbgens.Ckrand.VNodeState
-import org.csc.vrfblk.msgproc.CreateNewBlock
+import org.csc.vrfblk.msgproc.MPCreateBlock
+import org.csc.bcapi.crypto.BitMap
+import java.math.BigInteger
 
 trait StateMessage {
 
@@ -23,7 +25,7 @@ case class StateChange(newsign: String, newhash: String, prevhash: String) exten
 
 case class Initialize() extends StateMessage;
 
-object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelper with LogHelper {
+object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelper with LogHelper with BitMap {
   var running: Boolean = true;
 
   def isRunning(): Boolean = {
@@ -33,18 +35,22 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
-    val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, VCtrl.network().node_strBits, VCtrl.curVN().getBitIdx)
-    log.debug("get new state == " + state+",blockbits="+blockbits.toString(2)+",notarybits="+notarybits.toString(2));
+    var netBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
+    VCtrl.coMinerByUID.map(f => {
+      netBits = netBits.setBit(f._2.getBitIdx);
+    })
+    val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
+    log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2));
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
-        val blkInfo = new CreateNewBlock(blockbits, notarybits, hash, sign);
+        val blkInfo = new MPCreateBlock(blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY =>
         VCtrl.curVN().setState(state)
-      case _                         =>
+      case _ =>
         VCtrl.curVN().setState(state)
-        log.debug("unknow state:"+state);
+        log.debug("unknow state:" + state);
     }
 
   }

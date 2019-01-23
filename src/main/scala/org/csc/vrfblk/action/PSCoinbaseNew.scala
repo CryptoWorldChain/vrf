@@ -25,13 +25,13 @@ import org.csc.vrfblk.msgproc.ApplyBlock
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
-class PDCoinbaseM extends PSMVRFNet[PSCoinbase] {
-  override def service = PDCoinbaseNew
+class PDCoinbaseNew extends PSMVRFNet[PSCoinbase] {
+  override def service = PDCoinbaseNewService
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PDCoinbaseNew extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
+object PDCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {

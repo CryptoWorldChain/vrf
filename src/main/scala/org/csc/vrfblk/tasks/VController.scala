@@ -33,6 +33,7 @@ import org.csc.vrfblk.utils.VConfig
 import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
+import java.util.concurrent.atomic.AtomicInteger
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
@@ -41,6 +42,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
   var cur_vnode: VNode.Builder = VNode.newBuilder()
   var isStop: Boolean = false;
 
+  val heightBlkSeen = new AtomicInteger(0);
   def loadNodeFromDB() = {
     val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY).get
     val root_node = network.root();
@@ -71,6 +73,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
       }
+      heightBlkSeen.set(cur_vnode.getCurBlock);
       syncToDB();
     }
 
@@ -100,8 +103,9 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
   def startup() = {
     loadNodeFromDB();
     NodeStateSwither.offerMessage(new Initialize())
-//    BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(cur_vnode).build());
+    //    BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(cur_vnode).build());
   }
+
 }
 object VCtrl extends LogHelper {
   var instance: VRFController = null;
@@ -118,10 +122,20 @@ object VCtrl extends LogHelper {
     }
     fastNode.getBcuid
   }
+  def ensureNode(trybcuid: String): Node = {
+    val net = instance.network;
+    net.nodeByBcuid(trybcuid) match {
+      case net.noneNode =>
+        net.directNodeByBcuid.values.toList.get((Math.abs(Math.random() * 100000) % net.directNodes.size).asInstanceOf[Int]);
+      case n: Node =>
+        n;
+    }
+  }
   //  def curTermMiner(): PSDutyTermVoteOrBuilder = instance.term_Miner
 
   def isReady(): Boolean = {
-    instance.network != null &&
+    instance != null && instance.network != null &&
+      instance.cur_vnode != null &&
       instance.cur_vnode.getStateValue > VNodeState.VN_INIT_VALUE
   }
 
