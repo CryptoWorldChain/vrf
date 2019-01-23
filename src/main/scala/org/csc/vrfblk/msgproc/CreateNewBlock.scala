@@ -92,7 +92,7 @@ case class CreateNewBlock(blockbits: BigInteger, notarybits: BigInteger, beaconH
       // write to
       //
       //            log.debug("mindob newblockheight::" + newblockheight + " cn.getCoAddress::" + cn.getCoAddress + " termid::" + DCtrl.termMiner().getTermId + " cn.getBcuid::" + cn.getBcuid)
-      VCtrl.network().wallMessage("CBCVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
+      VCtrl.network().wallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);
     }
 

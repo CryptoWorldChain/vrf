@@ -34,13 +34,17 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, VCtrl.network().node_strBits, VCtrl.curVN().getBitIdx)
+    log.debug("get new state == " + state+",blockbits="+blockbits.toString(2)+",notarybits="+notarybits.toString(2));
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
+        VCtrl.curVN().setState(state)
         val blkInfo = new CreateNewBlock(blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY =>
-
+        VCtrl.curVN().setState(state)
       case _                         =>
+        VCtrl.curVN().setState(state)
+        log.debug("unknow state:"+state);
     }
 
   }

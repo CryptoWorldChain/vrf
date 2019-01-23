@@ -134,7 +134,6 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   }
 
   def setConfirmMapDB(ddc: IConfirmTxMap) = {
-    log.info("setconfirmMapDB==" + ddc);
     this.confirmMapDB = ddc;
     Daos.confirmMapDB = ddc;
   }

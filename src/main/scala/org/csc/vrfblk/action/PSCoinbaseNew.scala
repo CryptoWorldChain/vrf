@@ -1,5 +1,5 @@
 
-package org.csc.dposblk.action
+package org.csc.vrfblk.action
 
 import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
@@ -26,16 +26,16 @@ import org.csc.vrfblk.msgproc.ApplyBlock
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
 class PDCoinbaseM extends PSMVRFNet[PSCoinbase] {
-  override def service = PDCoinbase
+  override def service = PDCoinbaseNew
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PDCoinbase extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
+object PDCoinbaseNew extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
-      log.debug("DCtrl not ready");
+      log.debug("VCtrl not ready:"+VCtrl.curVN().getState);
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       BlockProcessor.offerMessage(new ApplyBlock(pbo));

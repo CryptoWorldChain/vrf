@@ -35,7 +35,7 @@ import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 
 //投票决定当前的节点
-case class VRFController(network: Network) extends SRunner with PMNodeHelper with LogHelper {
+case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
   def getName() = "VCtrl"
   val VRF_NODE_DB_KEY = "CURRENT_VRF_KEY";
   var cur_vnode: VNode.Builder = VNode.newBuilder()
@@ -61,11 +61,16 @@ case class VRFController(network: Network) extends SRunner with PMNodeHelper wit
         log.info("load from db:OK:" + cur_vnode)
       }
     }
-    if (cur_vnode.getCurBlock == 0 || cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
+    if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
       log.info("vrf block Info load from DB:c=" +
         cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
-      cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
-      cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
+      if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
+        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        cur_vnode.setCurBlockHash(Daos.chainHelper.getBlockByNumber(0).getHeader.getBlockHash);
+      } else {
+        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
+      }
       syncToDB();
     }
 
@@ -91,130 +96,13 @@ case class VRFController(network: Network) extends SRunner with PMNodeHelper wit
       })
     }
   }
-  def runOnce() = {
-    Thread.currentThread().setName("VCtrl");
-    implicit val _net = network
-    MDCSetBCUID(network);
-    MDCRemoveMessageID()
-    var continue = true;
-    var continuecCC = 0;
-    while (continue && !isStop) {
-      try {
-        continuecCC = continuecCC + 1;
-        continue = false;
-        log.info("VCTRL=" + cur_vnode.getState + ",B=" + cur_vnode.getCurBlock
-          + ",CA=" + cur_vnode.getCoAddress
-          + ",MN=" + VCtrl.coMinerByUID.size
-          + ",DN=" + network.bitenc.bits.bitCount
-          + ",PN=" + network.pendingNodeByBcuid.size
-        //          + ",banVote=" + (System.currentTimeMillis() <= DTask_DutyTermVote.ban_for_vote_sec) + ":" + (-1 * JodaTimeHelper.secondIntFromNow(DTask_DutyTermVote.ban_for_vote_sec))
-        //          + ",NextSec=" + JodaTimeHelper.secondFromNow(cur_vnode.getDutyEndMs)
-        //          + ",SecPass=" + JodaTimeHelper.secondFromNow(cur_vnode.getLastDutyTime)
-        );
-        cur_vnode.getState match {
-          case VNodeState.VN_INIT =>
-            //tell other I will join
-            loadNodeFromDB();
-            BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(cur_vnode).build());
-          case VNodeState.VN_SYNC_BLOCK       =>
-          case VNodeState.VN_DUTY_BEACON      =>
-          case VNodeState.VN_DUTY_BLOCKMAKERS =>
-          case VNodeState.VN_DUTY_NOTARY      =>
-          case VNodeState.VN_DUTY_SYNC        =>
-          case _ =>
-            log.warn("unknow state");
-        }
-        //          case DNodeState.DN_CO_MINER =>
-        //
-        //            if (!hbTask.onScheduled) {
-        ////              Scheduler.scheduleWithFixedDelay(hbTask, 60, DConfig.HEATBEAT_TICK_SEC, TimeUnit.SECONDS);
-        //              Daos.ddc.scheduleWithFixedDelaySecond( hbTask,60, DConfig.HEATBEAT_TICK_SEC);
-        //              hbTask.onScheduled = true;
-        //            }
-        //            if (DConfig.RUN_COMINER != 1) {
-        //              cur_vnode.setState(DNodeState.DN_BAKCUP)
-        //            } else if (DTask_DutyTermVote.runOnce) {
-        //              continue = true;
-        //              cur_vnode.setState(DNodeState.DN_DUTY_MINER);
-        //            } else {
-        //              log.debug("cominer run false:" + cur_vnode.getCurBlock + ",vq[" + VCtrl.voteRequest().getBlockRange.getStartBlock
-        //                + "," + VCtrl.voteRequest().getBlockRange.getEndBlock + "]" + ",vqid=" + VCtrl.voteRequest().getTermId
-        //                + ",vqlid=" + VCtrl.voteRequest().getLastTermId + ",tid=" + term_Miner.getTermId
-        //                + ",tq[" + term_Miner.getBlockRange.getStartBlock + "," + term_Miner.getBlockRange.getEndBlock + "]");
-        //            }
-        //          case DNodeState.DN_DUTY_MINER =>
-        //            if (DConfig.RUN_COMINER != 1) {
-        //              cur_vnode.setState(DNodeState.DN_BAKCUP)
-        //            } else if (term_Miner.getBlockRange.getStartBlock > cur_vnode.getCurBlock + term_Miner.getMinerQueueCount) {
-        //              log.debug("cur term force to resync block:" + cur_vnode.getCurBlock + ",vq[" + VCtrl.voteRequest().getBlockRange.getStartBlock
-        //                + "," + VCtrl.voteRequest().getBlockRange.getEndBlock + "]" + ",vqid=" + VCtrl.voteRequest().getTermId
-        //                + ",vqlid=" + VCtrl.voteRequest().getLastTermId + ",tid=" + term_Miner.getTermId
-        //                + ",tq[" + term_Miner.getBlockRange.getStartBlock + "," + term_Miner.getBlockRange.getEndBlock + "]");
-        //              continue = true;
-        //              cur_vnode.setState(DNodeState.DN_SYNC_BLOCK);
-        //            } else if (cur_vnode.getCurBlock >= term_Miner.getBlockRange.getEndBlock && term_Miner.getBlockRange.getEndBlock > 1 //|| VCtrl.voteRequest().getLastTermId >= term_Miner.getTermId
-        //            ) {
-        //              log.debug("cur term force to end:" + cur_vnode.getCurBlock + ",vq[" + VCtrl.voteRequest().getBlockRange.getStartBlock
-        //                + "," + VCtrl.voteRequest().getBlockRange.getEndBlock + "]" + ",vqid=" + VCtrl.voteRequest().getTermId
-        //                + ",vqlid=" + VCtrl.voteRequest().getLastTermId + ",tid=" + term_Miner.getTermId
-        //                + ",tq[" + term_Miner.getBlockRange.getStartBlock + "," + term_Miner.getBlockRange.getEndBlock + "]");
-        //              continue = true;
-        //              cur_vnode.setState(DNodeState.DN_CO_MINER);
-        //            } else if (DTask_MineBlock.runOnce) {
-        //              if (cur_vnode.getCurBlock >= term_Miner.getBlockRange.getEndBlock
-        //                || term_Miner.getTermId < vote_Request.getTermId) {
-        ////                val sleept = Math.abs((Math.random() * 100000000 % DConfig.DTV_TIME_MS_EACH_BLOCK).asInstanceOf[Long]) + 10;
-        //                log.info("cur term WILL end:newblk=" + cur_vnode.getCurBlock + ",term[" + VCtrl.voteRequest().getBlockRange.getStartBlock
-        //                  + "," + VCtrl.voteRequest().getBlockRange.getEndBlock + "]" + ",T=" + term_Miner.getTermId + ",try to vote,blk="+cur_vnode.getCurBlock);
-        //                continue = true;
-        //                cur_vnode.setState(DNodeState.DN_CO_MINER);
-        //                //don't sleep for next vote.
-        ////                DTask_DutyTermVote.synchronized({
-        ////                  DTask_DutyTermVote.wait(sleept)
-        ////                });
-        //                true
-        //              } else {
-        //                val pendingSize = Daos.confirmMapDB.getQueueSize;
-        //                if (pendingSize > DConfig.WAIT_BLOCK_MIN_TXN) {
-        //                  continue = true;
-        //                  true
-        //                } else {
-        //                  false
-        //                }
-        //              }
-        //            } else {
-        //              //check who mining.
-        //              if (cur_vnode.getCurBlock >= term_Miner.getBlockRange.getEndBlock && term_Miner.getBlockRange.getEndBlock > 1) {
-        //                continue = true;
-        //                cur_vnode.setState(DNodeState.DN_CO_MINER);
-        //                val sleept = Math.abs((Math.random() * 10000000 % DConfig.DTV_TIME_MS_EACH_BLOCK).asInstanceOf[Long]) + 1000;
-        //                DTask_DutyTermVote.synchronized({
-        //                  DTask_DutyTermVote.wait(sleept)
-        //                });
-        //                true
-        //              } else {
-        //                false;
-        //              }
-        //            }
-        //          case DNodeState.DN_SYNC_BLOCK =>
-        //            DTask_CoMine.runOnce
-        //          case DNodeState.DN_BAKCUP =>
-        //            DTask_CoMine.runOnce
-        //          case _ =>
-        //            log.warn("unknow State:" + cur_vnode.getState);
-        //
-        //        }
 
-      } catch {
-        case e: Throwable =>
-          log.warn("v control :Error", e);
-      } finally {
-        MDCRemoveMessageID()
-      }
-    }
+  def startup() = {
+    loadNodeFromDB();
+    NodeStateSwither.offerMessage(new Initialize())
+//    BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(cur_vnode).build());
   }
 }
-
 object VCtrl extends LogHelper {
   var instance: VRFController = null;
   def network(): Network = instance.network;
@@ -235,13 +123,6 @@ object VCtrl extends LogHelper {
   def isReady(): Boolean = {
     instance.network != null &&
       instance.cur_vnode.getStateValue > VNodeState.VN_INIT_VALUE
-  }
-  def sleep(sleepMS: Long): Unit = {
-    if (sleepMS <= 1) return
-    Thread.sleep(sleepMS);
-  }
-  def checkMiner(block: Int, coaddr: String, mineTime: Long, threadName: String, maxWaitMS: Long = 0L): (Boolean, Boolean) = {
-    (true, false)
   }
 
   val recentBlocks: Cache[Int, PBlockEntry.Builder] = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS)

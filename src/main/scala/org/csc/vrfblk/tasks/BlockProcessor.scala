@@ -27,7 +27,7 @@ import org.csc.vrfblk.msgproc.CreateNewBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
 
 trait BlockMessage {
-  def proc():Unit;
+  def proc(): Unit;
 }
 
 object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper with BitMap with LogHelper {
@@ -39,12 +39,12 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
 
   val NewBlockFP = PacketHelper.genPack("NEWBLOCK", "__VRF", "", true, 9);
 
-  
   def runBatch(items: List[BlockMessage]): Unit = {
     items.asScala.map(m => {
       //should wait
       m match {
         case blkInfo: CreateNewBlock =>
+          log.debug("get newblock info:" + blkInfo);
           val sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
@@ -57,14 +57,13 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
             }
           })
         case blk: ApplyBlock =>
-          
-        case _ =>
-          log.warn("unknow info");
+            log.debug("apply block" + blk);
+            blk.proc();
+        case n @ _ =>
+          log.warn("unknow info:" + n);
       }
       //      Daos.ddc.executeNow(arg0, arg1, arg2)
     })
   }
-  
-  
 
 }

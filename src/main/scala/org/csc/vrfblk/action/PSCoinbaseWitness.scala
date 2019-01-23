@@ -1,5 +1,5 @@
 
-package org.csc.dposblk.action
+package org.csc.vrfblk.action
 
 import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
@@ -27,7 +27,7 @@ import org.csc.vrfblk.msgproc.NotaryBlock
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
 class PDCoinbaseW extends PSMVRFNet[PSCoinbase] {
-  override def service = PDCoinbase
+  override def service = PDCoinbaseWitness
 }
 
 //

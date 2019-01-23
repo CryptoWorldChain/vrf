@@ -1,4 +1,4 @@
-package org.csc.dposblk.action
+package org.csc.vrfblk.action
 
 import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
@@ -51,7 +51,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         })
         ret.setVn(VCtrl.curVN())
 
-        if (StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
+        if (StringUtils.equals(pack.getFrom(),network.root.bcuid)|| StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
           BeaconGossip.offerMessage(pbo);
         } else {
           network.nodeByBcuid(pack.getFrom()) match {

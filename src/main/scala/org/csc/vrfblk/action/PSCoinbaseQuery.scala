@@ -1,5 +1,5 @@
 
-package org.csc.dposblk.action
+package org.csc.vrfblk.action
 
 import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides

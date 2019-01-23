@@ -1,6 +1,5 @@
 package org.csc.vrfblk
 
-
 import java.util.concurrent.TimeUnit
 
 import org.apache.felix.ipojo.annotations.Invalidate
@@ -15,6 +14,9 @@ import onight.tfw.outils.serialize.UUIDGenerator
 import org.csc.vrfblk.utils.VConfig
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.tasks.VRFController
+import org.csc.vrfblk.tasks.BeaconGossip
+import org.csc.vrfblk.tasks.BlockProcessor
+import org.csc.vrfblk.tasks.NodeStateSwither
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -33,7 +35,7 @@ class VRFStartup extends PSMVRFNet[Message] {
 
   @Invalidate
   def destory() {
-//    !!DCtrl.instance.isStop = true;
+    //    !!DCtrl.instance.isStop = true;
   }
 
 }
@@ -43,8 +45,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
     URLHelper.init();
     while (!Daos.isDbReady() //        || MessageSender.sockSender.isInstanceOf[NonePackSender]
     ) {
-      log.debug("Daos Or sockSender Not Ready..:pzp=" + Daos.pzp+",dbready="+Daos.isDbReady()
-          +",daos="+Daos)
+      log.debug("Daos Or sockSender Not Ready..:pzp=" + Daos.pzp + ",dbready=" + Daos.isDbReady())
       Thread.sleep(1000);
     }
 
@@ -56,7 +57,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
       if (vrfnet != null) {
         MDCSetBCUID(vrfnet)
       }
-      log.debug("vrf ctrl not ready. vrfnet=" + vrfnet+",ddc="+Daos.ddc)
+      log.debug("vrf ctrl not ready. vrfnet=" + vrfnet + ",ddc=" + Daos.ddc)
       Thread.sleep(5000);
     }
     //    RSM.instance = RaftStateManager(raftnet);
@@ -64,7 +65,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
     //     Daos.actdb.getNodeAccount();
 
     while (Daos.chainHelper.getNodeAccount == null) {
-      log.debug(" cws account not ready. "+",ddc="+Daos.ddc)
+      log.debug(" cws account not ready. " + ",ddc=" + Daos.ddc)
       Thread.sleep(5000);
     }
     val naccount = Daos.chainHelper.getNodeAccount;
@@ -72,19 +73,25 @@ class VRFBGLoader() extends Runnable with LogHelper {
     UUIDGenerator.setJVM(vrfnet.root().bcuid.substring(1))
     vrfnet.changeNodeVAddr(naccount);
     log.debug("dposnet.initOK:My Node=" + vrfnet.root() + ",CoAddr=" + vrfnet.root().v_address
-        +",vctrl.tick="+Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
+      + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 
     VCtrl.instance = VRFController(vrfnet);
+    Array(BeaconGossip,BlockProcessor,NodeStateSwither).map(f => {
+      f.startup(Daos.ddc.getExecutorService("vrf"));
+    })
 
-//    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
-//      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)
-    Daos.ddc.scheduleWithFixedDelay(VCtrl.instance, VConfig.INITDELAY_DCTRL_SEC,
-      Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS),TimeUnit.MILLISECONDS)
+    //    BeaconGossip.startup(Daos.ddc);
+    VCtrl.instance.startup();
 
-//!!    TxSync.instance = TransactionSync(dposnet);
+    //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
+    //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)
+    //    Daos.ddc.scheduleWithFixedDelay(VCtrl.instance, VConfig.INITDELAY_DCTRL_SEC,
+    //      Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS),TimeUnit.MILLISECONDS)
 
-//!!    Daos.ddc.scheduleWithFixedDelay(TxSync.instance, DConfig.INITDELAY_DCTRL_SEC,
-//!!      Math.min(DConfig.TICK_DCTRL_MS_TX, DConfig.TXS_EPOCH_MS),TimeUnit.MILLISECONDS)
+    //!!    TxSync.instance = TransactionSync(dposnet);
+
+    //!!    Daos.ddc.scheduleWithFixedDelay(TxSync.instance, DConfig.INITDELAY_DCTRL_SEC,
+    //!!      Math.min(DConfig.TICK_DCTRL_MS_TX, DConfig.TXS_EPOCH_MS),TimeUnit.MILLISECONDS)
 
   }
 }
