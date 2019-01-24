@@ -54,6 +54,9 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
                 //create block.
                 blkInfo.proc();
+              }else
+              {
+                log.debug("cancel create block:"+blkInfo.beaconHash)
               }
             }
           })
