@@ -93,7 +93,6 @@ object RandFunction extends LogHelper with BitMap {
     val ranInt = new BigInteger(beaconHash, 16).abs(); //.multiply(BigInteger.valueOf(curIdx));
     val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue();
     log.debug("calc rand sleep,indexInBits=" + indexInBits + ",stepRange=" + stepRange + ",bitcount=" + blockbits.bitCount());
-    ((indexInBits + stepRange) % (blockbits.bitCount() + 1)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC
-    +VConfig.BLK_EPOCH_MS
+    return ((indexInBits + stepRange) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC + VConfig.BLK_EPOCH_MS
   }
 }
