@@ -25,17 +25,17 @@ import org.csc.vrfblk.msgproc.ApplyBlock
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
-class PDCoinbaseNew extends PSMVRFNet[PSCoinbase] {
-  override def service = PDCoinbaseNewService
+class PSCoinbaseNew extends PSMVRFNet[PSCoinbase] {
+  override def service = PSCoinbaseNewService
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PDCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
+object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
-      log.debug("VCtrl not ready:"+VCtrl.curVN().getState);
+      log.debug("VCtrl not ready:"+VCtrl.curVN());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       BlockProcessor.offerMessage(new ApplyBlock(pbo));

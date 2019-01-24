@@ -17,7 +17,7 @@ import onight.tfw.outils.serialize.UUIDGenerator
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.utils.TxCache
 
-case class MPCreateBlock(blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[MultiTransaction]) = {
     val txs = Daos.txHelper.getWaitBlockTx(
@@ -71,8 +71,16 @@ case class MPCreateBlock(blockbits: BigInteger, notarybits: BigInteger, beaconHa
         .setBlockSeeds(ByteString.copyFrom(blockbits.toByteArray()))
         .setPrevBeaconHash(cn.getBeaconHash)
         .setPrevBlockSeeds(cn.getVrfRandseeds)
-        .setVrfCodes(ByteString.copyFrom(blockbits.toByteArray()))
+        .setVrfCodes(ByteString.copyFrom(netBits.toByteArray()))
         .setWitnessBits(hexToMapping(notarybits))
+
+      if (netBits.bitCount() < VCtrl.coMinerByUID.size) {
+        var newNetBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
+        VCtrl.coMinerByUID.map(f => {
+          newNetBits = newNetBits.setBit(f._2.getBitIdx);
+        })
+        newCoinbase.setVrfCodes(ByteString.copyFrom(newNetBits.toByteArray()))
+      }
 
       cn.setCurBlock(newblockheight)
         .setBeaconHash(beaconHash)
@@ -81,6 +89,8 @@ case class MPCreateBlock(blockbits: BigInteger, notarybits: BigInteger, beaconHa
         .setCurBlockMakeTime(now)
         .setCurBlockRecvTime(now)
         .setPrevBlockHash(newCoinbase.getPrevBeaconHash)
+        .setVrfCodes(ByteString.copyFrom(netBits.toByteArray()));
+
       VCtrl.instance.syncToDB()
       if (System.currentTimeMillis() - start > VConfig.ADJUST_BLOCK_TX_MAX_TIMEMS) {
         for (i <- 1 to 2) {

@@ -40,6 +40,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   val NewBlockFP = PacketHelper.genPack("NEWBLOCK", "__VRF", "", true, 9);
 
   def runBatch(items: List[BlockMessage]): Unit = {
+    MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
       //should wait
       m match {

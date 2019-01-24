@@ -45,6 +45,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
   }
 
   def runBatch(items: List[SyncInfo]): Unit = {
+    MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
       //should wait
       m match {
@@ -52,6 +53,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
         case syncInfo: SyncBlock =>
           log.debug("syncInfo =" + syncInfo);
+          
           val messageid = UUIDGenerator.generate();
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
@@ -63,10 +65,10 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 MDCSetMessageID(messageid)
                 try {
                   if (fp.getBody == null) {
-                    log.debug("send SYNDOB error:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo.reqBody + ",ret=null")
+                    log.debug("send SYNVRF error:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo.reqBody + ",ret=null")
                   } else {
                     val ret = PRetSyncBlocks.newBuilder().mergeFrom(fp.getBody);
-                    log.debug("send SYNDOB success:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",ret=" +
+                    log.debug("send SYNVRF success:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo.reqBody.getStartId + ",ret=" +
                       ret.getRetCode + ",count=" + ret.getBlockHeadersCount)
 
                     if (ret.getRetCode() == 0) { //same message

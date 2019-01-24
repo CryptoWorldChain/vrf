@@ -20,14 +20,17 @@ import org.fc.zippo.dispatcher.SingletonWorkShop
 import onight.tfw.outils.serialize.UUIDGenerator
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfoOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSSyncBlocks
+import org.csc.p22p.core.Votes.NotConverge
+import org.csc.vrfblk.Daos
+import org.csc.ckrand.pbgens.Ckrand.VNodeState
 
 //投票决定当前的节点
-case class BRDetect(messageId: String, checktime: Long, votebase: Int);
+case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
 
 object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHelper with LogHelper {
   var running: Boolean = true;
   val incomingInfos = new ConcurrentHashMap[String, PSNodeInfoOrBuilder]();
-  var currentBR: BRDetect = BRDetect(null, 0, 0);
+  var currentBR: BRDetect = BRDetect(null, 0, 0, null);
 
   def isRunning(): Boolean = {
     return running;
@@ -37,6 +40,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
   }
   def runBatch(items: List[PSNodeInfoOrBuilder]): Unit = {
+    MDCSetBCUID(VCtrl.network())
     items.asScala.map(pn =>
       if (StringUtils.equals(pn.getMessageId, currentBR.messageId)) {
         log.debug("put a new br:" + pn);
@@ -44,14 +48,15 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       })
 
     tryMerge();
-    if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) {
+    if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
+      || !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
       gossipBeaconInfo();
     }
   }
 
   def gossipBeaconInfo() {
     val messageId = UUIDGenerator.generate();
-    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size);
+    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN());
     VCtrl.coMinerByUID.map(m => {
@@ -83,21 +88,30 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
       Votes.vote(checkList).PBFTVote(n => {
-        Some((n.getBeaconSign, n.getBeaconHash))
+        Some((n.getBeaconSign, n.getBeaconHash, Daos.enc.hexEnc(n.getVrfRandseeds.toByteArray())))
       }, currentBR.votebase) match {
-        case Converge((sign: String, hash: String)) =>
+        case Converge((sign: String, hash: String, randseed: String)) =>
           log.info("get merge beacon sign = :" + sign + ",hash=" + hash);
-          NodeStateSwither.offerMessage(new BeaconConverge(sign, hash));
           incomingInfos.clear();
-        case _ =>
-          log.info("cannot get converge for pbft vote:" + checkList + ",incomingInfos=" + incomingInfos.size + ":" + incomingInfos + ",currentBR=" + currentBR);
+          NodeStateSwither.offerMessage(new BeaconConverge(sign, hash));
+        case n: NotConverge =>
+          log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
+            + ",messageid=" + currentBR.messageId);
           //find
           val messageId = UUIDGenerator.generate();
-          currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size);
+          currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
           //
-          val sync = PSSyncBlocks.newBuilder().setStartId(suggestStartIdx)
-            .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
-          BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
+          incomingInfos.clear();
+          if (maxHeight > VCtrl.curVN().getCurBlock) {
+            VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
+            val sync = PSSyncBlocks.newBuilder().setStartId(suggestStartIdx)
+              .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
+            BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
+          }
+        case n @ _ =>
+          log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
+            + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
+            + ",messageid=" + currentBR.messageId);
       };
 
     }

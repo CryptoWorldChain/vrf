@@ -108,7 +108,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
 
 }
 object VCtrl extends LogHelper {
-  var instance: VRFController = null;
+  var instance: VRFController = VRFController(null);
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
   def curVN(): VNode.Builder = instance.cur_vnode

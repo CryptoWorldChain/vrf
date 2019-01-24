@@ -14,6 +14,7 @@ import org.csc.vrfblk.utils.BlkTxCalc
 import org.csc.vrfblk.tasks.NodeStateSwither
 import org.csc.vrfblk.tasks.StateChange
 import org.csc.vrfblk.utils.RandFunction
+import com.google.protobuf.ByteString
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -34,6 +35,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
+        VCtrl.curVN().setVrfCodes(pbo.getVrfCodes);
+
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())

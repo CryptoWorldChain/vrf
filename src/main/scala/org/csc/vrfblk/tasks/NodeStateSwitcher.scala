@@ -35,16 +35,27 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
-    var netBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
-    VCtrl.coMinerByUID.map(f => {
-      netBits = netBits.setBit(f._2.getBitIdx);
-    })
+    var netBits = BigInteger.ZERO;
+    try {
+      if (VCtrl.curVN().getVrfRandseeds != null&&VCtrl.curVN().getVrfRandseeds.size()>0) {
+        netBits = new BigInteger(VCtrl.curVN().getVrfRandseeds.toByteArray());
+      }
+    } catch {
+      case t: Throwable =>
+        log.debug("set netbits error:"+t.getMessage);
+    }
+    if (netBits.bitCount() <= 0) {
+      netBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
+      VCtrl.coMinerByUID.map(f => {
+        netBits = netBits.setBit(f._2.getBitIdx);
+      })
+    }
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
     log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2));
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
-        val blkInfo = new MPCreateBlock(blockbits, notarybits, hash, sign);
+        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY =>
         VCtrl.curVN().setState(state)
@@ -55,6 +66,7 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
 
   }
   def runBatch(items: List[StateMessage]): Unit = {
+    MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
       m match {
         case BeaconConverge(sign, hash) => {
