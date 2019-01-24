@@ -37,15 +37,25 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   }
 
   def gossipBlocks() {
-    BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
+    try{
+      currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
+
+      BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
+    }catch{
+      case t:Throwable =>
+        log.debug("error in gossip blocks:", t);
+    }
   }
   def runBatch(items: List[PSNodeInfoOrBuilder]): Unit = {
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(pn =>
       if (StringUtils.equals(pn.getMessageId, currentBR.messageId)) {
-        log.debug("put a new br:" + pn);
+        log.debug("put a new br:from=" + pn.getVn.getBcuid+ ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
+            + ",BH=" + pn.getVn.getBeaconHash+",SEED="+pn.getVn.getVrfRandseeds);
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
+      
+   log.debug("gossipBlocks:beaconhash.curvn="+VCtrl.curVN().getBeaconHash+",br="+ currentBR.beaconHash);
 
     tryMerge();
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
@@ -65,7 +75,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     //get all vote block
     incomingInfos.clear();
     MDCSetMessageID(messageId);
-    log.debug("gen a new gossipinfo:" + body + ",network=" + VCtrl.network());
+    log.debug("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
+            + ",BH=" + currentBR.beaconHash);
     VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
   }
 
@@ -88,12 +99,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
       Votes.vote(checkList).PBFTVote(n => {
-        Some((n.getBeaconSign, n.getBeaconHash, Daos.enc.hexEnc(n.getVrfRandseeds.toByteArray())))
+        Some((n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
         case Converge((sign: String, hash: String, randseed: String)) =>
           log.info("get merge beacon sign = :" + sign + ",hash=" + hash);
           incomingInfos.clear();
-          NodeStateSwither.offerMessage(new BeaconConverge(sign, hash));
+          NodeStateSwither.offerMessage(new BeaconConverge(sign, hash,randseed));
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
             + ",messageid=" + currentBR.messageId);

@@ -29,6 +29,8 @@ import org.csc.ckrand.pbgens.Ckrand.PSSyncBlocks
 import onight.tfw.async.CallBack
 import org.csc.ckrand.pbgens.Ckrand.PRetSyncBlocks
 import scala.collection.JavaConverters._
+import org.csc.evmapi.gens.Block.BlockEntity
+import org.csc.evmapi.gens.Block.BlockEntityOrBuilder
 
 trait SyncInfo {
   //  def proc(): Unit;
@@ -53,7 +55,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
         case syncInfo: SyncBlock =>
           log.debug("syncInfo =" + syncInfo);
-          
+
           val messageid = UUIDGenerator.generate();
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
@@ -77,17 +79,27 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.debug("realBlockCount=" + realmap.size);
+                      var lastSuccessBlock: BlockEntityOrBuilder = null;
                       realmap.map { b =>
-                        val vres = Daos.blkHelper.ApplyBlock(b.getBlockHeader, true);
+                        val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
+                        val vres = Daos.blkHelper.ApplyBlock(block, true);
                         if (vres.getCurrentNumber >= b.getBlockHeight) {
-                          log.debug("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber);
+                          if (vres.getCurrentNumber > maxid) {
+                            lastSuccessBlock = block
+                            maxid = vres.getCurrentNumber.intValue();
+                          }
+                          log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber+",hash="+block.getHeader.getBlockHash+",seed="+
+                            block.getHeader.getExtraData);
+
                         } else {
-                          log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + VCtrl.curVN().getCurBlock);
+                          log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid+",hash="+block.getHeader.getBlockHash
+                              +",prev="+block.getHeader.getParentHash+",seed="+
+                            block.getHeader.getExtraData);
                         }
                       }
                       log.debug("checkMiner --> maxid::" + maxid)
                       if (maxid > 0) {
-                        VCtrl.instance.updateBlockHeight(maxid, "")
+                        VCtrl.instance.updateBlockHeight(maxid,lastSuccessBlock.getHeader.getBlockHash, lastSuccessBlock.getHeader.getExtraData)
                       }
                     }
                   }

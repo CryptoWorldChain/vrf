@@ -38,7 +38,7 @@ class VNodeInfo extends PSMVRFNet[PSNodeInfo] {
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
 object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSNodeInfo, handler: CompleteHandler) = {
-    log.debug("onPBPacket::" + pbo)
+
     var ret = PRetNodeInfo.newBuilder();
     val network = networkByID("vrf")
     if (network == null) {
@@ -51,7 +51,9 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
           ret.addMurs(GossipMiner.newBuilder().setBcuid(m._2.getBcuid).setCurBlock(m._2.getCurBlock))
         })
         ret.setVn(VCtrl.curVN())
-
+        MDCSetMessageID(pbo.getMessageId);
+        log.debug("getNodeInfo::" + pack.getFrom()+",blockheight="+pbo.getVn.getCurBlock)
+    
         if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
           VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
           BeaconGossip.offerMessage(pbo);
@@ -60,6 +62,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             case network.noneNode =>
             case n: PNode =>
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+                log.debug("add cominer:"+pbo.getVn.getBcuid+",blockheight="+pbo.getVn.getCurBlock+",cur="+VCtrl.curVN().getCurBlock);
                 VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
               }
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());

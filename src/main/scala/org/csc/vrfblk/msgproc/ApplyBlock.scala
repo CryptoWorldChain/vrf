@@ -15,6 +15,7 @@ import org.csc.vrfblk.tasks.NodeStateSwither
 import org.csc.vrfblk.tasks.StateChange
 import org.csc.vrfblk.utils.RandFunction
 import com.google.protobuf.ByteString
+import org.csc.evmapi.gens.Block.BlockEntity
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -23,36 +24,39 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   val emptyBlock = new AtomicLong(0);
 
   def saveBlock(b: PBlockEntryOrBuilder, needBody: Boolean = false): (Int, Int) = {
+    val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
+
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
-      val vres = Daos.blkHelper.ApplyBlock(b.getBlockHeader, needBody);
+      val vres = Daos.blkHelper.ApplyBlock(block, needBody);
       if (vres.getTxHashsCount > 0) {
         log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight);
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-        VCtrl.instance.updateBlockHeight(vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null)
+        VCtrl.instance.updateBlockHeight(
+          vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-        VCtrl.curVN().setVrfCodes(pbo.getVrfCodes);
-
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,block.getHeader.getExtraData)
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       }
+      
     } else {
-      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
-      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign)
+//      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
+      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,block.getHeader.getExtraData)
       (b.getBlockHeight, b.getBlockHeight)
     }
   }
   def tryNotifyState() {
-//    if(VCtrl.instance.b
-        
-    val (hash, sign) =  RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
-    NodeStateSwither.offerMessage(new StateChange(sign,hash,pbo.getPrevBeaconHash));
-    
+    //    if(VCtrl.instance.b
+
+    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
+    NodeStateSwither.offerMessage(new StateChange(sign, hash, pbo.getBlockEntry.getBlockhash));
+
   }
   def proc() {
     val cn = VCtrl.curVN();
@@ -66,9 +70,17 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
         case n if n > 0 =>
-          log.info("applyblock:OK,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+          val vstr=
+          if(StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) ){
+            "MY"
+          }else{
+            "OK"
+          }
+          log.info("applyblock:"+vstr+",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-            + ",B=" + pbo.getBlockEntry.getSign
+            + ",MN=" + VCtrl.coMinerByUID.size
+            + ",NBits=" + new String(pbo.getVrfCodes.toByteArray())
+              + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
           bestheight.set(n);
           tryNotifyState();

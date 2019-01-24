@@ -42,7 +42,7 @@ object RandFunction extends LogHelper with BitMap {
     }
     return t;
   }
-  def reasonableRandInt(beaconHexSeed: String, netBits: BigInteger,blockMakerCount:Int,notaryCount:Int): (BigInteger, BigInteger) = { //4 roles.
+  def reasonableRandInt(beaconHexSeed: String, netBits: BigInteger, blockMakerCount: Int, notaryCount: Int): (BigInteger, BigInteger) = { //4 roles.
     val subleft = beaconHexSeed.substring(0, beaconHexSeed.length() / 2);
     val subright = beaconHexSeed.substring(beaconHexSeed.length() / 2 + 1);
     val leftbits = new BigInteger(subleft + subleft.reverse, 16); //.
@@ -52,20 +52,20 @@ object RandFunction extends LogHelper with BitMap {
     //    log.debug("reasonableRandInt,blockbits=" + leftbits.toString(2) + ",votebits=" + rightbits.toString(2) + ",netBits=" + netBits.toString(2));
 
     val votebits = bigIntAnd(netBits, rightbits); //andNot(blockbits)
-    log.debug("reasonableRandInt::bb.count=" + blockbits.bitCount() + ",vb.count=" + votebits.bitCount() + ",net.length=" + netBits.bitLength());
-    if (blockbits.bitCount() >= blockMakerCount&& votebits.bitCount >= notaryCount) {
+    //    log.debug("reasonableRandInt::bb.count=" + blockbits.bitCount() + ",vb.count=" + votebits.bitCount() + ",net.length=" + netBits.bitLength());
+    if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
       //cannot product block maker
       return (blockbits, votebits);
     } else {
       val deeprand = Daos.enc.hexEnc(Daos.enc.sha256Encode(subleft.getBytes)) + Daos.enc.hexEnc(Daos.enc.sha256Encode(subright.getBytes))
-      reasonableRandInt(deeprand, netBits,blockMakerCount,notaryCount);
+      reasonableRandInt(deeprand, netBits, blockMakerCount, notaryCount);
     }
   }
 
   def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
-    val blockMakerCount:Int = Math.max(1,netBits.bitCount());
-    val notaryCount:Int = Math.max(1,netBits.bitCount());
-    val (blockbits, votebits) = reasonableRandInt(beaconHexSeed,netBits, blockMakerCount,notaryCount);
+    val blockMakerCount: Int = Math.max(1, netBits.bitCount() / 3);
+    val notaryCount: Int = Math.max(1, netBits.bitCount() / 3);
+    val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
     log.debug("chooseGroups,blockbits=" + blockbits.toString(2) + ",votebits=" + blockbits.toString(2) + ",curIdx=" + curIdx);
     if (blockbits.testBit(curIdx)) {
       (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
@@ -82,16 +82,18 @@ object RandFunction extends LogHelper with BitMap {
     while (testcc < 1024000 && testBits.bitCount() > 0) {
       if (blockbits.testBit(testcc)) {
         testBits = testBits.clearBit(testcc);
-        if (curIdx == indexInBits) {
+        if (curIdx == testcc) {
           testBits = BigInteger.ZERO;
+        } else {
+          indexInBits = indexInBits + 1;
         }
-        indexInBits = indexInBits + 1;
       }
       testcc = testcc + 1;
     }
     val ranInt = new BigInteger(beaconHash, 16).abs(); //.multiply(BigInteger.valueOf(curIdx));
     val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue();
-    (indexInBits + stepRange) % blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC
+    log.debug("calc rand sleep,indexInBits=" + indexInBits + ",stepRange=" + stepRange + ",bitcount=" + blockbits.bitCount());
+    ((indexInBits + stepRange) % (blockbits.bitCount() + 1)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC
     +VConfig.BLK_EPOCH_MS
   }
 }

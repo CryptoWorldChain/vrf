@@ -34,9 +34,11 @@ import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 import java.util.concurrent.atomic.AtomicInteger
+import org.csc.bcapi.crypto.BitMap
+import com.google.protobuf.ByteString
 
 //投票决定当前的节点
-case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
+case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
   def getName() = "VCtrl"
   val VRF_NODE_DB_KEY = "CURRENT_VRF_KEY";
   var cur_vnode: VNode.Builder = VNode.newBuilder()
@@ -56,11 +58,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
     } else {
       cur_vnode.mergeFrom(ov.getExtdata).setBitIdx(root_node.node_idx)
       if (!StringUtils.equals(cur_vnode.getBcuid, root_node.bcuid)) {
-        log.warn("load from dnode info not equals with pzp node:" + cur_vnode + ",root=" + root_node)
+        log.warn("load from dnode info not equals with pzp node:{" + cur_vnode.toString().replaceAll("\n", ",") + "},root=" + root_node)
         cur_vnode.setBcuid(root_node.bcuid);
         syncToDB();
       } else {
-        log.info("load from db:OK:" + cur_vnode)
+        log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ")+"}")
       }
     }
     if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
@@ -72,7 +74,9 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
       } else {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
+        
       }
+      cur_vnode.setBeaconHash(cur_vnode.getCurBlockHash)
       heightBlkSeen.set(cur_vnode.getCurBlock);
       syncToDB();
     }
@@ -84,17 +88,22 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper {
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String) = {
-    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock);
+  def updateBlockHeight(blockHeight: Int, blockHash: String,extraData:String) = {
+//    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
+//       +",rand="+extraData);
     if (blockHeight != cur_vnode.getCurBlock) {
 
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
+        cur_vnode.setBeaconHash(blockHash);
+        cur_vnode.setVrfRandseeds(extraData);
         if (blockHash != null) {
           cur_vnode.setCurBlockHash(blockHash)
         }
-        log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock);
+        log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
+            +",hash="+blockHash+",seed="+extraData);
         syncToDB()
       })
     }

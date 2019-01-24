@@ -19,7 +19,7 @@ import java.math.BigInteger
 trait StateMessage {
 
 }
-case class BeaconConverge(beaconSign: String, beaconHash: String) extends StateMessage;
+case class BeaconConverge(beaconSign: String, beaconHash: String, randseed: String) extends StateMessage;
 //状态转化器
 case class StateChange(newsign: String, newhash: String, prevhash: String) extends StateMessage;
 
@@ -37,12 +37,13 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
     val sign = VCtrl.curVN().getBeaconSign;
     var netBits = BigInteger.ZERO;
     try {
-      if (VCtrl.curVN().getVrfRandseeds != null&&VCtrl.curVN().getVrfRandseeds.size()>0) {
-        netBits = new BigInteger(VCtrl.curVN().getVrfRandseeds.toByteArray());
+      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length > 0) {
+        netBits = mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger;
       }
+      netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
     } catch {
       case t: Throwable =>
-        log.debug("set netbits error:"+t.getMessage);
+        log.debug("set netbits error:" + t.getMessage);
     }
     if (netBits.bitCount() <= 0) {
       netBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
@@ -69,13 +70,13 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
       m match {
-        case BeaconConverge(sign, hash) => {
-          log.info("set new beacon seed:" + sign); //String pubKey, String hexHash, String sign hex
-          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash);
+        case BeaconConverge(sign, hash, seed) => {
+          log.info("set new beacon seed:" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
+          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed);
           notifyStateChange();
         }
         case StateChange(newsign, newhash, prevhash) => {
-          log.info("get new statechange:sig={},hash={},prevhash={},localbeanhash={}", newsign, newhash, prevhash, VCtrl.curVN().getBeaconHash);
+          log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
           if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
             //@TODO !should verify...
             VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash);

@@ -25,7 +25,7 @@ import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.msgproc.MPCreateBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
-
+import scala.collection.JavaConverters._
 trait BlockMessage {
   def proc(): Unit;
 }
@@ -45,7 +45,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-          log.debug("get newblock info:" + blkInfo);
+          log.debug("get newblock info:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits));
           val sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
@@ -58,8 +58,9 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
             }
           })
         case blk: ApplyBlock =>
-            log.debug("apply block" + blk);
-            blk.proc();
+          log.debug("apply block:" + blk.pbo.getBeaconHash + ",netbits" + new String(blk.pbo.getVrfCodes.toByteArray()) + ",blockheight="
+            + blk.pbo.getBlockHeight);
+          blk.proc();
         case n @ _ =>
           log.warn("unknow info:" + n);
       }

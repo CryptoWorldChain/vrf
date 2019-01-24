@@ -39,10 +39,17 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
   def proc(): Unit = {
     val start = System.currentTimeMillis();
     val cn = VCtrl.curVN();
-    val strblkBits = hexToMapping(blockbits);
+    var newNetBits = netBits; //(VCtrl.network().node_strBits).bigInteger;
+    if (netBits.bitCount() < VCtrl.coMinerByUID.size) {
+      newNetBits = BigInteger.ZERO
+      VCtrl.coMinerByUID.map(f => {
+        newNetBits = newNetBits.setBit(f._2.getBitIdx);
+      })
+    }
+    val strnetBits =  hexToMapping(newNetBits); 
     val (newblk, txs) = newBlockFromAccount(
       BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK), 0, beaconHash,
-      strblkBits);
+      strnetBits);
 
     if (newblk == null) {
       log.debug("mining error: ch=" + cn.getCurBlock);
@@ -65,31 +72,24 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
           .setSign(newblk.getHeader.getBlockHash))
         .setSliceId(VConfig.SLICE_ID)
         .setTxcount(txs.size())
-        .setBeaconBits(strblkBits)
+        .setBeaconBits(strnetBits)
         .setBeaconSign(beaconSig)
         .setBeaconHash(beaconHash)
         .setBlockSeeds(ByteString.copyFrom(blockbits.toByteArray()))
         .setPrevBeaconHash(cn.getBeaconHash)
-        .setPrevBlockSeeds(cn.getVrfRandseeds)
-        .setVrfCodes(ByteString.copyFrom(netBits.toByteArray()))
+        .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
+        .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
-
-      if (netBits.bitCount() < VCtrl.coMinerByUID.size) {
-        var newNetBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
-        VCtrl.coMinerByUID.map(f => {
-          newNetBits = newNetBits.setBit(f._2.getBitIdx);
-        })
-        newCoinbase.setVrfCodes(ByteString.copyFrom(newNetBits.toByteArray()))
-      }
+    
 
       cn.setCurBlock(newblockheight)
-        .setBeaconHash(beaconHash)
+        .setBeaconHash(newblk.getHeader.getBlockHash)
         .setBeaconSign(beaconSig)
         .setCurBlockHash(newblk.getHeader.getBlockHash)
         .setCurBlockMakeTime(now)
         .setCurBlockRecvTime(now)
         .setPrevBlockHash(newCoinbase.getPrevBeaconHash)
-        .setVrfCodes(ByteString.copyFrom(netBits.toByteArray()));
+        .setVrfRandseeds(strnetBits);
 
       VCtrl.instance.syncToDB()
       if (System.currentTimeMillis() - start > VConfig.ADJUST_BLOCK_TX_MAX_TIMEMS) {
