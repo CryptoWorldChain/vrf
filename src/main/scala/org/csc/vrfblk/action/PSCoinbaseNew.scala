@@ -21,6 +21,8 @@ import onight.tfw.ntrans.api.ActorService
 import onight.tfw.proxy.IActor
 import onight.tfw.otransio.api.session.CMDService
 import org.csc.vrfblk.msgproc.ApplyBlock
+import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.Initialize
 
 @NActorProvider
 @Instantiate
@@ -37,6 +39,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
+      NodeStateSwither.offerMessage(new Initialize());
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)

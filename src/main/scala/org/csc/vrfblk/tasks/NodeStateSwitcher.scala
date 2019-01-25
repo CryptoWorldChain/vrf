@@ -15,6 +15,8 @@ import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.vrfblk.msgproc.MPCreateBlock
 import org.csc.bcapi.crypto.BitMap
 import java.math.BigInteger
+import org.csc.vrfblk.utils.VConfig
+import onight.tfw.otransio.api.PacketHelper
 
 trait StateMessage {
 
@@ -31,6 +33,7 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
   def isRunning(): Boolean = {
     return running;
   }
+  val NotaryBlockFP = PacketHelper.genPack("NOTARYBLOCK", "__VRF", "", true, 9);
 
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
@@ -60,6 +63,23 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
+        var timeOutMS =  blockbits.bitCount()* VConfig.BLOCK_MAKE_TIMEOUT_SEC*1000;
+        val checkHash = VCtrl.curVN().getBeaconHash;
+        Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
+            def run() {
+              while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(checkHash)) {
+                Thread.sleep(Math.min(100, timeOutMS));
+                timeOutMS = timeOutMS - 100;
+              }
+              if (VCtrl.curVN().getBeaconHash.equals(checkHash)) {
+                //decide to make block
+                log.debug("reconsider cominers:" + checkHash + ",sleep still:" + timeOutMS);
+                BeaconGossip.gossipBlocks();
+              } else {
+                log.debug("cancel rechecking block:" + checkHash + ",sleep still:" + timeOutMS);
+              }
+            }
+          })
         VCtrl.curVN().setState(state)
       case _ =>
         VCtrl.curVN().setState(state)
