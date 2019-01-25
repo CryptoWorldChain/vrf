@@ -36,7 +36,7 @@ object PDCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
-      log.debug("DCtrl not ready");
+      log.debug("VCtrl not ready");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       BlockProcessor.offerMessage(new NotaryBlock(pbo));

@@ -53,13 +53,13 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
     }
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
     log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2)
-       +",hash="+hash+",curblk="+VCtrl.curVN().getCurBlock);
+      + ",hash=" + hash + ",curblk=" + VCtrl.curVN().getCurBlock);
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
-      case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC  =>
+      case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
         VCtrl.curVN().setState(state)
       case _ =>
         VCtrl.curVN().setState(state)
@@ -85,11 +85,13 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
           }
         }
         case init: Initialize => {
-          val (hash, sign) = RandFunction.genRandHash(
-            VCtrl.curVN().getCurBlockHash,
-            VCtrl.curVN().getPrevBlockHash, VCtrl.network().node_strBits);
-          VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign);
-          BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
+          if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
+            val (hash, sign) = RandFunction.genRandHash(
+              VCtrl.curVN().getCurBlockHash,
+              VCtrl.curVN().getPrevBlockHash, VCtrl.network().node_strBits);
+            VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign);
+            BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
+          }
         }
       }
     })

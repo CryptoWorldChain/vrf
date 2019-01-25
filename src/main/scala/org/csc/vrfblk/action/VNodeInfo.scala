@@ -26,6 +26,8 @@ import org.csc.p22p.node.PNode
 import org.csc.vrfblk.tasks.BeaconGossip
 import org.apache.commons.lang3.StringUtils
 import org.csc.vrfblk.utils.VConfig
+import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.Initialize
 
 @NActorProvider
 @Instantiate
@@ -64,6 +66,9 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
                 log.debug("add cominer:"+pbo.getVn.getBcuid+",blockheight="+pbo.getVn.getCurBlock+",cur="+VCtrl.curVN().getCurBlock);
                 VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              }
+              if(!VCtrl.isReady()){
+                  NodeStateSwither.offerMessage(new Initialize());
               }
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
               network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);

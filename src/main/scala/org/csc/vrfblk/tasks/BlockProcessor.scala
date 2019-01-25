@@ -47,17 +47,20 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-//          log.debug("get newblock info:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits));
-          val sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
+          //          log.debug("get newblock info:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits));
+          var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
-              Thread.sleep(sleepMS);
+              while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+                Thread.sleep(Math.min(100, sleepMS));
+                sleepMS = sleepMS - 100;
+              }
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
                 //create block.
                 blkInfo.proc();
               } else {
-                log.debug("cancel create block:" + blkInfo.beaconHash)
+                log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
               }
             }
           })
