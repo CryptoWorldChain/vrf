@@ -37,12 +37,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   }
 
   def gossipBlocks() {
-    try{
-      currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
+    try {
+      currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
       BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
-    }catch{
-      case t:Throwable =>
+    } catch {
+      case t: Throwable =>
         log.debug("error in gossip blocks:", t);
     }
   }
@@ -50,12 +50,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(pn =>
       if (StringUtils.equals(pn.getMessageId, currentBR.messageId)) {
-        log.debug("put a new br:from=" + pn.getVn.getBcuid+ ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
-            + ",BH=" + pn.getVn.getBeaconHash+",SEED="+pn.getVn.getVrfRandseeds);
+        log.debug("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
+          + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds);
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
-      
-   log.debug("gossipBlocks:beaconhash.curvn="+VCtrl.curVN().getBeaconHash+",br="+ currentBR.beaconHash);
+
+    log.debug("gossipBlocks:beaconhash.curvn=" + VCtrl.curVN().getBeaconHash + ",br=" + currentBR.beaconHash);
 
     tryMerge();
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
@@ -66,7 +66,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def gossipBeaconInfo() {
     val messageId = UUIDGenerator.generate();
-    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
+    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN());
     VCtrl.coMinerByUID.map(m => {
@@ -76,8 +76,20 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     incomingInfos.clear();
     MDCSetMessageID(messageId);
     log.debug("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
-            + ",BH=" + currentBR.beaconHash);
+      + ",BH=" + currentBR.beaconHash);
     VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
+  }
+
+  def syncBlock(maxHeight: Int, suggestStartIdx: Int, frombcuid: String) {
+    val messageId = UUIDGenerator.generate();
+    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
+    //
+    incomingInfos.clear();
+
+    VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
+    val sync = PSSyncBlocks.newBuilder().setStartId(suggestStartIdx)
+      .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
+    BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
   }
 
   def tryMerge(): Unit = {
@@ -104,25 +116,28 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         case Converge((sign: String, hash: String, randseed: String)) =>
           log.info("get merge beacon sign = :" + sign + ",hash=" + hash);
           incomingInfos.clear();
-          NodeStateSwither.offerMessage(new BeaconConverge(sign, hash,randseed));
+          if (maxHeight > VCtrl.curVN().getCurBlock) {
+            //sync first
+            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+          } else {
+            NodeStateSwither.offerMessage(new BeaconConverge(sign, hash, randseed));
+          }
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
             + ",messageid=" + currentBR.messageId);
           //find
-          val messageId = UUIDGenerator.generate();
-          currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size,VCtrl.curVN().getBeaconHash);
-          //
-          incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
-            VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
-            val sync = PSSyncBlocks.newBuilder().setStartId(suggestStartIdx)
-              .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
-            BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
+            //sync first
+            syncBlock(maxHeight, suggestStartIdx, frombcuid);
           }
         case n @ _ =>
           log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
             + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
             + ",messageid=" + currentBR.messageId);
+          if (maxHeight > VCtrl.curVN().getCurBlock) {
+            //sync first
+            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+          }
       };
 
     }

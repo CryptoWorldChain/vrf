@@ -39,6 +39,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
   def proc(): Unit = {
     val start = System.currentTimeMillis();
     val cn = VCtrl.curVN();
+    MDCSetBCUID(VCtrl.network())
     var newNetBits = netBits; //(VCtrl.network().node_strBits).bigInteger;
     if (netBits.bitCount() < VCtrl.coMinerByUID.size) {
       newNetBits = BigInteger.ZERO

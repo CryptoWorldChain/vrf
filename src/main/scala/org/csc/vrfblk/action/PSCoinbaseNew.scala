@@ -35,9 +35,12 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
-      log.debug("VCtrl not ready:"+VCtrl.curVN());
+      log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
+      MDCSetBCUID(VCtrl.network())
+      MDCSetMessageID(pbo.getMessageId)
+      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash+",H="+pbo.getBlockEntry.getBlockHeight);
       BlockProcessor.offerMessage(new ApplyBlock(pbo));
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }

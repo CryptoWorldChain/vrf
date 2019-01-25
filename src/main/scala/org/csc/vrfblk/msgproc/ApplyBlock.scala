@@ -16,6 +16,7 @@ import org.csc.vrfblk.tasks.StateChange
 import org.csc.vrfblk.utils.RandFunction
 import com.google.protobuf.ByteString
 import org.csc.evmapi.gens.Block.BlockEntity
+import org.csc.vrfblk.tasks.BlockProcessor
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -39,6 +40,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
+        
         VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,block.getHeader.getExtraData)
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
@@ -60,13 +62,17 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
   def proc() {
     val cn = VCtrl.curVN();
+    MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
       val (acceptHeight, blockWant) = saveBlock(pbo.getBlockEntry);
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
           log.info("applyblock:UU,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+           + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+            +",VB="+pbo.getWitnessBits
+
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
         case n if n > 0 =>
@@ -77,16 +83,23 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             "OK"
           }
           log.info("applyblock:"+vstr+",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",MN=" + VCtrl.coMinerByUID.size
-            + ",NBits=" + new String(pbo.getVrfCodes.toByteArray())
+            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+            +",VB="+pbo.getWitnessBits
               + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
           bestheight.set(n);
+          val notaBits = mapToBigInt(pbo.getWitnessBits);
+          if(notaBits.testBit(cn.getBitIdx)){
+              VCtrl.network().wallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
+          }
           tryNotifyState();
         case n @ _ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            .size + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+            +",VB="+pbo.getWitnessBits
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
       }
