@@ -23,10 +23,19 @@ import org.csc.ckrand.pbgens.Ckrand.PSSyncBlocks
 import org.csc.p22p.core.Votes.NotConverge
 import org.csc.vrfblk.Daos
 import org.csc.ckrand.pbgens.Ckrand.VNodeState
+import org.csc.bcapi.exec.SRunner
+import org.csc.bcapi.JodaTimeHelper
 
 //投票决定当前的节点
 case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
 
+object BeaconTask extends SRunner {
+  def getName() = "beacontask"
+  def runOnce() = {
+    log.debug("try gossip past="+JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime)+",vn.hash="+VCtrl.curVN().getBeaconHash+",brhash="+ BeaconGossip.currentBR.beaconHash);
+    BeaconGossip.tryGossip();
+  }
+}
 object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHelper with LogHelper {
   var running: Boolean = true;
   val incomingInfos = new ConcurrentHashMap[String, PSNodeInfoOrBuilder]();
@@ -39,7 +48,6 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def gossipBlocks() {
     try {
       currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
-
       BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
     } catch {
       case t: Throwable =>
@@ -58,6 +66,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     log.debug("gossipBlocks:beaconhash.curvn=" + VCtrl.curVN().getBeaconHash + ",br=" + currentBR.beaconHash);
 
     tryMerge();
+    tryGossip();
+  }
+  def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
       || !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
       gossipBeaconInfo();
@@ -99,7 +110,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       val checkList = new ListBuffer[VNode]();
       var maxHeight = VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
-      var suggestStartIdx = VCtrl.instance.cur_vnode.getCurBlock + 1;
+      var suggestStartIdx = VCtrl.instance.cur_vnode.getCurBlock - 1;
       incomingInfos.asScala.values.map({ p =>
         if (p.getVn.getCurBlock > maxHeight) {
           maxHeight = p.getVn.getCurBlock;

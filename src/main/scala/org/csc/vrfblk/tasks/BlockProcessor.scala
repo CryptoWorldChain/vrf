@@ -40,7 +40,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   }
 
   val NewBlockFP = PacketHelper.genPack("NEWBLOCK", "__VRF", "", true, 9);
-
+  var blockMakeCheckHash: String = null;
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
@@ -50,17 +50,21 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           //          log.debug("get newblock info:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits));
           var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
+          blockMakeCheckHash = blkInfo.beaconHash;
+          log.debug("exec create block background running:" + blockMakeCheckHash + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
-              while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+              while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
-              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+              if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
                 //create block.
+                log.debug("wait up to create block:"+blockMakeCheckHash+ ",sleep still:" + sleepMS);
                 blkInfo.proc();
+                
               } else {
-                log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
+                log.debug("cancel create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
               }
             }
           })

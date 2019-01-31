@@ -35,8 +35,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-        VCtrl.instance.updateBlockHeight(
-          vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
+//        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }

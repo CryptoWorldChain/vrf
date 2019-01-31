@@ -13,7 +13,12 @@ object VConfig {
 
   val SLICE_ID = prop.get(PROP_DOMAIN + "slice.id", 0); //2 seconds each block
 
-    
+    //gossip线程初始化等待时间
+  val INITDELAY_GOSSIP_SEC = prop.get(PROP_DOMAIN + "initdelay.gossip.sec", 60);
+
+    //gossip线程检查时间
+  val TICK_GOSSIP_SEC = prop.get(PROP_DOMAIN + "tick.gossip.sec", 120);
+   
   //打块时间；按秒计算，（已经废弃，后面用毫秒取代）
   val _DBLK_EPOCH_SEC = prop.get(PROP_DOMAIN + "blk.epoch.sec", 1); //2 seconds each block
 

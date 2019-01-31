@@ -54,7 +54,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
         case syncInfo: GossipRecentBlocks =>
 
         case syncInfo: SyncBlock =>
-          log.debug("syncInfo =" + syncInfo);
+          log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
 
           val messageid = UUIDGenerator.generate();
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);

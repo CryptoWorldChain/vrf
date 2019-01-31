@@ -18,6 +18,7 @@ import org.csc.vrfblk.tasks.BeaconGossip
 import org.csc.vrfblk.tasks.BlockProcessor
 import org.csc.vrfblk.tasks.NodeStateSwither
 import org.csc.vrfblk.tasks.BlockSync
+import org.csc.vrfblk.tasks.BeaconTask
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -77,12 +78,15 @@ class VRFBGLoader() extends Runnable with LogHelper {
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 
     VCtrl.instance = VRFController(vrfnet);
-    Array(BeaconGossip,BlockProcessor,NodeStateSwither,BlockSync).map(f => {
+    Array(BeaconGossip, BlockProcessor, NodeStateSwither, BlockSync).map(f => {
       f.startup(Daos.ddc.getExecutorService("vrf"));
     })
 
     //    BeaconGossip.startup(Daos.ddc);
     VCtrl.instance.startup();
+
+    Daos.ddc.scheduleWithFixedDelay(BeaconTask, VConfig.INITDELAY_GOSSIP_SEC,
+      VConfig.TICK_GOSSIP_SEC, TimeUnit.SECONDS);
 
     //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
     //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)

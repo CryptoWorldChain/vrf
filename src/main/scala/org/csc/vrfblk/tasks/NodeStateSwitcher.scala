@@ -35,6 +35,7 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
   }
   val NotaryBlockFP = PacketHelper.genPack("NOTARYBLOCK", "__VRF", "", true, 9);
 
+  var notaryCheckHash: String = null;
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
@@ -63,23 +64,25 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
-        var timeOutMS =  blockbits.bitCount()* VConfig.BLOCK_MAKE_TIMEOUT_SEC*1000;
-        val checkHash = VCtrl.curVN().getBeaconHash;
+        var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
+        notaryCheckHash = VCtrl.curVN().getBeaconHash;
+        log.debug("exec notary block background running:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+
         Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
-            def run() {
-              while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(checkHash)) {
-                Thread.sleep(Math.min(100, timeOutMS));
-                timeOutMS = timeOutMS - 100;
-              }
-              if (VCtrl.curVN().getBeaconHash.equals(checkHash)) {
-                //decide to make block
-                log.debug("reconsider cominers:" + checkHash + ",sleep still:" + timeOutMS);
-                BeaconGossip.gossipBlocks();
-              } else {
-                log.debug("cancel rechecking block:" + checkHash + ",sleep still:" + timeOutMS);
-              }
+          def run() {
+            while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+              Thread.sleep(Math.min(100, timeOutMS));
+              timeOutMS = timeOutMS - 100;
             }
-          })
+            if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+              //decide to make block
+              log.debug("reconsider cominers:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+              BeaconGossip.gossipBlocks();
+            } else {
+              log.debug("cancel rechecking block:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+            }
+          }
+        })
         VCtrl.curVN().setState(state)
       case _ =>
         VCtrl.curVN().setState(state)

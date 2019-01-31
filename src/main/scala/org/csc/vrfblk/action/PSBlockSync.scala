@@ -35,14 +35,14 @@ class PSBlockSync extends PSMVRFNet[PSSyncBlocks] {
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
 object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlocks] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSSyncBlocks, handler: CompleteHandler) = {
-//    log.debug("BlockSyncService:" + pack.getFrom())
+    //    log.debug("BlockSyncService:" + pack.getFrom())
     var ret = PRetSyncBlocks.newBuilder();
     if (!VCtrl.isReady()) {
       ret.setRetCode(-1).setRetMessage("DPoS Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else {
       try {
-        val startTime=System.currentTimeMillis();
+        val startTime = System.currentTimeMillis();
         MDCSetBCUID(VCtrl.network())
         MDCSetMessageID(pbo.getMessageId)
         ret.setMessageId(pbo.getMessageId);
@@ -52,15 +52,19 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         for (
           id <- pbo.getStartId to pbo.getEndId
         ) {
-            val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
-            if (b != null) {
-              ret.addBlockHeaders(b);
-            }
+          val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
+          if (b != null) {
+            b.map(bs => {
+              ret.addBlockHeaders(bs);
+            })
+          }
         }
         pbo.getBlockIdxList.map { id =>
           val b = VCtrl.loadFromBlock(id);
           if (b != null) {
-            ret.addBlockHeaders(b);
+            b.map(bs => {
+              ret.addBlockHeaders(bs);
+            })
           }
         }
       } catch {

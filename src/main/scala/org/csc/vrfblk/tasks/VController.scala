@@ -5,8 +5,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-import scala.collection.JavaConversions.`deprecated asScalaBuffer`
-import scala.collection.JavaConversions.`deprecated seqAsJavaList`
 import scala.collection.mutable.Map
 
 import org.apache.commons.lang3.StringUtils
@@ -18,6 +16,7 @@ import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.node.Network
 import org.csc.p22p.node.Node
 import org.csc.p22p.utils.LogHelper
+
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
@@ -36,7 +35,7 @@ import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 import java.util.concurrent.atomic.AtomicInteger
 import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
-
+import scala.collection.JavaConverters._
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
   def getName() = "VCtrl"
@@ -62,7 +61,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setBcuid(root_node.bcuid);
         syncToDB();
       } else {
-        log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ")+"}")
+        log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ") + "}")
       }
     }
     if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
@@ -74,7 +73,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       } else {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
-        
+
       }
       cur_vnode.setBeaconHash(cur_vnode.getCurBlockHash)
       heightBlkSeen.set(cur_vnode.getCurBlock);
@@ -88,14 +87,14 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String,extraData:String) = {
-//    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
-//       +",rand="+extraData);
-    if (blockHeight != cur_vnode.getCurBlock) {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
+    //    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
+    //       +",rand="+extraData);
+    if (blockHeight >= cur_vnode.getCurBlock + 1) {
 
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        cur_vnode.setCurBlock(blockHeight)
         cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
         cur_vnode.setBeaconHash(blockHash);
         cur_vnode.setVrfRandseeds(extraData);
@@ -103,7 +102,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
           cur_vnode.setCurBlockHash(blockHash)
         }
         log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
-            +",hash="+blockHash+",seed="+extraData);
+          + ",hash=" + blockHash + ",seed=" + extraData);
         syncToDB()
       })
     }
@@ -135,7 +134,7 @@ object VCtrl extends LogHelper {
     val net = instance.network;
     net.nodeByBcuid(trybcuid) match {
       case net.noneNode =>
-        net.directNodeByBcuid.values.toList.get((Math.abs(Math.random() * 100000) % net.directNodes.size).asInstanceOf[Int]);
+        net.directNodeByBcuid.values.toList((Math.abs(Math.random() * 100000) % net.directNodes.size).asInstanceOf[Int]);
       case n: Node =>
         n;
     }
@@ -151,31 +150,33 @@ object VCtrl extends LogHelper {
   val recentBlocks: Cache[Int, PBlockEntry.Builder] = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS)
     .maximumSize(1000).build().asInstanceOf[Cache[Int, PBlockEntry.Builder]]
 
-  def loadFromBlock(block: Int): PBlockEntry.Builder = {
+  def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
   }
-  def loadFromBlock(block: Int, needBody: Boolean): PBlockEntry.Builder = {
+  def loadFromBlock(block: Int, needBody: Boolean): Iterable[PBlockEntry.Builder] = {
     //    val ov = Daos.dposdb.get("D" + block).get
     //    if (ov != null) {
     //    recentBlocks.synchronized {
     if (block > curVN().getCurBlock) {
       null
     } else {
-      val recentblk = recentBlocks.getIfPresent(block);
-      if (recentblk != null) {
-        return recentblk;
-      }
-      val blk = Daos.chainHelper.getBlockByNumber(block);
-      if (blk != null) {
-        if (needBody) {
-          val b = PBlockEntry.newBuilder().setBlockHeader(blk.toBuilder().build().toByteString()).setBlockHeight(block)
-          recentBlocks.put(block, b);
-          b
-        } else {
-          val b = PBlockEntry.newBuilder().setBlockHeader(blk.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
-          recentBlocks.put(block, b);
-          b
-        }
+      //      val recentblk = recentBlocks.getIfPresent(block);
+      //      if (recentblk != null) {
+      //        return recentblk;
+      //      }
+      val blks = Daos.chainHelper.getBlocksByNumber(block);
+      if (blks != null) {
+        blks.asScala.map(f => {
+          if (needBody) {
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
+            recentBlocks.put(block, b);
+            b
+          } else {
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
+            recentBlocks.put(block, b);
+            b
+          }
+        })
       } else {
         log.error("blk not found in AccountDB:" + block);
         null;
