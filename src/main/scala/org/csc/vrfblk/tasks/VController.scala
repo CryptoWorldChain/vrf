@@ -90,11 +90,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
     //    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
     //       +",rand="+extraData);
-    if (blockHeight >= cur_vnode.getCurBlock + 1) {
+    if (blockHeight != cur_vnode.getCurBlock) {
 
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        cur_vnode.setCurBlock(blockHeight)
+        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
         cur_vnode.setBeaconHash(blockHash);
         cur_vnode.setVrfRandseeds(extraData);

@@ -110,7 +110,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       val checkList = new ListBuffer[VNode]();
       var maxHeight = VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
-      var suggestStartIdx = VCtrl.instance.cur_vnode.getCurBlock - 1;
+      var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
       incomingInfos.asScala.values.map({ p =>
         if (p.getVn.getCurBlock > maxHeight) {
           maxHeight = p.getVn.getCurBlock;

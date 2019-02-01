@@ -60,10 +60,10 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
           log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
             + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
-            if (network.directNodeByBcuid.get(pack.getFrom()) != network.noneNode) {
+            if (network.nodeByBcuid(pack.getFrom()) != network.noneNode) {
               VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              BeaconGossip.offerMessage(pbo);
             }
-            BeaconGossip.offerMessage(pbo);
           } else {
             network.nodeByBcuid(pack.getFrom()) match {
               case network.noneNode =>
@@ -72,9 +72,9 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
                 }
-                if (!VCtrl.isReady()) {
-                  NodeStateSwither.offerMessage(new Initialize());
-                }
+//                if (!VCtrl.isReady()) {
+//                  NodeStateSwither.offerMessage(new Initialize());
+//                }
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
                 network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);
               case _ =>

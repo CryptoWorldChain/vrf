@@ -96,14 +96,14 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
       m match {
         case BeaconConverge(sign, hash, seed) => {
           log.info("set new beacon seed:" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
-          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed);
+          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash);
           notifyStateChange();
         }
         case StateChange(newsign, newhash, prevhash) => {
           log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
           if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
             //@TODO !should verify...
-            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash);
+            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setCurBlockHash(newhash);
             notifyStateChange();
           }
         }
@@ -112,7 +112,7 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
             val (hash, sign) = RandFunction.genRandHash(
               VCtrl.curVN().getCurBlockHash,
               VCtrl.curVN().getPrevBlockHash, VCtrl.network().node_strBits);
-            VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign);
+            VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
             BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
           }
         }
