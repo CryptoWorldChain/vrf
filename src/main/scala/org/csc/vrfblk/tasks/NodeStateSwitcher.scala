@@ -21,13 +21,13 @@ import onight.tfw.otransio.api.PacketHelper
 trait StateMessage {
 
 }
-case class BeaconConverge(beaconSign: String, beaconHash: String, randseed: String) extends StateMessage;
+case class BeaconConverge(height: Int, beaconSign: String, beaconHash: String, randseed: String) extends StateMessage;
 //状态转化器
 case class StateChange(newsign: String, newhash: String, prevhash: String) extends StateMessage;
 
 case class Initialize() extends StateMessage;
 
-object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelper with LogHelper with BitMap {
+object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelper with LogHelper with BitMap {
   var running: Boolean = true;
 
   def isRunning(): Boolean = {
@@ -47,9 +47,20 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
       netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
     } catch {
       case t: Throwable =>
-        log.debug("set netbits error:" + t.getMessage);
+        log.debug("set netbits error:" + t.getMessage, t);
     }
     if (netBits.bitCount() <= 0) {
+      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length > 0) {
+        log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
+          VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]"
+          + ",b=" + mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger.bitCount()
+          + "[" + mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger.toString(2) + "]");
+      } else {
+        log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
+          VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
+
+      }
+
       netBits = BigInteger.ZERO; //(VCtrl.network().node_strBits).bigInteger;
       VCtrl.coMinerByUID.map(f => {
         netBits = netBits.setBit(f._2.getBitIdx);
@@ -94,16 +105,21 @@ object NodeStateSwither extends SingletonWorkShop[StateMessage] with PMNodeHelpe
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {
       m match {
-        case BeaconConverge(sign, hash, seed) => {
-          log.info("set new beacon seed:" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
-          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash);
-          notifyStateChange();
+        case BeaconConverge(height, sign, hash, seed) => {
+
+          log.info("set new beacon seed:height=" + height + ",sign=" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
+          if (height <= VCtrl.curVN().getCurBlock) {
+            VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash);
+            notifyStateChange();
+          } else {
+            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
+          }
         }
         case StateChange(newsign, newhash, prevhash) => {
           log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
           if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
             //@TODO !should verify...
-            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setCurBlockHash(newhash);
+            //            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setCurBlockHash(newhash);
             notifyStateChange();
           }
         }

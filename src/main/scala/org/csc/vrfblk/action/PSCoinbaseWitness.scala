@@ -23,7 +23,7 @@ import onight.tfw.otransio.api.session.CMDService
 import org.csc.vrfblk.msgproc.ApplyBlock
 import org.csc.vrfblk.msgproc.NotaryBlock
 import org.csc.vrfblk.tasks.Initialize
-import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.NodeStateSwitcher
 
 @NActorProvider
 @Instantiate
@@ -39,7 +39,7 @@ object PDCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
-      NodeStateSwither.offerMessage(new Initialize());
+      NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       BlockProcessor.offerMessage(new NotaryBlock(pbo));

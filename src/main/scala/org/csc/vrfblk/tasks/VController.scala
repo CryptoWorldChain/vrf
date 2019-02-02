@@ -93,6 +93,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
     if (blockHeight != cur_vnode.getCurBlock) {
 
       Daos.blkHelper.synchronized({
+        cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
@@ -110,7 +111,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
   def startup() = {
     loadNodeFromDB();
-    NodeStateSwither.offerMessage(new Initialize())
+    NodeStateSwitcher.offerMessage(new Initialize())
     //    BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(cur_vnode).build());
   }
 

@@ -11,12 +11,13 @@ import java.util.concurrent.atomic.AtomicLong
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.vrfblk.Daos
 import org.csc.vrfblk.utils.BlkTxCalc
-import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.StateChange
 import org.csc.vrfblk.utils.RandFunction
 import com.google.protobuf.ByteString
 import org.csc.evmapi.gens.Block.BlockEntity
 import org.csc.vrfblk.tasks.BlockProcessor
+import org.csc.vrfblk.tasks.BeaconGossip
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -56,7 +57,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     //    if(VCtrl.instance.b
 
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
-    NodeStateSwither.offerMessage(new StateChange(sign, hash, pbo.getBlockEntry.getBlockhash));
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBlockEntry.getBlockhash));
 
   }
   def proc() {
@@ -74,6 +75,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
+          
+          BeaconGossip.gossipBlocks();
         case n if n > 0 =>
           val vstr=
           if(StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) ){
@@ -86,7 +89,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",MN=" + VCtrl.coMinerByUID.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
             +",VB="+pbo.getWitnessBits
-              + ",B=" + pbo.getBlockEntry.getSign
+              + ",B=" + pbo.getBlockEntry.getBlockhash
             + ",TX=" + pbo.getTxcount);
           bestheight.set(n);
           val notaBits = mapToBigInt(pbo.getWitnessBits);

@@ -32,8 +32,14 @@ case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHas
 object BeaconTask extends SRunner {
   def getName() = "beacontask"
   def runOnce() = {
-    log.debug("try gossip past="+JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime)+",vn.hash="+VCtrl.curVN().getBeaconHash+",brhash="+ BeaconGossip.currentBR.beaconHash);
-    BeaconGossip.tryGossip();
+    log.debug("time check try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
+      + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
+    if (System.currentTimeMillis() - VCtrl.curVN().getCurBlockRecvTime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) {
+      log.debug("do try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
+        + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockRecvTime));
+
+      BeaconGossip.tryGossip();
+    }
   }
 }
 object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHelper with LogHelper {
@@ -122,16 +128,16 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
       Votes.vote(checkList).PBFTVote(n => {
-        Some((n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
+        Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
-        case Converge((sign: String, hash: String, randseed: String)) =>
-          log.info("get merge beacon sign = :" + sign + ",hash=" + hash);
+        case Converge((height: Int, sign: String, hash: String, randseed: String)) =>
+          log.info("get merge beacon sign = :" + sign + ",hash=" + hash + ",height=" + height);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
-            NodeStateSwither.offerMessage(new BeaconConverge(sign, hash, randseed));
+            NodeStateSwitcher.offerMessage(new BeaconConverge(height, sign, hash, randseed));
           }
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx

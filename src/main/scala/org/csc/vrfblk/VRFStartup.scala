@@ -16,7 +16,7 @@ import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.tasks.VRFController
 import org.csc.vrfblk.tasks.BeaconGossip
 import org.csc.vrfblk.tasks.BlockProcessor
-import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.BlockSync
 import org.csc.vrfblk.tasks.BeaconTask
 
@@ -78,7 +78,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 
     VCtrl.instance = VRFController(vrfnet);
-    Array(BeaconGossip, BlockProcessor, NodeStateSwither, BlockSync).map(f => {
+    Array(BeaconGossip, BlockProcessor, NodeStateSwitcher, BlockSync).map(f => {
       f.startup(Daos.ddc.getExecutorService("vrf"));
     })
 

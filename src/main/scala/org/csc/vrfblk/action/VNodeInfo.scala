@@ -26,7 +26,7 @@ import org.csc.p22p.node.PNode
 import org.csc.vrfblk.tasks.BeaconGossip
 import org.apache.commons.lang3.StringUtils
 import org.csc.vrfblk.utils.VConfig
-import org.csc.vrfblk.tasks.NodeStateSwither
+import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.Initialize
 
 @NActorProvider
