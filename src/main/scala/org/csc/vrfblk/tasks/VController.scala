@@ -97,10 +97,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
-        cur_vnode.setBeaconHash(blockHash);
         cur_vnode.setVrfRandseeds(extraData);
         if (blockHash != null) {
           cur_vnode.setCurBlockHash(blockHash)
+          cur_vnode.setBeaconHash(blockHash);
         }
         log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
           + ",hash=" + blockHash + ",seed=" + extraData);

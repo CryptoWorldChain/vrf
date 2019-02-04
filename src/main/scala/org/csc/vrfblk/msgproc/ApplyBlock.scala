@@ -94,7 +94,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           bestheight.set(n);
           val notaBits = mapToBigInt(pbo.getWitnessBits);
           if(notaBits.testBit(cn.getBitIdx)){
-              VCtrl.network().wallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
+              VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
           tryNotifyState();
         case n @ _ =>

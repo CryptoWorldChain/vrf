@@ -103,7 +103,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       // write to
       //
       //            log.debug("mindob newblockheight::" + newblockheight + " cn.getCoAddress::" + cn.getCoAddress + " termid::" + DCtrl.termMiner().getTermId + " cn.getBcuid::" + cn.getBcuid)
-      VCtrl.network().wallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
+      VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);
     }
 
