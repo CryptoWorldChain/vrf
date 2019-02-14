@@ -28,18 +28,18 @@ import org.csc.vrfblk.tasks.NodeStateSwitcher
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
-class PDCoinbaseW extends PSMVRFNet[PSCoinbase] {
-  override def service = PDCoinbaseWitness
+class PSCoinbaseW extends PSMVRFNet[PSCoinbase] {
+  override def service = PSCoinbaseWitness
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PDCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
+object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
-      NodeStateSwitcher.offerMessage(new Initialize());
+//     ! NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       BlockProcessor.offerMessage(new NotaryBlock(pbo));
