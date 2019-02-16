@@ -48,7 +48,7 @@ message VNode{
 	string		prev_block_hash = 8;//当前blockhash
 
 	int32		bit_idx = 9;//bitidx;
-	string 		vrf_randseeds = 10;
+	bytes 		vrf_randseeds = 10;
 	string		vrf_codes = 11;//
 	string		vrf_groups = 12;//
 	string		beacon_hash = 13;//

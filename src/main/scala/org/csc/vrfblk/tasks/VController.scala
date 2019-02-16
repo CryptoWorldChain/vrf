@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils
 import org.csc.bcapi.JodaTimeHelper
 import org.csc.bcapi.exec.SRunner
 import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.evmapi.gens.Tx.MultiTransaction
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.node.Network
 import org.csc.p22p.node.Node
@@ -69,7 +68,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
-        cur_vnode.setCurBlockHash(Daos.chainHelper.getBlockByNumber(0).getHeader.getBlockHash);
+        cur_vnode.setCurBlockHash(new String(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
       } else {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
@@ -87,7 +86,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: ByteString) = {
     //    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
     //       +",rand="+extraData);
     if (blockHeight != cur_vnode.getCurBlock) {

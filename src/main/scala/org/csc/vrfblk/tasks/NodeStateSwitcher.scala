@@ -17,6 +17,7 @@ import org.csc.bcapi.crypto.BitMap
 import java.math.BigInteger
 import org.csc.vrfblk.utils.VConfig
 import onight.tfw.otransio.api.PacketHelper
+import com.google.protobuf.ByteString
 
 trait StateMessage {
 
@@ -41,8 +42,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     val sign = VCtrl.curVN().getBeaconSign;
     var netBits = BigInteger.ZERO;
     try {
-      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length > 0) {
-        netBits = mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger;
+      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.size() > 0) {
+        netBits = mapToBigInt(new String(VCtrl.curVN().getVrfRandseeds.toByteArray())).bigInteger;
       }
       netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
     } catch {
@@ -50,11 +51,11 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         log.debug("set netbits error:" + t.getMessage, t);
     }
     if (netBits.bitCount() <= 0) {
-      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length > 0) {
+      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.size > 0) {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]"
-          + ",b=" + mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger.bitCount()
-          + "[" + mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger.toString(2) + "]");
+          + ",b=" + mapToBigInt(new String(VCtrl.curVN().getVrfRandseeds.toByteArray())).bigInteger.bitCount()
+          + "[" + mapToBigInt(new String(VCtrl.curVN().getVrfRandseeds.toByteArray())).bigInteger.toString(2) + "]");
       } else {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
@@ -109,7 +110,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
           log.info("set new beacon seed:height=" + height + ",sign=" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
           if (height <= VCtrl.curVN().getCurBlock) {
-            VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash);
+            VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(ByteString.copyFrom(seed.getBytes)).setCurBlockHash(hash);
             notifyStateChange();
           } else {
             log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");

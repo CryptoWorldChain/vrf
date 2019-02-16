@@ -2,8 +2,6 @@ package org.csc.vrfblk.utils
 
 import java.util.concurrent.TimeUnit
 
-import org.csc.evmapi.gens.Tx.MultiTransaction
-
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 

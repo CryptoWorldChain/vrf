@@ -6,7 +6,6 @@ import org.csc.p22p.action.PMNodeHelper
 import org.csc.bcapi.crypto.BitMap
 import org.csc.p22p.utils.LogHelper
 import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.evmapi.gens.Tx.MultiTransaction
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.tasks.BlockMessage
 import org.csc.vrfblk.utils.BlkTxCalc
@@ -16,14 +15,15 @@ import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
 import onight.tfw.outils.serialize.UUIDGenerator
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.utils.TxCache
+import org.csc.evmapi.gens.Tx.Transaction
 
 case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
-  def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[MultiTransaction]) = {
+  def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
-    val newblk = Daos.blkHelper.CreateNewBlock(txs, voteInfos, beaconHash);
+    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash);
     val newblockheight = VCtrl.curVN().getCurBlock + 1
     if (newblk == null || newblk.getHeader == null) {
       log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
@@ -60,17 +60,17 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
       log.debug("mining check ok :new block=" + newblockheight + ",CO=" + cn.getCoAddress
-        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" + newblk.getHeader.getBlockHash);
+        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" +new String(newblk.getHeader.getHash.toByteArray()));
       val newCoinbase = PSCoinbase.newBuilder()
         .setBlockHeight(newblockheight).setCoAddress(cn.getCoAddress)
         .setCoAddress(cn.getCoAddress)
         .setMessageId(UUIDGenerator.generate())
         .setBcuid(cn.getBcuid)
         .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(newblk.getHeader.getBlockHash)
+          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(new String(newblk.getHeader.getHash.toByteArray()))
           .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
           //.setBlockMiner(newblk)
-          .setSign(newblk.getHeader.getBlockHash))
+          .setSign(new String(newblk.getHeader.getHash.toByteArray())))
         .setSliceId(VConfig.SLICE_ID)
         .setTxcount(txs.size())
         .setBeaconBits(strnetBits)
@@ -78,19 +78,19 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         .setBeaconHash(beaconHash)
         .setBlockSeeds(ByteString.copyFrom(blockbits.toByteArray()))
         .setPrevBeaconHash(cn.getBeaconHash)
-        .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
+        .setPrevBlockSeeds(cn.getVrfRandseeds)
         .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
     
 
       cn.setCurBlock(newblockheight)
-        .setBeaconHash(newblk.getHeader.getBlockHash)
+        .setBeaconHash(new String(newblk.getHeader.getHash.toByteArray()))
         .setBeaconSign(beaconSig)
-        .setCurBlockHash(newblk.getHeader.getBlockHash)
+        .setCurBlockHash(new String(newblk.getHeader.getHash.toByteArray()))
         .setCurBlockMakeTime(now)
         .setCurBlockRecvTime(now)
         .setPrevBlockHash(newCoinbase.getPrevBeaconHash)
-        .setVrfRandseeds(strnetBits);
+        .setVrfRandseeds(ByteString.copyFrom(strnetBits.getBytes));
 
       VCtrl.instance.syncToDB()
       if (System.currentTimeMillis() - start > VConfig.ADJUST_BLOCK_TX_MAX_TIMEMS) {

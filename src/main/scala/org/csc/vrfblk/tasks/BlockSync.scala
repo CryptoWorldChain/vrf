@@ -88,18 +88,18 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                             lastSuccessBlock = block
                             maxid = vres.getCurrentNumber.intValue();
                           }
-                          log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber+",hash="+block.getHeader.getBlockHash+",seed="+
-                            block.getHeader.getExtraData);
+                          log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber+",hash="+new String(block.getHeader.getHash.toByteArray())+",seed="+
+                           new String(block.getHeader.getExtData.toByteArray()));
 
                         } else {
-                          log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid+",hash="+block.getHeader.getBlockHash
-                              +",prev="+block.getHeader.getParentHash+",seed="+
-                            block.getHeader.getExtraData);
+                          log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid+",hash="+new String(block.getHeader.getHash.toByteArray())
+                              +",prev="+new String(block.getHeader.getPreHash.toByteArray())+",seed="+
+                            new String(block.getHeader.getExtData.toByteArray()));
                         }
                       }
                       log.debug("checkMiner --> maxid::" + maxid)
                       if (maxid > 0) {
-                        VCtrl.instance.updateBlockHeight(maxid,lastSuccessBlock.getHeader.getBlockHash, lastSuccessBlock.getHeader.getExtraData)
+                        VCtrl.instance.updateBlockHeight(maxid,new String(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getHeader.getExtData)
                       }
                     }
                   }
