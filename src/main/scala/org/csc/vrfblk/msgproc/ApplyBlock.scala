@@ -41,7 +41,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
         
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,block.getHeader.getExtData)
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,new String(block.getHeader.getExtData.toByteArray()))
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
@@ -49,7 +49,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       
     } else {
 //      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
-      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,block.getHeader.getExtData)
+      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,new String(block.getHeader.getExtData.toByteArray()))
       (b.getBlockHeight, b.getBlockHeight)
     }
   }

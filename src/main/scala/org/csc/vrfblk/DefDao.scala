@@ -145,8 +145,8 @@ object Daos extends OLog {
   var vrfvotedb: ODBSupport = null
   //  var blkdb: ODBSupport = null
   var pzp: PZPCtrl = null;
-  var chainHelper: IChainHelper = null;
-  var blkHelper: IBlockHelper = null;
+  var chainHelper: IChainHelper = null; 
+  var blkHelper: IBlockHelper = null; 
   var txHelper: ITransactionHelper = null;
   var enc: EncAPI = null;
   var ddc: IActorDispatcher = null;
@@ -155,11 +155,12 @@ object Daos extends OLog {
   def isDbReady(): Boolean = {
     vrfpropdb != null && vrfpropdb.getDaosupport.isInstanceOf[ODBSupport] &&
       vrfvotedb != null && vrfvotedb.getDaosupport.isInstanceOf[ODBSupport] &&
-      blkHelper != null &&
-      txHelper != null &&
+//      blkHelper != null &&
+//      txHelper != null &&
       ddc != null &&
-      confirmMapDB != null &&
-      pzp != null && chainHelper!=null
+       pzp != null
+//      confirmMapDB != null &&
+//      pzp != null && chainHelper!=null
   }
 }
 

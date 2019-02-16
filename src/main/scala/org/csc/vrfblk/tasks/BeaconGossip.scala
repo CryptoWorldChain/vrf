@@ -128,7 +128,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
       Votes.vote(checkList).PBFTVote(n => {
-        Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
+        Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash,n.getVrfRandseeds))
       }, currentBR.votebase) match {
         case Converge((height: Int, sign: String, hash: String, randseed: String)) =>
           log.info("get merge beacon sign = :" + sign + ",hash=" + hash + ",height=" + height);

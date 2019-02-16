@@ -60,17 +60,17 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
       log.debug("mining check ok :new block=" + newblockheight + ",CO=" + cn.getCoAddress
-        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" +new String(newblk.getHeader.getHash.toByteArray()));
+        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" +Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()));
       val newCoinbase = PSCoinbase.newBuilder()
         .setBlockHeight(newblockheight).setCoAddress(cn.getCoAddress)
         .setCoAddress(cn.getCoAddress)
         .setMessageId(UUIDGenerator.generate())
         .setBcuid(cn.getBcuid)
         .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(new String(newblk.getHeader.getHash.toByteArray()))
+          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
           .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
           //.setBlockMiner(newblk)
-          .setSign(new String(newblk.getHeader.getHash.toByteArray())))
+          .setSign(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray())))
         .setSliceId(VConfig.SLICE_ID)
         .setTxcount(txs.size())
         .setBeaconBits(strnetBits)
@@ -78,19 +78,19 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         .setBeaconHash(beaconHash)
         .setBlockSeeds(ByteString.copyFrom(blockbits.toByteArray()))
         .setPrevBeaconHash(cn.getBeaconHash)
-        .setPrevBlockSeeds(cn.getVrfRandseeds)
+        .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
         .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
     
 
       cn.setCurBlock(newblockheight)
-        .setBeaconHash(new String(newblk.getHeader.getHash.toByteArray()))
+        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
         .setBeaconSign(beaconSig)
-        .setCurBlockHash(new String(newblk.getHeader.getHash.toByteArray()))
+        .setCurBlockHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
         .setCurBlockMakeTime(now)
         .setCurBlockRecvTime(now)
         .setPrevBlockHash(newCoinbase.getPrevBeaconHash)
-        .setVrfRandseeds(ByteString.copyFrom(strnetBits.getBytes));
+        .setVrfRandseeds(strnetBits)
 
       VCtrl.instance.syncToDB()
       if (System.currentTimeMillis() - start > VConfig.ADJUST_BLOCK_TX_MAX_TIMEMS) {

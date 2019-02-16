@@ -86,7 +86,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: ByteString) = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
     //    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
     //       +",rand="+extraData);
     if (blockHeight != cur_vnode.getCurBlock) {
