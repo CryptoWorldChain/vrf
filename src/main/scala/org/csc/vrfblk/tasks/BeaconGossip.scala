@@ -25,6 +25,7 @@ import org.csc.vrfblk.Daos
 import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.bcapi.exec.SRunner
 import org.csc.bcapi.JodaTimeHelper
+import org.csc.vrfblk.msgproc.RollbackBlock
 
 //投票决定当前的节点
 case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
@@ -81,7 +82,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     }
   }
 
-  def gossipBeaconInfo() {
+  def gossipBeaconInfo(gossipBlock: Int = -1) {
     val messageId = UUIDGenerator.generate();
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
@@ -92,8 +93,11 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     //get all vote block
     incomingInfos.clear();
     MDCSetMessageID(messageId);
+    if (gossipBlock > 0) {
+      body.setGossipBlockInfo(gossipBlock);
+    }
     log.debug("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
-      + ",BH=" + currentBR.beaconHash);
+      + ",BH=" + currentBR.beaconHash+",gossipBlock="+gossipBlock);
     VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
   }
 
@@ -117,12 +121,25 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       var maxHeight = VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
       var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
+      
+      
       incomingInfos.asScala.values.map({ p =>
         if (p.getVn.getCurBlock > maxHeight) {
           maxHeight = p.getVn.getCurBlock;
           frombcuid = p.getVn.getBcuid;
         }
-        checkList.+=(p.getVn);
+        if(p.getSugguestStartSyncBlockId < suggestStartIdx && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT){
+          suggestStartIdx = p.getSugguestStartSyncBlockId;
+        }
+        if (p.getGossipBlockInfo > 0) {
+          checkList.+=(VNode.newBuilder().setCurBlock(p.getGossipMinerInfo.getCurBlock)
+            .setCurBlockHash(p.getGossipMinerInfo.getCurBlockHash)
+            .setBeaconHash(p.getGossipMinerInfo.getBeaconHash)
+            .setVrfRandseeds(p.getGossipMinerInfo.getBlockExtrData)
+            .build());
+        } else {
+          checkList.+=(p.getVn);
+        }
       })
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
@@ -148,6 +165,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
+          } else if (size >= currentBR.votebase * 4 / 5) {
+            tryRollbackBlock();
           }
         case n @ _ =>
           log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
@@ -156,9 +175,29 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
+          } else if (size >= currentBR.votebase * 4 / 5) {
+            tryRollbackBlock();
           }
       };
 
+    }
+  }
+  def tryRollbackBlock() {
+
+    incomingInfos.clear();
+    log.info("rollback --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock);
+    //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
+    var startBlock = VCtrl.curVN().getCurBlock - 1;
+    while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
+      val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
+      if (blks != null && blks.size() == 1) {
+        val messageId = UUIDGenerator.generate();
+        log.debug("robllback --> start to gossip from starBlock:" + (startBlock));
+        BeaconGossip.gossipBeaconInfo(startBlock)
+        startBlock = -100;
+      } else {
+        startBlock = startBlock - 1;
+      }
     }
   }
 }

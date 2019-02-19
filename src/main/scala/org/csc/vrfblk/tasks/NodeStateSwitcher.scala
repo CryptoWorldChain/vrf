@@ -109,12 +109,13 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         case BeaconConverge(height, sign, hash, seed) => {
 
           log.info("set new beacon seed:height=" + height + ",sign=" + sign + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
-          if (height <= VCtrl.curVN().getCurBlock) {
-            VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash);
-            notifyStateChange();
-          } else {
-            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
-          }
+          //          if (height >= VCtrl.curVN().getCurBlock) {
+          VCtrl.curVN().setBeaconSign(sign).setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(hash)
+            .setCurBlock(height);
+          notifyStateChange();
+          //          } else {
+          //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
+          //          }
         }
         case StateChange(newsign, newhash, prevhash) => {
           log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);

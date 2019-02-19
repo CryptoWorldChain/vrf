@@ -16,7 +16,6 @@ import org.csc.p22p.node.Network
 import org.csc.p22p.node.Node
 import org.csc.p22p.utils.LogHelper
 
-
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 
@@ -94,8 +93,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
-        cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
+        if (blockHeight == cur_vnode.getCurBlock + 1) {
+          cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
+        }
+        cur_vnode.setCurBlock(blockHeight)
+
         cur_vnode.setVrfRandseeds(extraData);
         if (blockHash != null) {
           cur_vnode.setCurBlockHash(blockHash)

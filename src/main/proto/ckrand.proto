@@ -59,6 +59,8 @@ message GossipMiner{
 	string	bcuid = 1;
 	int32	cur_block = 2 ;
 	string	cur_block_hash = 3;
+	string	beacon_hash = 4;
+	string  block_extr_data = 5;
 }
 	
 //获取本地节点信息
@@ -68,6 +70,8 @@ message PSNodeInfo{
 	repeated GossipMiner murs = 4;
 	bool   is_query = 5;
 	int32  sugguest_start_sync_block_id = 6;
+	int32	gossip_block_info = 7;//请求某一个块的信息
+	GossipMiner gossip_miner_info = 8; //返回某个块的信息
 	string message_id = 30;
 }
 

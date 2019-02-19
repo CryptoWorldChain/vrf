@@ -28,6 +28,8 @@ import org.apache.commons.lang3.StringUtils
 import org.csc.vrfblk.utils.VConfig
 import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.Initialize
+import org.csc.vrfblk.Daos
+import com.google.protobuf.ByteString
 
 @NActorProvider
 @Instantiate
@@ -55,7 +57,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         ret.setVn(VCtrl.curVN())
         MDCSetMessageID(pbo.getMessageId);
         if (StringUtils.isBlank(pack.getFrom())) {
-        
+
         } else {
           log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
             + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
@@ -72,10 +74,33 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
                 }
-//                if (!VCtrl.isReady()) {
-//                  NodeStateSwither.offerMessage(new Initialize());
-//                }
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
+                
+                if (pbo.hasGossipMinerInfo() && pbo.getGossipBlockInfo > 0) {
+                  val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
+                  if (blks != null && blks.size() == 1) {
+                    val blk = blks.get(0);
+                    psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
+                    psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
+                      .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                      .setBlockExtrData(blk.getHeader.getExtData.toStringUtf8())
+                      .setBeaconHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                      .setCurBlock(blk.getHeader.getNumber.intValue()))
+                     
+                  }
+                }else{
+                   var startBlock = pbo.getVn.getCurBlock;
+                    while (startBlock > pbo.getVn.getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
+                      val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
+                      if (blks != null && blks.size() == 1) {
+                        psret.setSugguestStartSyncBlockId(startBlock);
+                        startBlock = -100;
+                      } else {
+                        startBlock = startBlock - 1;
+                      }
+                    }
+                }
+                
                 network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);
               case _ =>
             }

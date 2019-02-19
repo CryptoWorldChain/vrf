@@ -74,6 +74,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           blk.proc();
         case blk: NotaryBlock =>
           blk.proc();
+          
         case n @ _ =>
           log.warn("unknow info:" + n);
       }

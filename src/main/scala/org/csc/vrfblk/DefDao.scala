@@ -146,7 +146,7 @@ object Daos extends OLog {
   //  var blkdb: ODBSupport = null
   var pzp: PZPCtrl = null;
   var chainHelper: IChainHelper = null; 
-  var blkHelper: IBlockHelper = null; 
+  var blkHelper: IBlockHelper = null;
   var txHelper: ITransactionHelper = null;
   var enc: EncAPI = null;
   var ddc: IActorDispatcher = null;
