@@ -131,7 +131,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
               VCtrl.curVN().getCurBlockHash,
               VCtrl.curVN().getPrevBlockHash, VCtrl.network().node_strBits);
             VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
-            BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()));
+            BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
           }
         }
       }

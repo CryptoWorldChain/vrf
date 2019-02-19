@@ -63,8 +63,26 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode) {
-              VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
-              BeaconGossip.offerMessage(pbo);
+               VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              if (pbo.getGossipBlockInfo > 0) {
+                val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
+                val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
+                psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
+                if (blks != null && blks.size() >= 1) {
+                  val blk = blks.get(0);
+                  psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
+                    .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                    .setBlockExtrData(blk.getHeader.getExtData.toStringUtf8())
+                    .setBeaconHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                    .setCurBlock(pbo.getGossipBlockInfo))
+                  log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
+                      +",lheight="+blk.getHeader.getNumber.intValue());
+                }
+                
+                BeaconGossip.offerMessage(psret);
+              } else {
+                BeaconGossip.offerMessage(pbo);
+              }
             }
           } else {
             network.nodeByBcuid(pack.getFrom()) match {
@@ -75,33 +93,36 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
                 }
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
-                
-                if (pbo.hasGossipMinerInfo() && pbo.getGossipBlockInfo > 0) {
+
+                if (pbo.getGossipBlockInfo > 0) {
                   val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
-                  if (blks != null && blks.size() == 1) {
+                  psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
+                  if (blks != null && blks.size() >= 1) {
                     val blk = blks.get(0);
-                    psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                     psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
                       .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
                       .setBlockExtrData(blk.getHeader.getExtData.toStringUtf8())
                       .setBeaconHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
-                      .setCurBlock(blk.getHeader.getNumber.intValue()))
-                     
+                      .setCurBlock(pbo.getGossipBlockInfo))
+                    log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
+                        +",rheight="+blk.getHeader.getNumber.intValue());
                   }
-                }else{
-                   var startBlock = pbo.getVn.getCurBlock;
-                    while (startBlock > pbo.getVn.getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
-                      val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
-                      if (blks != null && blks.size() == 1) {
-                        psret.setSugguestStartSyncBlockId(startBlock);
-                        startBlock = -100;
-                      } else {
-                        startBlock = startBlock - 1;
-                      }
+                } else {
+                  var startBlock = pbo.getVn.getCurBlock;
+                  while (startBlock > pbo.getVn.getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
+                    val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
+                    if (blks != null && blks.size() == 1) {
+                      psret.setSugguestStartSyncBlockId(startBlock);
+                      startBlock = -100;
+                    } else {
+                      startBlock = startBlock - 1;
                     }
+                  }
                 }
-                
-                network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);
+                if (pbo.getIsQuery) {
+                  psret.setIsQuery(false);
+                  network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);
+                }
               case _ =>
             }
           }
