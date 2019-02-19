@@ -83,17 +83,17 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       realmap.map { b =>
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
                         val vres = Daos.blkHelper.ApplyBlock(block, true);
-                        if (vres.getCurrentNumber >= b.getBlockHeight) {
-                          if (vres.getCurrentNumber > maxid) {
+                        if (vres.getCurrentNumber > maxid) {
                             lastSuccessBlock = block
                             maxid = vres.getCurrentNumber.intValue();
                           }
+                        if (vres.getCurrentNumber >= b.getBlockHeight) {
                           log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber+",hash="+Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())+",seed="+
                            new String(block.getHeader.getExtData.toByteArray()));
-
                         } else {
+                          
                           log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid+",hash="+Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
-                              +",prev="+new String(block.getHeader.getPreHash.toByteArray())+",seed="+
+                              +",prev="+Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray())+",seed="+
                             new String(block.getHeader.getExtData.toByteArray()));
                         }
                       }
