@@ -23,7 +23,10 @@ enum PCommand {
 	
 	SRT = 9; //同步单笔交易
 	
+	SOS = 10;//节点退出
 	RHR = 31;//给运维使用的心跳
+	
+	
 };
 
 enum VNodeState{
@@ -74,6 +77,12 @@ message PSNodeInfo{
 	GossipMiner gossip_miner_info = 8; //返回某个块的信息
 	string message_id = 30;
 }
+
+//节点退出
+message PSNodeGraceShutDown{
+	string  reason = 1;
+} 
+
 
 message PRetNodeInfo{
 	int32 ret_code = 1;//返回

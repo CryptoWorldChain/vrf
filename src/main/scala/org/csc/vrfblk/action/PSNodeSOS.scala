@@ -23,59 +23,40 @@ import org.csc.ckrand.pbgens.Ckrand.PRetSyncBlocks
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.ckrand.pbgens.Ckrand.PCommand
+import org.csc.ckrand.pbgens.Ckrand.PSNodeGraceShutDown
+import org.csc.p22p.node.PNode
 
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
-class PSBlockSync extends PSMVRFNet[PSSyncBlocks] {
-  override def service = PSBlockSyncService
+class PSNodeSOSModule extends PSMVRFNet[PSNodeGraceShutDown] {
+  override def service = PSNodeSOS
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlocks] with PMNodeHelper {
-  override def onPBPacket(pack: FramePacket, pbo: PSSyncBlocks, handler: CompleteHandler) = {
+object PSNodeSOS extends LogHelper with PBUtils with LService[PSNodeGraceShutDown] with PMNodeHelper {
+  override def onPBPacket(pack: FramePacket, pbo: PSNodeGraceShutDown, handler: CompleteHandler) = {
     //    log.debug("BlockSyncService:" + pack.getFrom())
-    var ret = PRetSyncBlocks.newBuilder();
+    var ret = PSNodeGraceShutDown.newBuilder();
     if (!VCtrl.isReady()) {
-      ret.setRetCode(-1).setRetMessage("VRF Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else {
       try {
-        val startTime = System.currentTimeMillis();
-        MDCSetBCUID(VCtrl.network())
-        MDCSetMessageID(pbo.getMessageId)
-        ret.setMessageId(pbo.getMessageId);
-        //
-        val cn = VCtrl.curVN()
-        ret.setRetCode(0).setRetMessage("SUCCESS")
-        for (
-          id <- pbo.getStartId to pbo.getEndId
-        ) {
-          val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
-          if (b != null) {
-            b.map(bs => {
-              ret.addBlockHeaders(bs);
-            })
-          }
-        }
-        pbo.getBlockIdxList.map { id =>
-          val b = VCtrl.loadFromBlock(id);
-          if (b != null) {
-            b.map(bs => {
-              ret.addBlockHeaders(bs);
-            })
-          }
+        log.debug("node shutdown:" + pack.getFrom() + ",reason=" + pbo.getReason)
+        val network = VCtrl.network();
+        network.nodeByBcuid(pack.getFrom()) match {
+              case network.noneNode =>
+              case n: PNode =>
+                network.removeDNode(n)
+                network.removePendingNode(n);
         }
       } catch {
         case e: FBSException => {
           ret.clear()
-          ret.setRetCode(-2).setRetMessage(e.getMessage)
         }
         case t: Throwable => {
           log.error("error:", t);
-          ret.clear()
-          ret.setRetCode(-3)
         }
       } finally {
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
@@ -83,5 +64,5 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
     }
   }
   //  override def getCmds(): Array[String] = Array(PWCommand.LST.name())
-  override def cmd: String = PCommand.SYN.name();
+  override def cmd: String = PCommand.SOS.name();
 }

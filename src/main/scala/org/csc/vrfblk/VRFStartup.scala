@@ -19,6 +19,7 @@ import org.csc.vrfblk.tasks.BlockProcessor
 import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.BlockSync
 import org.csc.vrfblk.tasks.BeaconTask
+import org.csc.ckrand.pbgens.Ckrand.PSNodeGraceShutDown
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -87,6 +88,14 @@ class VRFBGLoader() extends Runnable with LogHelper {
 
     Daos.ddc.scheduleWithFixedDelay(BeaconTask, VConfig.INITDELAY_GOSSIP_SEC,
       VConfig.TICK_GOSSIP_SEC, TimeUnit.SECONDS);
+    val messageId = UUIDGenerator.generate();
+    val body = PSNodeGraceShutDown.newBuilder().setReason("shutdown").build();
+
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run() = {
+          VCtrl.network().wallMessage("SOSVRF", Left(body), messageId, '9');
+      }
+    })
 
     //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
     //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)
