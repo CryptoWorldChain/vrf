@@ -92,7 +92,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         if (vres.getCurrentNumber >= b.getBlockHeight) {
                           if (vres.getCurrentNumber > maxid) {
                             lastSuccessBlock = block
-                            maxid = vres.getCurrentNumber.intValue();
+                            maxid = block.getHeader.getNumber.intValue();
                           }
                           log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +
                             new String(block.getHeader.getExtData.toByteArray()));
