@@ -66,7 +66,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
               if (pbo.getGossipBlockInfo > 0) {
                 val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
-                val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
+                val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(pbo.getVn);
                 psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                 if (blks != null && blks.size() >= 1) {
                   val blk = blks.get(0);
