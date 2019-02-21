@@ -31,7 +31,7 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
 
     //save to db
     val key = OEntityBuilder.byteKey2OKey(pbo.getBlockEntry.getBlockhashBytes);
-    val value = OEntityBuilder.byteValue2OValue(pbo.toByteString())
+    val value = OEntityBuilder.byteValue2OValue(pbo.getBlockEntry.getBlockMiner.toByteArray()).toBuilder()
     value.setSecondKey(String.valueOf(pbo.getBlockHeight))
     value.setInfo(pbo.getBlockEntry.getBlockhash);
     Daos.vrfvotedb.put(key, value.build());
