@@ -62,8 +62,10 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
           log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
             + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
+            // 如果消息是自己发的
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode) {
-               VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              // 等待后续执行pbft
               if (pbo.getGossipBlockInfo > 0) {
                 val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
@@ -85,10 +87,13 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               }
             }
           } else {
+            // 其它节点
+            // 返回自己的信息
             network.nodeByBcuid(pack.getFrom()) match {
               case network.noneNode =>
               case n: PNode =>
                 if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+                  // 成为打快节点
                   log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
                 }

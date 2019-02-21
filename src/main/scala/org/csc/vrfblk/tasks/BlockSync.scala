@@ -57,12 +57,16 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
 
           val messageid = UUIDGenerator.generate();
+          // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
+          // 请求一组block，执行applyBlock方法
           VCtrl.network().asendMessage("SYNVRF", syncInfo.reqBody, randn,
             new CallBack[FramePacket] {
               def onSuccess(fp: FramePacket) = {
                 val end = System.currentTimeMillis();
+
+                //
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
                 try {
@@ -81,6 +85,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       log.debug("realBlockCount=" + realmap.size);
                       var lastSuccessBlock: BlockEntityOrBuilder = null;
                       realmap.map { b =>
+                        //同步执行 apply 并验证返回结果
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
                         val vres = Daos.blkHelper.ApplyBlock(block, true);
 
