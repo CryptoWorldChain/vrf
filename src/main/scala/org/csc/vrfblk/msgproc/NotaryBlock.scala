@@ -17,7 +17,7 @@ import org.csc.p22p.core.Votes.NotConverge
 case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def proc(): Unit = {
-
+    //块确认
     //to notify other.
     MDCSetBCUID(VCtrl.network())
     log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size

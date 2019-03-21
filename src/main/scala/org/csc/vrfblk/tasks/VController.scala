@@ -67,9 +67,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        //读取创世块HASH
         cur_vnode.setCurBlockHash(new String(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
       } else {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        //当前块BlockHASH
         cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
 
       }
