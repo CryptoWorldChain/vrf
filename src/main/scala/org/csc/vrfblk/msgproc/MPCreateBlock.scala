@@ -23,7 +23,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash);//extradata,term
+    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, null);//extradata,term
     val newblockheight = VCtrl.curVN().getCurBlock + 1
     if (newblk == null || newblk.getHeader == null) {
       log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
