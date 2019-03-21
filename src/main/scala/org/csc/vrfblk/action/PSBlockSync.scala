@@ -21,7 +21,6 @@ import org.csc.vrfblk.PSMVRFNet
 import org.csc.ckrand.pbgens.Ckrand.PSSyncBlocks
 import org.csc.ckrand.pbgens.Ckrand.PRetSyncBlocks
 import org.csc.vrfblk.tasks.VCtrl
-import org.csc.vrfblk.tasks.VCtrl
 import org.csc.ckrand.pbgens.Ckrand.PCommand
 
 @NActorProvider

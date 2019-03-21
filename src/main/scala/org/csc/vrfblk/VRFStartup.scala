@@ -20,6 +20,8 @@ import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.BlockSync
 import org.csc.vrfblk.tasks.BeaconTask
 import org.csc.ckrand.pbgens.Ckrand.PSNodeGraceShutDown
+import org.csc.vrfblk.tasks.TxSync
+import org.csc.vrfblk.tasks.TransactionSync
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -96,6 +98,10 @@ class VRFBGLoader() extends Runnable with LogHelper {
           VCtrl.network().wallMessage("SOSVRF", Left(body), messageId, '9');
       }
     })
+
+    TxSync.instance = TransactionSync(VCtrl.network());
+    Daos.ddc.scheduleWithFixedDelay(TxSync.instance, VConfig.INITDELAY_GOSSIP_SEC,
+      Math.min(VConfig.TICK_DCTRL_MS_TX, VConfig.TXS_EPOCH_MS),TimeUnit.MILLISECONDS)
 
     //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
     //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)
