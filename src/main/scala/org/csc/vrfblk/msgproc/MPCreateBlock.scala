@@ -23,7 +23,8 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash);//extradata,term
+    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash);
+    //extradata,term
     val newblockheight = VCtrl.curVN().getCurBlock + 1
     if (newblk == null || newblk.getHeader == null) {
       log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
@@ -47,9 +48,13 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         newNetBits = newNetBits.setBit(f._2.getBitIdx);
       })
     }
-    val strnetBits =  hexToMapping(newNetBits); 
+
+    //需要广播的节点数量
+    val wallAccount: Int = VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+
+    val strnetBits = hexToMapping(newNetBits);
     val (newblk, txs) = newBlockFromAccount(
-      BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK), 0, beaconHash,
+      BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK), wallAccount, beaconHash,
       strnetBits);
 
     if (newblk == null) {
@@ -60,7 +65,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
       log.debug("mining check ok :new block=" + newblockheight + ",CO=" + cn.getCoAddress
-        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" +Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()));
+        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" + Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()));
       val newCoinbase = PSCoinbase.newBuilder()
         .setBlockHeight(newblockheight).setCoAddress(cn.getCoAddress)
         .setCoAddress(cn.getCoAddress)
@@ -81,7 +86,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
         .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
-    
+
 
       cn.setCurBlock(newblockheight)
         .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
@@ -103,6 +108,9 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       // write to
       //
       //            log.debug("mindob newblockheight::" + newblockheight + " cn.getCoAddress::" + cn.getCoAddress + " termid::" + DCtrl.termMiner().getTermId + " cn.getBcuid::" + cn.getBcuid)
+
+      log.debug(s"blockHeight:${newblockheight}, HASH:${cn.getCurBlockHash}, miner:${cn.getBcuid}, " +
+        s"coAddr:${cn.getCoAddress}, messageId:${newCoinbase.getMessageId}, confirmation ratio:${VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO}")
       VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);
     }

@@ -174,6 +174,8 @@ object VConfig {
 
   //连续打块不sleep的次数限制
   val DCTRL_CONTINUE_LOOP_COUNT = prop.get(PROP_DOMAIN + "dctrl.continue.loop.count", 3); //80%
+  //出块后，块确认需要广播节点的比例 MAX 100 min 0
+  val DCTRL_BLOCK_CONFIRMATION_RATIO = prop.get(PROP_DOMAIN + "block.confirmation.ratio", 0); //60%
 
 }
 
