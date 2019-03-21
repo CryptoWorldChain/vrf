@@ -2,6 +2,7 @@ package org.csc.vrfblk.msgproc
 
 import org.csc.vrfblk.Daos
 import java.math.BigInteger
+
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.bcapi.crypto.BitMap
 import org.csc.p22p.utils.LogHelper
@@ -10,14 +11,13 @@ import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.tasks.BlockMessage
 import org.csc.vrfblk.utils.BlkTxCalc
 import org.csc.vrfblk.utils.VConfig
-import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
+import org.csc.ckrand.pbgens.Ckrand.{BlockWitnessInfo, PBlockEntry, PSCoinbase, VNode}
 import onight.tfw.outils.serialize.UUIDGenerator
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.utils.TxCache
 import org.csc.evmapi.gens.Tx.Transaction
 
-case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String, witnessNode:BlockWitnessInfo) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
     val txs = Daos.txHelper.getWaitBlockTx(
