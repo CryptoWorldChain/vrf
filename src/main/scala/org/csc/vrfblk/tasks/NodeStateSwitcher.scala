@@ -41,6 +41,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
+    log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
     var netBits = BigInteger.ZERO;
     try {
       if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
@@ -105,10 +106,10 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             }
             if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
               //decide to make block
-              log.debug("reconsider cominers:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
               BeaconGossip.gossipBlocks();
             } else {
-              log.debug("cancel rechecking block:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
             }
           }
         })
