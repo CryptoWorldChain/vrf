@@ -1,26 +1,20 @@
 package org.csc.vrfblk.tasks
 
+import java.math.BigInteger
 import java.util.List
 
+import onight.tfw.otransio.api.PacketHelper
+import org.csc.bcapi.crypto.BitMap
+import org.csc.ckrand.pbgens.Ckrand
 import org.csc.ckrand.pbgens.Ckrand.{BlockWitnessInfo, PSNodeInfo, VNodeState}
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
+import org.csc.vrfblk.Daos
+import org.csc.vrfblk.msgproc.MPCreateBlock
+import org.csc.vrfblk.utils.{RandFunction, VConfig}
 import org.fc.zippo.dispatcher.SingletonWorkShop
 
 import scala.collection.JavaConverters._
-import org.apache.commons.lang3.StringUtils
-import org.csc.vrfblk.Daos
-
-import scala.util.Random
-import org.csc.vrfblk.utils.RandFunction
-import org.csc.vrfblk.msgproc.MPCreateBlock
-import org.csc.bcapi.crypto.BitMap
-import java.math.BigInteger
-
-import org.csc.vrfblk.utils.VConfig
-import onight.tfw.otransio.api.PacketHelper
-import com.google.protobuf.ByteString
-import org.csc.ckrand.pbgens.Ckrand
 
 trait StateMessage {
 
@@ -80,7 +74,6 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
-        // TODO need Know all Witness with Beacon
         val myWitness = VCtrl.coMinerByUID.filter {
           case (bcuid: String, node: Ckrand.VNode) => {
             val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
@@ -93,6 +86,9 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
         val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
           .setBeaconHash(hash)
+          .setBlockheight(VCtrl.curVN().getCurBlock)
+          .setNetbitx(netBits.toString(16))
+          .addAllWitness(myWitness.asJava)
 
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign, blockWitness.build);
         BlockProcessor.offerMessage(blkInfo);

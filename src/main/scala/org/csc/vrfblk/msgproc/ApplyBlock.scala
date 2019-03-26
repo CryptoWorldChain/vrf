@@ -1,23 +1,26 @@
 package org.csc.vrfblk.msgproc
 
-import org.csc.bcapi.crypto.BitMap
-import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
-import org.csc.p22p.action.PMNodeHelper
-import org.csc.p22p.utils.LogHelper
-import org.csc.vrfblk.tasks.BlockMessage
-import org.apache.commons.lang3.StringUtils
-import org.csc.vrfblk.tasks.VCtrl
+import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicLong
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
-import org.csc.vrfblk.Daos
-import org.csc.vrfblk.utils.BlkTxCalc
-import org.csc.vrfblk.tasks.NodeStateSwitcher
-import org.csc.vrfblk.tasks.StateChange
-import org.csc.vrfblk.utils.RandFunction
-import com.google.protobuf.ByteString
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+
+import onight.tfw.async.CallBack
+import onight.tfw.otransio.api.beans.FramePacket
+import org.apache.commons.lang3.StringUtils
+import org.csc.account.gens.Blockimpl.AddBlockResponse
+import org.csc.bcapi.crypto.BitMap
+import org.csc.ckrand.pbgens.Ckrand.{PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction}
 import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.vrfblk.tasks.BlockProcessor
-import org.csc.vrfblk.tasks.BeaconGossip
+import org.csc.evmapi.gens.Tx.Transaction
+import org.csc.p22p.action.PMNodeHelper
+import org.csc.p22p.node.{Network, Node}
+import org.csc.p22p.utils.LogHelper
+import org.csc.vrfblk.Daos
+import org.csc.vrfblk.tasks._
+import org.csc.vrfblk.utils.{BlkTxCalc, RandFunction, VConfig}
+
+import scala.collection.JavaConverters._
+import scala.util.Random
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -32,27 +35,35 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       val startupApply = System.currentTimeMillis();
       val vres = Daos.blkHelper.ApplyBlock(block, needBody);
       if (vres.getTxHashsCount > 0) {
-        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight);
+        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
+        // TODO: Sync Transaction  need Sleep for a while First
+        //val timeToSleep: Long = RandFunction.getRandMakeBlockSleep(block.getHeader.getHash.toString(),
+        //  new BigInteger(s"${VCtrl.coMinerByUID.size}", 10), VCtrl.curVN().getBitIdx);
+        //log.info(s"must sync transaction first, sync time ms${timeToSleep}")
+        //Thread.sleep(timeToSleep)
+        trySyncTransaction(b, needBody, vres)
+
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-//        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
+        //        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-        
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,new String(block.getHeader.getExtData.toByteArray()))
+
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       }
-      
+
     } else {
-//      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
-      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign,new String(block.getHeader.getExtData.toByteArray()))
+      //      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
+      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
       (b.getBlockHeight, b.getBlockHeight)
     }
   }
+
   def tryNotifyState() {
     //    if(VCtrl.instance.b
 
@@ -60,6 +71,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBlockEntry.getBlockhash));
 
   }
+
   def proc() {
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
@@ -69,43 +81,166 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
           log.info("applyblock:UU,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-           + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            +",VB="+pbo.getWitnessBits
+            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+            + ",VB=" + pbo.getWitnessBits
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-          
+
           BeaconGossip.gossipBlocks();
         case n if n > 0 =>
-          val vstr=
-          if(StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) ){
-            "MY"
-          }else{
-            "OK"
-          }
-          log.info("applyblock:"+vstr+",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+          val vstr =
+            if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress)) {
+              "MY"
+            } else {
+              "OK"
+            }
+          log.info("applyblock:" + vstr + ",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",MN=" + VCtrl.coMinerByUID.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            +",VB="+pbo.getWitnessBits
-              + ",B=" + pbo.getBlockEntry.getBlockhash
+            + ",VB=" + pbo.getWitnessBits
+            + ",B=" + pbo.getBlockEntry.getBlockhash
             + ",TX=" + pbo.getTxcount);
           bestheight.set(n);
           val notaBits = mapToBigInt(pbo.getWitnessBits);
-          if(notaBits.testBit(cn.getBitIdx)){
-              VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
+          if (notaBits.testBit(cn.getBitIdx)) {
+            VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
           tryNotifyState();
-        case n @ _ =>
+        case n@_ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            +",VB="+pbo.getWitnessBits
+            + ",VB=" + pbo.getWitnessBits
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
       }
     }
 
   }
+
+  def buildReqTx(res: AddBlockResponse): PSGetTransaction.Builder = {
+    val reqTx = PSGetTransaction.newBuilder()
+    if (res.getTxHashsCount > 0) {
+      for (txHash <- res.getTxHashsList.asScala) {
+        if (res.getTxHashsCount < 20) {
+          log.info(s"request Hash:${txHash}, blockNum=${res.getCurrentNumber}")
+        }
+        reqTx.addTxHash(txHash)
+      }
+    }
+    reqTx
+  }
+
+  def getRandomSleepTime(blockHash: String): Long = {
+    val stepBits: BigInteger = new BigInteger(s"${VCtrl.coMinerByUID.size}", 10)
+    val ranInt = new BigInteger(blockHash, 16).abs()
+    val stepRange = ranInt.mod(BigInteger.valueOf(stepBits.bitCount())).intValue()
+
+    (VCtrl.coMinerByUID.size + stepRange) % stepBits.bitCount() * VConfig.SYNC_TX_SLEEP_MS
+  }
+
+  def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
+
+    this.synchronized {
+      val miner = BlockEntity.parseFrom(block.getBlockHeader)
+      val network = VCtrl.network
+
+      var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
+      if (vNetwork.isEmpty) {
+        log.info("not find miner in network")
+        val miners = VCtrl.coMinerByUID
+          .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
+        if (miners.isDefined) {
+          vNetwork = network.directNodeByBcuid.get(miners.get._1)
+        } else {
+          val randomNode = randomNodeInNetwork(network)
+          vNetwork = randomNode
+        }
+      }
+
+      val reqTx = buildReqTx(res)
+      var rspTx = PRetGetTransaction.newBuilder()
+
+      val cdl = new CountDownLatch(1)
+      var notSuccess = true
+      var counter = 0
+      val start = System.currentTimeMillis()
+
+      while (cdl.getCount > 0 && counter < 6 && notSuccess) {
+        try {
+          if (counter > 3) {
+            vNetwork = randomNodeInNetwork(network)
+          }
+          network.asendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
+            override def onSuccess(v: FramePacket): Unit = {
+              try {
+                if (notSuccess) {
+                  rspTx = if (v.getBody != null) {
+                    PRetGetTransaction.newBuilder().mergeFrom(v.getBody)
+                  } else {
+                    log.info(s"no transaction find from ${vNetwork.get.bcuid}")
+                    null
+                  }
+                  if (rspTx != null && rspTx.getTxContentCount > 0) {
+                    val txList = rspTx.getTxContentList.asScala.map(Transaction.newBuilder().mergeFrom(_)).toList
+                    Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
+                    notSuccess = false
+                    log.debug(s"SRTVRF success !!!cost:${System.currentTimeMillis() - start}")
+                    cdl.countDown()
+                  } else {
+                    log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
+                      s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
+                  }
+                }
+              }
+              catch {
+                case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
+              }
+            }
+
+            override def onFailed(e: Exception, v: FramePacket): Unit =
+              log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
+                s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
+          }
+            , '9')
+
+          counter += 1
+          cdl.await(40, TimeUnit.SECONDS)
+
+        }
+        catch {
+          case t: Throwable => log.error("get Transaction failed:", t)
+        }
+      }
+      saveBlock(block, needBody)
+    }
+
+
+    //1. waiting to sync( get distance to sleep)
+    //A. getBlockMiner
+    //B. sleep distance clc
+
+    //2. how Much Transaction,witch TxHash waiting for sync
+    //block.getBody.getTxsList
+
+
+    //3.rquest success and save transaction
+
+  }
+
+  def randomNodeInNetwork(network: Network): Option[Node] = {
+    val self = VCtrl.curVN()
+    val indexRange = network.directNodes.size - 1
+
+    Option.apply(
+      network.directNodes
+        .filter(p => p.bcuid.equals(self.getBcuid))
+        .toList.asJava
+        .get(Random.nextInt(indexRange))
+    )
+  }
+
 }

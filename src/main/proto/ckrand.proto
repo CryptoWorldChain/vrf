@@ -26,6 +26,8 @@ enum PCommand {
 	SOS = 10;//节点退出
 	RHR = 31;//给运维使用的心跳
 
+	VNI = 32; // 查看节点信息
+
 
 };
 
@@ -251,4 +253,19 @@ message PRetRhrCheck{//加入的返回信息
 	int64	timepasslastblk = 12;  //上次新块的时间戳
 	int32	banforvote = 13;	   //禁止投票的时间（秒）
 	string 	beacon_hash = 14;	//
+}
+
+//节点信息
+message PRetHealthCheck {
+    int32 ret_code = 1; //返回
+    string ret_message = 2; //返回信息
+    int32 net_idx = 3; // net_id
+    string bcuid = 4; // bcuid
+    int64 block_height = 5; //块高
+    string beacon_hash = 6; //beacon
+    string co_addr = 10; //联合账户地址
+    VNodeState state = 12; //
+    string pending_node = 13; //coMiner
+    string direct_node = 14; //coMiner
+    repeated VNode coMiners = 15; //coMiner
 }
