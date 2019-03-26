@@ -20,10 +20,15 @@ import org.csc.evmapi.gens.Tx.Transaction
 case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
+    val starttx = System.currentTimeMillis();
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
+    val startblk = System.currentTimeMillis();
     val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, null);//extradata,term
+    val endblk = System.currentTimeMillis();
+
+    log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
 
     val newblockheight = VCtrl.curVN().getCurBlock + 1
     if (newblk == null || newblk.getHeader == null) {
