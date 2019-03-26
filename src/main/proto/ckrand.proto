@@ -8,25 +8,27 @@ enum PModule {
 enum PCommand {
 	JIN = 0; //申请加入节点集群,follow up
 	INF = 1; //获取当前网络信息
-	
+
 	CBN = 2; //发送coinbase,new
-	
+
 	CBW = 3; //发送coinbase,witness
-	
+
 	CBR = 4; //发送coinbase,reply
-	
+
 	SYN = 5; //同步block
-	
+
 	VFY = 6; //块校验
-	
+
 	BRT = 8; //同步交易
-	
+
 	SRT = 9; //同步单笔交易
-	
+
 	SOS = 10;//节点退出
 	RHR = 31;//给运维使用的心跳
-	
-	
+
+	VNI = 32; // 查看节点信息
+
+
 };
 
 enum VNodeState{
@@ -37,7 +39,7 @@ enum VNodeState{
 	VN_DUTY_NOTARY = 5; //
 	VN_DUTY_BEACON = 6; //同步
 	VN_DUTY_SYNC = 7; //同步
-	
+
 }
 
 message VNode{
@@ -65,7 +67,15 @@ message GossipMiner{
 	string	beacon_hash = 4;
 	string  block_extr_data = 5;
 }
-	
+
+//块认证者
+message BlockWitnessInfo{
+    int64 blockheight = 1; // 产出高度
+    string beacon_hash = 2; // beaconHash,父块hash
+    string  netbitx = 3; // 网络节点分布
+    repeated VNode witness = 10; // 见证者
+}
+
 //获取本地节点信息
 message PSNodeInfo{
 	string req_token = 1;//是否获取拓扑信息
@@ -81,7 +91,7 @@ message PSNodeInfo{
 //节点退出
 message PSNodeGraceShutDown{
 	string  reason = 1;
-} 
+}
 
 
 message PRetNodeInfo{
@@ -93,9 +103,9 @@ message PRetNodeInfo{
 	int64	queue_confirm = 5; //待确认交易数量
 	int64	queue_wall = 6;    //待广播交易数量
 	string	extinfo = 7;
-	
+
 	repeated  GossipMiner  murs = 8;
-	
+
 	string 	message_id = 30;
 	string 	sign = 100;//对上述数据的签名结果
 }
@@ -114,18 +124,18 @@ message  PSCoinbase{
 	int64 	cws_guaranty = 10;//保证金
 
 	int32	slice_id = 11;	     //分片
-	
+
 	string	group_bits = 12;//
 	string 	beacon_bits = 13;//
 	string	witness_bits = 14;//
-	
+
 	string 	bcuid = 15;			//节点
 
 	int64	block_mine_time = 16;		 //出块时间戳
 	int32	txcount = 17;		 //交易数量
 	PBlockEntry block_entry = 18;//块体
 	repeated bytes txbodies = 19; //交易体
-	
+
 	string 	message_id = 30;
 }
 
@@ -154,7 +164,7 @@ message PBlockEntry{
 	string 	coinbase_bcuid = 2; //打块节点ID
 	int32	slice_id = 3;		//分片
 	string	blockhash = 4;
-	
+
 	bytes	block_header = 10;	//header
 	bytes 	block_miner = 11;   //Miner
 	string 	sign = 50;
@@ -173,10 +183,10 @@ message PSSyncBlocks{
 	repeated BlockHashInfo  block_infos = 5;
 	int32	sync_block_count = 6;//
 	bool needBody = 7;		//是否同步Body体
-	
+
 	string 	bcuid = 10;		//节点Id
 	string message_id = 30;
-	
+
 	enum QueryMode{
 		QM_RANGE = 0;//根据startid和endid查询
 		QM_BLOCK_IDX = 1;//根据block的id列表查询
@@ -220,7 +230,7 @@ message PSGetTransaction {
 message PRetGetTransaction {
 	int32 ret_code = 1;
 	string ret_message = 2;
-	repeated bytes txContent = 3;	
+	repeated bytes txContent = 3;
 }
 
 
@@ -243,4 +253,19 @@ message PRetRhrCheck{//加入的返回信息
 	int64	timepasslastblk = 12;  //上次新块的时间戳
 	int32	banforvote = 13;	   //禁止投票的时间（秒）
 	string 	beacon_hash = 14;	//
+}
+
+//节点信息
+message PRetHealthCheck {
+    int32 ret_code = 1; //返回
+    string ret_message = 2; //返回信息
+    int32 net_idx = 3; // net_id
+    string bcuid = 4; // bcuid
+    int64 block_height = 5; //块高
+    string beacon_hash = 6; //beacon
+    string co_addr = 10; //联合账户地址
+    VNodeState state = 12; //
+    string pending_node = 13; //coMiner
+    string direct_node = 14; //coMiner
+    repeated VNode coMiners = 15; //coMiner
 }

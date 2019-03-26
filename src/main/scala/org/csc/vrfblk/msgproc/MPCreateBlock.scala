@@ -1,31 +1,42 @@
 package org.csc.vrfblk.msgproc
 
-import org.csc.vrfblk.Daos
 import java.math.BigInteger
-import org.csc.p22p.action.PMNodeHelper
-import org.csc.bcapi.crypto.BitMap
-import org.csc.p22p.utils.LogHelper
-import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.vrfblk.tasks.VCtrl
-import org.csc.vrfblk.tasks.BlockMessage
-import org.csc.vrfblk.utils.BlkTxCalc
-import org.csc.vrfblk.utils.VConfig
-import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
-import onight.tfw.outils.serialize.UUIDGenerator
-import com.google.protobuf.ByteString
-import org.csc.vrfblk.utils.TxCache
-import org.csc.evmapi.gens.Tx.Transaction
 
-case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+import com.google.protobuf.ByteString
+import onight.tfw.outils.serialize.UUIDGenerator
+import org.csc.bcapi.crypto.BitMap
+import org.csc.ckrand.pbgens.Ckrand.{BlockWitnessInfo, PBlockEntry, PSCoinbase}
+import org.csc.evmapi.gens.Block.BlockEntity
+import org.csc.evmapi.gens.Tx.Transaction
+import org.csc.p22p.action.PMNodeHelper
+import org.csc.p22p.utils.LogHelper
+import org.csc.vrfblk.Daos
+import org.csc.vrfblk.tasks.{BlockMessage, VCtrl}
+import org.csc.vrfblk.utils.{BlkTxCalc, TxCache, VConfig}
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable.ListBuffer
+
+case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
     val starttx = System.currentTimeMillis();
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
+
+    //奖励节点
+    val excitationAddress: ListBuffer[String] = new ListBuffer()
+    if (witnessNode.getBeaconHash.equals(beaconHash)) {
+      excitationAddress.appendAll(witnessNode.getWitnessList.asScala.map(node => node.getCoAddress).toList)
+    }
+
+    log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
+      s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
+
+
     val startblk = System.currentTimeMillis();
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, null);//extradata,term
+    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava);//extradata,term
     val endblk = System.currentTimeMillis();
 
     log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
@@ -115,7 +126,8 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       //            log.debug("mindob newblockheight::" + newblockheight + " cn.getCoAddress::" + cn.getCoAddress + " termid::" + DCtrl.termMiner().getTermId + " cn.getBcuid::" + cn.getBcuid)
 
       log.debug(s"blockHeight:${newblockheight}, HASH:${cn.getCurBlockHash}, miner:${cn.getBcuid}, " +
-        s"coAddr:${cn.getCoAddress}, messageId:${newCoinbase.getMessageId}, confirmation ratio:${VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO}")
+        s"coAddr:${cn.getCoAddress}, messageId:${newCoinbase.getMessageId}, confirmation ratio:${VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO}" +
+        s"txHash:${txs.asScala.mkString("[", ",", "]")}")
       VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);
     }

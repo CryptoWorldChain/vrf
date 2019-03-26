@@ -1,10 +1,11 @@
 package org.csc.vrfblk.action
 
 import java.math.BigInteger
+import java.util
 import java.util.ArrayList
-import java.util.concurrent.{LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.{LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit}
 
 import com.google.protobuf.ByteString
 import onight.oapi.scala.commons.{LService, PBUtils}
@@ -21,18 +22,14 @@ import org.apache.commons.codec.binary.Hex
 import org.apache.commons.lang3.StringUtils
 import org.apache.felix.ipojo.annotations.{Instantiate, Provides}
 import org.csc.account.api.IPengingQueue
+import org.csc.ckrand.pbgens.Ckrand.PSSyncTransaction.SyncType
+import org.csc.ckrand.pbgens.Ckrand.{PCommand, PRetSyncTransaction, PSSyncTransaction}
 import org.csc.evmapi.gens.Tx.Transaction
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
-import org.csc.ckrand.pbgens.Ckrand.PCommand;
-import org.csc.ckrand.pbgens.Ckrand.PSSyncTransaction;
-import org.csc.ckrand.pbgens.Ckrand.PSSyncTransaction.SyncType;
-import org.csc.ckrand.pbgens.Ckrand.PRetSyncTransaction;
-import org.csc.vrfblk.tasks.VCtrl;
-import org.csc.vrfblk.PSMVRFNet;
-import org.csc.vrfblk.utils.VConfig;
-import org.csc.vrfblk.Daos;
-import org.csc.evmapi.gens.Tx.Transaction;
+import org.csc.vrfblk.tasks.VCtrl
+import org.csc.vrfblk.utils.VConfig
+import org.csc.vrfblk.{Daos, PSMVRFNet}
 
 import scala.collection.JavaConversions._
 
@@ -41,8 +38,8 @@ import scala.collection.JavaConversions._
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
 class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
-  
-  
+
+
   @ActorRequire(name = "BlocksPendingQueue", scope = "global")
   var blocksPendingQ: IPengingQueue[Object] = null;
 
@@ -55,14 +52,15 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
     this.blocksPendingQ = ddc;
     PSTransactionSyncService.dbBatchSaveList = ddc;
   }
-  
-  
-//   = new PendingQueue[(Array[Byte], BigInteger)]("batchsavelist", 100);
+
+
+  //   = new PendingQueue[(Array[Byte], BigInteger)]("batchsavelist", 100);
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
   val greendbBatchSaveList = new LinkedBlockingDeque[(ArrayList[Transaction.Builder], BigInteger, CompleteHandler)]();
-  var dbBatchSaveList: IPengingQueue[Object] = null;//(Array[Byte], BigInteger)
+  //(Array[Byte], BigInteger)
+  var dbBatchSaveList: IPengingQueue[Object] = null;
   val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
 
   val wallHashList = new LinkedBlockingQueue[ByteString]();
@@ -77,7 +75,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         ret;
       } else {
         val op = dbBatchSaveList.pollFirst();
-        
+
         if (op != null) {
           val p = op.asInstanceOf[(Array[Byte], BigInteger)];
           val pbo = PSSyncTransaction.newBuilder().mergeFrom(p._1);
@@ -95,14 +93,15 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         }
       }
     }
+
     override def run() {
       running.set(true);
       Thread.currentThread().setName("DPosTx-BatchRunner-" + id);
-      while(dbBatchSaveList==null){
+      while (dbBatchSaveList == null) {
         log.debug("wait for batch :")
         Thread.sleep(1000)
       }
-        
+
       while (running.get) {
         try {
           var p = poll();
@@ -197,7 +196,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
             }
             if (syncTransaction.getTxHashCount > 0) {
-              VCtrl.instance.network.wallMessage("BRTDOB", Left(syncTransaction.build()), msgid)
+              VCtrl.instance.network.wallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
             }
           }
         } catch {
@@ -213,6 +212,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       }
     }
   }
+
   for (i <- 1 to VConfig.PARALL_SYNC_TX_BATCHBS) {
     new Thread(new BatchRunner(i)).start()
   }
@@ -248,10 +248,12 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
                 dbBatchSaveList.addElement((pbo.toByteArray(), bits))
+                //TransactionSyncProcessor.offerMessage((SyncTransaction2TransactionBuilder(pbo.toByteArray()), bits, null))
               }
               if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
                 pbo.getTxHashList.map {
                   f => wallHashList.offer(f);
+                  //f => TransactionHashBrodcastor.offerMessage(f)
                 }
               }
             case _ =>
@@ -262,6 +264,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
               pbo.getTxHashList.map { txHash =>
                 tmpList.add((Hex.encodeHexString(txHash.toByteArray()), bits))
+                //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
               }
               confirmHashList.addAll(tmpList)
           }
@@ -281,6 +284,22 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
       }
     }
+
+
+    def SyncTransaction2TransactionBuilder(array: Array[Byte]): util.ArrayList[Transaction.Builder] = {
+      val pbo = PSSyncTransaction.newBuilder().mergeFrom(array);
+      val dbsaveList = new ArrayList[Transaction.Builder]();
+      for (x <- pbo.getTxDatasList) {
+        val oMultiTransaction = Transaction.newBuilder();
+        oMultiTransaction.mergeFrom(x);
+        if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getBcuid)) {
+          dbsaveList.add(oMultiTransaction)
+        }
+      }
+      dbsaveList
+    }
+
   }
+
   override def cmd: String = PCommand.BRT.name();
 }

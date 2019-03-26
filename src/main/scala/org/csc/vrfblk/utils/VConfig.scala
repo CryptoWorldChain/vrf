@@ -6,19 +6,19 @@ object VConfig {
   val prop: PropHelper = new PropHelper(null);
 
   val PROP_DOMAIN = "org.bc.vrf." //前缀
-  
+
   val GOSSIP_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "gossip.timeout.sec", 60); //2 seconds each block
 
   val BLOCK_MAKE_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.timeout.sec", 60); //2 seconds each block
 
   val SLICE_ID = prop.get(PROP_DOMAIN + "slice.id", 0); //2 seconds each block
 
-    //gossip线程初始化等待时间
+  //gossip线程初始化等待时间
   val INITDELAY_GOSSIP_SEC = prop.get(PROP_DOMAIN + "initdelay.gossip.sec", 60);
 
-    //gossip线程检查时间
+  //gossip线程检查时间
   val TICK_GOSSIP_SEC = prop.get(PROP_DOMAIN + "tick.gossip.sec", 120);
-   
+
   //打块时间；按秒计算，（已经废弃，后面用毫秒取代）
   val _DBLK_EPOCH_SEC = prop.get(PROP_DOMAIN + "blk.epoch.sec", 1); //2 seconds each block
 
@@ -41,6 +41,8 @@ object VConfig {
 
   //同步块时候，每一页最大块的数量
   val SYNCBLK_PAGE_SIZE = prop.get(PROP_DOMAIN + "syncblk.page.size", 10);
+
+  val SYNC_TX_SLEEP_MS = prop.get(PROP_DOMAIN + "synctx.sleep.ms", 0);
 
   //Term投票的比例
   val VOTE_QUORUM_RATIO = prop.get(PROP_DOMAIN + "vote.quorum.ratio", 60); //60%
@@ -164,7 +166,7 @@ object VConfig {
   val PARALL_SYNC_TX_WALLOUT = prop.get(PROP_DOMAIN + "parall.sync.tx.wallout", Runtime.getRuntime.availableProcessors());
 
   //当前节点是否参与挖矿
-  val RUN_COMINER = prop.get(PROP_DOMAIN + "run.cominer", 1); 
+  val RUN_COMINER = prop.get(PROP_DOMAIN + "run.cominer", 1);
 
   //打块时，tx需要经过多少节点确认才能进行打块，按照百分比计算
   val CREATE_BLOCK_TX_CONFIRM_PERCENT = prop.get(PROP_DOMAIN + "create.block.tx.confirm.percent", 80); //80%

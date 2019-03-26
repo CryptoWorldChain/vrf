@@ -1,28 +1,27 @@
 package org.csc.vrfblk.tasks
 
+import java.math.BigInteger
 import java.util.List
 
-import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
+import onight.tfw.otransio.api.PacketHelper
+import org.csc.bcapi.crypto.BitMap
+import org.csc.ckrand.pbgens.Ckrand
+import org.csc.ckrand.pbgens.Ckrand.{BlockWitnessInfo, PSNodeInfo, VNodeState}
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
-import org.fc.zippo.dispatcher.SingletonWorkShop
-import scala.collection.JavaConverters._
-import org.apache.commons.lang3.StringUtils
 import org.csc.vrfblk.Daos
-import scala.util.Random
-import org.csc.vrfblk.utils.RandFunction
-import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.vrfblk.msgproc.MPCreateBlock
-import org.csc.bcapi.crypto.BitMap
-import java.math.BigInteger
-import org.csc.vrfblk.utils.VConfig
-import onight.tfw.otransio.api.PacketHelper
-import com.google.protobuf.ByteString
+import org.csc.vrfblk.utils.{RandFunction, VConfig}
+import org.fc.zippo.dispatcher.SingletonWorkShop
+
+import scala.collection.JavaConverters._
 
 trait StateMessage {
 
 }
+
 case class BeaconConverge(height: Int, beaconSign: String, beaconHash: String, randseed: String) extends StateMessage;
+
 //状态转化器
 case class StateChange(newsign: String, newhash: String, prevhash: String) extends StateMessage;
 
@@ -34,12 +33,15 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
   def isRunning(): Boolean = {
     return running;
   }
+
   val NotaryBlockFP = PacketHelper.genPack("NOTARYBLOCK", "__VRF", "", true, 9);
 
   var notaryCheckHash: String = null;
+
   def notifyStateChange() {
     val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
+    log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
     var netBits = BigInteger.ZERO;
     try {
       if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
@@ -73,7 +75,23 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
-        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign);
+        val myWitness = VCtrl.coMinerByUID.filter {
+          case (bcuid: String, node: Ckrand.VNode) => {
+            val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
+            log.debug(s"node:${bcuid} state:${state}")
+            VNodeState.VN_DUTY_NOTARY.equals(state)
+          }
+        }.map {
+          case (bcuid: String, node: Ckrand.VNode) => node
+        }.toList
+
+        val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
+          .setBeaconHash(hash)
+          .setBlockheight(VCtrl.curVN().getCurBlock)
+          .setNetbitx(netBits.toString(16))
+          .addAllWitness(myWitness.asJava)
+
+        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign, blockWitness.build);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
         var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
@@ -88,10 +106,10 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             }
             if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
               //decide to make block
-              log.debug("reconsider cominers:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
               BeaconGossip.gossipBlocks();
             } else {
-              log.debug("cancel rechecking block:" + notaryCheckHash + ",sleep still:" + timeOutMS);
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
             }
           }
         })
@@ -102,6 +120,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     }
 
   }
+
   def runBatch(items: List[StateMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(m => {

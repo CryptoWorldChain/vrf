@@ -159,6 +159,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
+      //Node State Vote 查看自己是不是2/3中的一员
       Votes.vote(checkList).PBFTVote(n => {
         Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
