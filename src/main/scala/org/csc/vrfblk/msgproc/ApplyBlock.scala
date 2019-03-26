@@ -130,8 +130,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         }
         reqTx.addTxHash(txHash)
       }
+      reqTx
+    }else{
+      log.info("no transaction need sync in BlockResponse")
+      null
     }
-    reqTx
   }
 
   def getRandomSleepTime(blockHash: String): Long = {
@@ -143,7 +146,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
-
     this.synchronized {
       val miner = BlockEntity.parseFrom(block.getBlockHeader)
       val network = VCtrl.network
@@ -161,13 +163,22 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         }
       }
 
+
       val reqTx = buildReqTx(res)
+      if (reqTx == null) {
+        saveBlock(block, needBody)
+        return
+      }
+
       var rspTx = PRetGetTransaction.newBuilder()
 
       val cdl = new CountDownLatch(1)
       var notSuccess = true
       var counter = 0
       val start = System.currentTimeMillis()
+
+
+      log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
 
       while (cdl.getCount > 0 && counter < 6 && notSuccess) {
         try {
