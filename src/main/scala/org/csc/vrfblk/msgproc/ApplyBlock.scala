@@ -37,10 +37,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       if (vres.getTxHashsCount > 0) {
         log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
         // TODO: Sync Transaction  need Sleep for a while First
-        //val timeToSleep: Long = RandFunction.getRandMakeBlockSleep(block.getHeader.getHash.toString(),
-        //  new BigInteger(s"${VCtrl.coMinerByUID.size}", 10), VCtrl.curVN().getBitIdx);
-        //log.info(s"must sync transaction first, sync time ms${timeToSleep}")
-        //Thread.sleep(timeToSleep)
+
+        val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
+        log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
+        Thread.sleep(sleepMs)
         trySyncTransaction(b, needBody, vres)
 
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
@@ -131,7 +131,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         reqTx.addTxHash(txHash)
       }
       reqTx
-    }else{
+    } else {
       log.info("no transaction need sync in BlockResponse")
       null
     }
@@ -146,7 +146,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
-    this.synchronized {
+    this.synchronized({
       val miner = BlockEntity.parseFrom(block.getBlockHeader)
       val network = VCtrl.network
 
@@ -227,7 +227,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         }
       }
       saveBlock(block, needBody)
-    }
+    })
 
 
     //1. waiting to sync( get distance to sleep)
@@ -252,6 +252,33 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         .toList.asJava
         .get(Random.nextInt(indexRange))
     )
+  }
+
+  def getRandomSleepMS(minerBcuid: String): Long = {
+    var miner: Int= 0
+    val self = VCtrl.curVN().getBitIdx
+
+    val indexs = VCtrl.coMinerByUID.map(p => {
+      if (p._2.getBcuid.equals(minerBcuid)) {
+        miner = p._2.getBitIdx
+      }
+      p._2.getBitIdx
+    }).toList.sorted
+
+    val (min, max) = if (self > miner) {
+      (miner, self)
+    } else {
+      (self, miner)
+    }
+
+    var step = 0;
+
+    for (index <- indexs) {
+      if (index >= min && index < max) {
+        step += 1
+      }
+    }
+    step * VConfig.SYNC_TX_SLEEP_MS
   }
 
 }
