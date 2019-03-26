@@ -54,7 +54,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       if (hash.equals(pbo.getBeaconHash)){
         BlockProcessor.offerMessage(new ApplyBlock(pbo));
       } else {
-        log.warn("beaconhash not equal:: BH="+ pbo.getBlockEntry.getBlockhash + " num=" + block.getHeader.getNumber + " need=" + hash + " get=" + pbo.getBeaconHash)
+        log.warn("beaconhash not equal:: BH="+ pbo.getBlockEntry.getBlockhash + " num=" + block.getHeader.getNumber + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + pbo.getBeaconBits)
       }
       
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))

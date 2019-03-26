@@ -20,6 +20,7 @@ import java.util.BitSet
 object RandFunction extends LogHelper with BitMap {
 
   def genRandHash(curblockHash: String, prevRandHash: String, nodebits: String): (String, String) = {
+    log.debug("curblockHash::" + curblockHash + " prevRandHash::"+prevRandHash + " nodebits::"+nodebits);
     val content = Array(curblockHash, prevRandHash, nodebits).mkString(",");
     val hash = Daos.enc.sha256Encode(content.getBytes);
     val sign = Daos.enc.ecSignHex(
