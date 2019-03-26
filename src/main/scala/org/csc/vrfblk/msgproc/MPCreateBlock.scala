@@ -1,28 +1,13 @@
 package org.csc.vrfblk.msgproc
 
-import org.csc.vrfblk.Daos
 import java.math.BigInteger
 
-import org.csc.p22p.action.PMNodeHelper
+import com.google.protobuf.ByteString
+import onight.tfw.outils.serialize.UUIDGenerator
 import org.csc.bcapi.crypto.BitMap
-import org.csc.p22p.utils.LogHelper
-import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.vrfblk.tasks.VCtrl
-import org.csc.vrfblk.tasks.BlockMessage
-import org.csc.vrfblk.utils.BlkTxCalc
-import org.csc.vrfblk.utils.VConfig
-import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
-import onight.tfw.outils.serialize.UUIDGenerator
-import com.google.protobuf.ByteString
-import org.csc.vrfblk.utils.TxCache
-import org.csc.evmapi.gens.Tx.Transaction
-
-import scala.collection.mutable.ListBuffer
-
-import com.google.protobuf.ByteString
-import onight.tfw.outils.serialize.UUIDGenerator
 import org.csc.ckrand.pbgens.Ckrand.{BlockWitnessInfo, PBlockEntry, PSCoinbase}
+import org.csc.evmapi.gens.Block.BlockEntity
+import org.csc.evmapi.gens.Tx.Transaction
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.Daos
@@ -39,32 +24,22 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     val txs = Daos.txHelper.getWaitBlockTx(
       txc, //只是打块！其中某些成功广播的tx，默认是80%
       confirmTimes);
+
     //奖励节点
     val excitationAddress: ListBuffer[String] = new ListBuffer()
     if (witnessNode.getBeaconHash.equals(beaconHash)) {
       excitationAddress.appendAll(witnessNode.getWitnessList.asScala.map(node => node.getCoAddress).toList)
-      excitationAddress.append(VCtrl.curVN().getCoAddress)
     }
 
     log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
       s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
 
+
     val startblk = System.currentTimeMillis();
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, null);//extradata,term
+    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava);//extradata,term
     val endblk = System.currentTimeMillis();
 
     log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
-    //奖励节点
-    val excitationAddress: ListBuffer[String] = new ListBuffer()
-    if (witnessNode.getBeaconHash.equals(beaconHash)) {
-      excitationAddress.appendAll(witnessNode.getWitnessList.asScala.map(node => node.getCoAddress).toList)
-      excitationAddress.append(VCtrl.curVN().getCoAddress)
-    }
-
-    log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
-      s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
-
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava); //extradata,term
 
     val newblockheight = VCtrl.curVN().getCurBlock + 1
     if (newblk == null || newblk.getHeader == null) {
