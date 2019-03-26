@@ -103,9 +103,9 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
 
-
+  //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
       cn.setCurBlock(newblockheight)
-        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
+        .setBeaconHash(newblk.getMiner.getTermid)
         .setBeaconSign(beaconSig)
         .setCurBlockHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
         .setCurBlockMakeTime(now)

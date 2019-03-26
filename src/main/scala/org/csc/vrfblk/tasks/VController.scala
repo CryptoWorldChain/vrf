@@ -68,7 +68,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         //读取创世块HASH
-        cur_vnode.setCurBlockHash(new String(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
+        cur_vnode.setCurBlockHash(Daos.enc.hexEnc(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
       } else {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         //当前块BlockHASH
@@ -95,16 +95,20 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        if (Daos.chainHelper.getLastBlockNumber.intValue() == blockHeight) {
+        val blk = Daos.chainHelper.GetConnectBestBlock();
+        if (blk.getHeader.getNumber.intValue() == blockHeight) {
           if (blockHeight == cur_vnode.getCurBlock + 1) {
             cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
           }
-          cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+          cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
           //        cur_vnode.setCurBlock(blockHeight)
           cur_vnode.setVrfRandseeds(extraData);
           if (blockHash != null) {
             cur_vnode.setCurBlockHash(blockHash)
-            cur_vnode.setBeaconHash(blockHash);
+            
+            // beaconhash = blockMiner.termId
+            // cur_vnode.setBeaconHash(blockHash);
+            cur_vnode.setBeaconHash(blk.getMiner.getTermid);
           }
         }
         log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock

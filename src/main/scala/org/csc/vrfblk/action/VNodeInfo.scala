@@ -75,7 +75,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
                     .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
                     .setBlockExtrData(blk.getHeader.getExtData.toStringUtf8())
-                    .setBeaconHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                    .setBeaconHash(blk.getMiner.getTermid)
                     .setCurBlock(pbo.getGossipBlockInfo))
                   log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
                       +",lheight="+blk.getHeader.getNumber.intValue() +"GossipBEACONHash="+psret.getGossipMinerInfo.getBeaconHash);
@@ -107,7 +107,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                     psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
                       .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
                       .setBlockExtrData(blk.getHeader.getExtData.toStringUtf8())
-                      .setBeaconHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
+                      .setBeaconHash(blk.getMiner.getTermid)
                       .setCurBlock(pbo.getGossipBlockInfo))
                     log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
                         +",rheight="+blk.getHeader.getNumber.intValue());

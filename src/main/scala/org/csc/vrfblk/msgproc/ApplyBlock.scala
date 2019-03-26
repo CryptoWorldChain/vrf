@@ -68,7 +68,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     //    if(VCtrl.instance.b
 
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBlockEntry.getBlockhash));
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getPrevBeaconHash));
 
   }
 

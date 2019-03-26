@@ -49,12 +49,13 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",H=" + pbo.getBlockEntry.getBlockHeight);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+      val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()));
 
-      val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), pbo.getPrevBeaconHash, Daos.enc.hexEnc(block.getHeader.getExtData.toByteArray()));
+      val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, pbo.getBeaconBits);
       if (hash.equals(block.getMiner.getTermid)) {
         BlockProcessor.offerMessage(new ApplyBlock(pbo));
       } else {
-        log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " num=" + block.getHeader.getNumber + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + block.getHeader.getExtData + " PBO=" + pbo)
+        log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + pbo.getBeaconBits + " PBO=" + pbo)
       }
 
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))

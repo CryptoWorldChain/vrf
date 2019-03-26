@@ -140,7 +140,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
           if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
             //@TODO !should verify...
-            //            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setCurBlockHash(newhash);
+            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash);
+            //.setCurBlockHash(newhash);
             notifyStateChange();
           }
         }
