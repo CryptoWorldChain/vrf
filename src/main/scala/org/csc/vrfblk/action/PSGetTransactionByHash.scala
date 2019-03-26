@@ -32,10 +32,11 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
 
   override def onPBPacket(pack: FramePacket, pbo: PSGetTransaction, handler: CompleteHandler): Unit = {
     val ret = PRetGetTransaction.newBuilder()
-    log.info("")
     if (VCtrl.isReady()) {
       try {
         val from = pack.getExtProp(PackHeader.PACK_FROM)
+        log.info(s"SRT SYNCTX request ${from}, need TX COUNT${pbo.getTxHashList.size()} ,self bcuid=${VCtrl.curVN().getBcuid}")
+
         var i = 0
         for (wantedHash: String <- pbo.getTxHashList.asScala) {
           val transactionX = TxCache.getTx(wantedHash) match {
@@ -51,7 +52,7 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
           } else {
             i += 1
             if (i < 11) {
-              log.info(s"can not get tx by HASH ${wantedHash} , from=${from}, node=${VCtrl.curVN().getBcuid}")
+              log.info(s"can not get tx by HASH ${wantedHash}")
             }
           }
         }
