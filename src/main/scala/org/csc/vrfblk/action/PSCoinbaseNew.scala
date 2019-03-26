@@ -5,12 +5,14 @@ import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
 import org.csc.ckrand.pbgens.Ckrand.PCommand
 import org.csc.ckrand.pbgens.Ckrand.PSCoinbase
+import org.csc.evmapi.gens.Block.BlockEntity
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.PSMVRFNet
 import org.csc.vrfblk.tasks.BlockProcessor
 import org.csc.vrfblk.tasks.VCtrl
 
+import org.csc.vrfblk.utils.RandFunction
 import onight.oapi.scala.commons.LService
 import onight.oapi.scala.commons.PBUtils
 import onight.osgi.annotation.NActorProvider
@@ -23,6 +25,7 @@ import onight.tfw.otransio.api.session.CMDService
 import org.csc.vrfblk.msgproc.ApplyBlock
 import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.Initialize
+import org.csc.vrfblk.Daos
 
 @NActorProvider
 @Instantiate
@@ -43,8 +46,17 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash+",H="+pbo.getBlockEntry.getBlockHeight);
-      BlockProcessor.offerMessage(new ApplyBlock(pbo));
+      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",H=" + pbo.getBlockEntry.getBlockHeight);
+      // 校验beaconHash和区块hash是否匹配，排除异常区块
+      val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+      
+      val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), pbo.getPrevBeaconHash, pbo.getBeaconBits);
+      if (hash.equals(pbo.getBeaconHash)){
+        BlockProcessor.offerMessage(new ApplyBlock(pbo));
+      } else {
+        log.warn("beaconhash not equal:: BH="+ pbo.getBlockEntry.getBlockhash + " num=" + block.getHeader.getNumber + " need=" + hash + " get=" + pbo.getBeaconHash)
+      }
+      
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }

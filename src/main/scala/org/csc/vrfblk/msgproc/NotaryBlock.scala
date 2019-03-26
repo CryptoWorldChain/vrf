@@ -41,6 +41,7 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
     }, mapToHex(pbo.getWitnessBits).bitCount) match {
       case Converge(blockhash) =>
         log.info("get merge blockhash :" + blockhash + ",height=" + pbo.getBlockHeight);
+        Daos.chainHelper.confirmBlock(blockhash.toString());
       case n: NotConverge =>
         log.info("cannot get converge for pbft vote:" + vs.get.size);
       case n @ _ =>
