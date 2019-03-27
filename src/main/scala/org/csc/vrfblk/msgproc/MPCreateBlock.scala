@@ -1,6 +1,7 @@
 package org.csc.vrfblk.msgproc
 
 import java.math.BigInteger
+import java.util.concurrent.TimeUnit
 
 import com.google.protobuf.ByteString
 import onight.tfw.outils.serialize.UUIDGenerator
@@ -35,22 +36,61 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
 
 
-    val startblk = System.currentTimeMillis();
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava);//extradata,term
-    val endblk = System.currentTimeMillis();
+    //  val startblk = System.currentTimeMillis();
+    //  val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava); //extradata,term
+    //  val endblk = System.currentTimeMillis();
+    //
+    //  log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk) + ",dbh=" + newblk);
+    //
+    //  val newblockheight = VCtrl.curVN().getCurBlock + 1
+    //  if (newblk == null || newblk.getHeader == null) {
+    //    log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
+    //    (null, null)
+    //  } else if (newblockheight != newblk.getHeader.getNumber) {
+    //    log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
+    //    (null, null)
+    //  } else {
+    //    (newblk, txs)
+    //  }
+    //} else {
+    //  log.warn("node is apply block now,Lost Block changce")
+    //  (null, null)
 
-    log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
+    @volatile var result: (BlockEntity, java.util.List[Transaction]) = (null, null)
+    @volatile var keepWait = true
+    val eachTime = VConfig.BLK_EPOCH_MS / 10
+    for (i <- 0 until 10 if keepWait) {
+      if (VCtrl.blockLock.tryLock(eachTime, TimeUnit.MILLISECONDS)) {
+        keepWait = false
+        try {
+          val startblk = System.currentTimeMillis();
+          val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava); //extradata,term
+          val endblk = System.currentTimeMillis();
 
-    val newblockheight = VCtrl.curVN().getCurBlock + 1
-    if (newblk == null || newblk.getHeader == null) {
-      log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
-      (null, null)
-    } else if (newblockheight != newblk.getHeader.getNumber) {
-      log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
-      (null, null)
-    } else {
-      (newblk, txs)
+          log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk) + ",dbh=" + newblk);
+
+          val newblockheight = VCtrl.curVN().getCurBlock + 1
+          if (newblk == null || newblk.getHeader == null) {
+            log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
+            result = (null, null)
+          } else if (newblockheight != newblk.getHeader.getNumber) {
+            log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
+            result = (null, null)
+          } else {
+            result = (newblk, txs)
+          }
+        } finally {
+          VCtrl.blockLock.unlock()
+        }
+      }
     }
+    if (keepWait) {
+      log.warn(s"node is apply block now,Lost Block Chance, beacon:${beaconHash}, blockHeight${witnessNode.getBlockheight}")
+      result = (null, null)
+    }
+
+    result
+
   }
 
   def proc(): Unit = {
