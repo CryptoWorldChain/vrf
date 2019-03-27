@@ -95,17 +95,17 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                             maxid = block.getHeader.getNumber.intValue();
                           }
                           log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +
-                            new String(block.getHeader.getExtData.toByteArray()));
+                            block.getMiner.getBit);
                         } else {
 
                           log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
                             + ",prev=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + ",seed=" +
-                            new String(block.getHeader.getExtData.toByteArray()));
+                            block.getMiner.getBit);
                         }
                       }
                       log.debug("checkMiner --> maxid::" + maxid)
                       if (maxid > 0) {
-                        VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), new String(lastSuccessBlock.getHeader.getExtData.toByteArray()))
+                        VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
                       }
                     }
                   }

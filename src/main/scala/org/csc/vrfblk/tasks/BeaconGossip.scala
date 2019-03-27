@@ -55,7 +55,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def gossipBlocks() {
     try {
       currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
-
+      log.debug("put gossip::" + VCtrl.curVN());
       BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
     } catch {
       case t: Throwable =>
@@ -74,7 +74,6 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           log.debug("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
             + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds);
         }
-
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
 
@@ -145,12 +144,16 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           log.debug("rollback setgetGossipBlockInfo= " + p.getGossipMinerInfo.getCurBlock + ",from = " + p.getVn.getBcuid
             + ",hash=" + p.getGossipMinerInfo.getBeaconHash + ",b=" + p.getGossipMinerInfo.getCurBlock);
 
+          log.debug("set vrfrandseed::" + p.getGossipMinerInfo.getBlockExtrData);
+
           checkList.+=(VNode.newBuilder().setCurBlock(p.getGossipMinerInfo.getCurBlock)
             .setCurBlockHash(p.getGossipMinerInfo.getCurBlockHash)
             .setBeaconHash(p.getGossipMinerInfo.getBeaconHash)
-            .setVrfRandseeds(p.getGossipMinerInfo.getBlockExtrData)
+            .setVrfRandseeds(p.getGossipMinerInfo.getBlockExtrData) // netbits
             .build());
         } else {
+          log.debug(" beacon gossip:: getCurBlock=" + p.getVn.getCurBlock + " getCurBlockHash==" + p.getVn.getCurBlockHash + " getBeaconHash=" + p.getVn.getBeaconHash + " getVrfRandseeds=" + p.getVn.getVrfRandseeds);
+
           checkList.+=(p.getVn);
         }
       })
@@ -159,19 +162,20 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
+      
       //Node State Vote 查看自己是不是2/3中的一员
       Votes.vote(checkList).PBFTVote(n => {
         Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
-        case Converge((height: Int, sign: String, hash: String, randseed: String)) =>
-          log.info("get merge beacon sign = :" + sign + ",hash=" + hash + ",height=" + height + ",currentheight="
+        case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
+          log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
             + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
-            NodeStateSwitcher.offerMessage(new BeaconConverge(height, sign, hash, randseed));
+            NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
           }
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx

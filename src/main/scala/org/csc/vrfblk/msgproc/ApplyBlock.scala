@@ -51,7 +51,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
 
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+        // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
@@ -59,16 +60,19 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     } else {
       //      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
-      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+      // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
       (b.getBlockHeight, b.getBlockHeight)
     }
   }
 
   def tryNotifyState() {
     //    if(VCtrl.instance.b
-
-    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getPrevBeaconHash, VCtrl.network().node_strBits)
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getPrevBeaconHash));
+    
+    val nodeBit = VCtrl.network().node_strBits;
+    log.debug("tryNotifyState:: pbo=" + pbo + " node_strBits=" + nodeBit)
+    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, nodeBit)
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, nodeBit));
 
   }
 
@@ -166,7 +170,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
       val reqTx = buildReqTx(res)
       if (reqTx == null) {
-        saveBlock(block, needBody)
+        // saveBlock(block, needBody)
         return
       }
 
@@ -226,7 +230,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           case t: Throwable => log.error("get Transaction failed:", t)
         }
       }
-      saveBlock(block, needBody)
+      BlockProcessor.offerMessage(new ApplyBlock(pbo));
+      // saveBlock(block, needBody)
     })
 
 

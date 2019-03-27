@@ -65,17 +65,21 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
     if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
       log.info("vrf block Info load from DB:c=" +
         cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
+      
+      
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         //读取创世块HASH
         cur_vnode.setCurBlockHash(Daos.enc.hexEnc(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
+        cur_vnode.setBeaconHash("")
       } else {
-        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+        val blk = Daos.chainHelper.GetConnectBestBlock();
+        cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
         //当前块BlockHASH
-        cur_vnode.setCurBlockHash(Daos.chainHelper.GetConnectBestBlockHash());
-
+        cur_vnode.setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()));
+        cur_vnode.setBeaconHash(blk.getMiner.getTermid)
       }
-      cur_vnode.setBeaconHash(cur_vnode.getCurBlockHash)
+
       heightBlkSeen.set(cur_vnode.getCurBlock);
       syncToDB();
     }
@@ -95,14 +99,14 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        val blk = Daos.chainHelper.GetConnectBestBlock();
+        val blk = Daos.blkHelper.getBlock(blockHash);
         if (blk.getHeader.getNumber.intValue() == blockHeight) {
           if (blockHeight == cur_vnode.getCurBlock + 1) {
             cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
           }
           cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
           //        cur_vnode.setCurBlock(blockHeight)
-          cur_vnode.setVrfRandseeds(extraData);
+          cur_vnode.setVrfRandseeds(blk.getMiner.getBit);
           if (blockHash != null) {
             cur_vnode.setCurBlockHash(blockHash)
             
