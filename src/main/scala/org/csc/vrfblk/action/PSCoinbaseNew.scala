@@ -50,7 +50,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
       val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()));
-      val nodebits = if (block.getHeader.getNumber == 1) pbo.getBeaconBits else parentBlock.getHeader.getExtData.toStringUtf8();
+      val nodebits = parentBlock.getMiner.getBit;
   
       val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits );
       if (hash.equals(block.getMiner.getTermid)) {

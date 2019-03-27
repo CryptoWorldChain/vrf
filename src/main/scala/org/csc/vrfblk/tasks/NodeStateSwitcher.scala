@@ -147,9 +147,11 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         }
         case init: Initialize => {
           if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
+            val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
+            val nodeBit = VCtrl.curVN().getCurBlock == 0
             val (hash, sign) = RandFunction.genRandHash(
               VCtrl.curVN().getCurBlockHash,
-              VCtrl.curVN().getPrevBlockHash, VCtrl.network().node_strBits);
+              VCtrl.curVN().getPrevBlockHash, block.getMiner.getBit);
             VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
             BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
           }

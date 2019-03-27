@@ -36,7 +36,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
 
 
     val startblk = System.currentTimeMillis();
-    val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava);//extradata,term
+    val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);//extradata,term
     val endblk = System.currentTimeMillis();
 
     log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
