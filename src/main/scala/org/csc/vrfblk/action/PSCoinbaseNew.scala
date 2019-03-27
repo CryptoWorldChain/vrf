@@ -46,17 +46,8 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",H=" + pbo.getBlockEntry.getBlockHeight);
-      // 校验beaconHash和区块hash是否匹配，排除异常区块
-      val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
-      
-      val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), pbo.getPrevBeaconHash, pbo.getBeaconBits);
-      if (hash.equals(pbo.getBeaconHash)){
-        BlockProcessor.offerMessage(new ApplyBlock(pbo));
-      } else {
-        log.warn("beaconhash not equal:: BH="+ pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " num=" + block.getHeader.getNumber + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + pbo.getBeaconBits + ", PBO="+pbo)
-      }
-      
+      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash+",H="+pbo.getBlockEntry.getBlockHeight);
+      BlockProcessor.offerMessage(new ApplyBlock(pbo));
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }
