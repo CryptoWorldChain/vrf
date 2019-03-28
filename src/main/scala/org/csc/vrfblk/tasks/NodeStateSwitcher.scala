@@ -134,7 +134,11 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           //          if (height >= VCtrl.curVN().getCurBlock) {
           VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
             .setCurBlock(height);
-          notifyStateChange(hash, mapToBigInt(seed).bigInteger);
+          
+          val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
+          NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed));
+
+          // notifyStateChange(VCtrl.curVN().getBeaconHash, mapToBigInt(seed).bigInteger);
           //          } else {
           //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
           //          }

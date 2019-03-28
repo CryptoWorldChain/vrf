@@ -55,7 +55,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       } else {
         val nodebits = if(block.getHeader.getNumber==1) "" else block.getMiner.getBit;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits );
-        if (hash.equals(block.getMiner.getTermid)) {
+        if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber==1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
           log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)

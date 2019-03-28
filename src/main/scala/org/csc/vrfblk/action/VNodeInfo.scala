@@ -97,8 +97,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                         .setBeaconHash(blk.getMiner.getTermid)
                         .setCurBlock(pbo.getGossipBlockInfo))
                         
-                     
-                          log.debug("set beancon bh=" + Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()) + " hash::" + blk.getMiner.getTermid)
+                  log.debug("set beancon bh=" + Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()) + " hash::" + blk.getMiner.getTermid)
                   psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTermid).setVrfRandseeds(blk.getMiner.getBit));
                        
                 }
