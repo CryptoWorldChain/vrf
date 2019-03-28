@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.mutable.Map
-
 import org.apache.commons.lang3.StringUtils
 import org.csc.bcapi.JodaTimeHelper
 import org.csc.bcapi.exec.SRunner
@@ -15,14 +14,13 @@ import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.node.Network
 import org.csc.p22p.node.Node
 import org.csc.p22p.utils.LogHelper
-
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-
 import onight.tfw.async.CallBack
 import onight.tfw.otransio.api.beans.FramePacket
 import org.csc.bcapi.gens.Oentity.OValue
 import java.math.BigInteger
+
 import org.csc.ckrand.pbgens.Ckrand.VNode
 import org.csc.vrfblk.Daos
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
@@ -31,8 +29,11 @@ import org.csc.ckrand.pbgens.Ckrand.VNodeState
 import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReentrantLock
+
 import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
+
 import scala.collection.JavaConverters._
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -134,6 +135,8 @@ object VCtrl extends LogHelper {
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
   def curVN(): VNode.Builder = instance.cur_vnode
+  //防止ApplyBlock时节点Make出相同高度的block
+  val blockLock:ReentrantLock = new ReentrantLock();
 
   def getFastNode(): String = {
     var fastNode = curVN().build();
