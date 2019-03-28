@@ -1,6 +1,7 @@
 package org.csc.vrfblk.msgproc
 
 import java.math.BigInteger
+import java.util.concurrent.TimeUnit
 
 import com.google.protobuf.ByteString
 import onight.tfw.outils.serialize.UUIDGenerator
@@ -34,23 +35,43 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
       s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
 
+    @volatile var result: (BlockEntity, java.util.List[Transaction]) = (null, null)
+    @volatile var keepWait = true
+    val eachTime = VConfig.BLK_EPOCH_MS / 10
+    for (i <- 0 until 10 if keepWait) {
+      if (VCtrl.blockLock.tryLock(eachTime, TimeUnit.MILLISECONDS)) {
+        keepWait = false
+        try {
+          log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
+          val startblk = System.currentTimeMillis();
+          val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);
+          //extradata,term
+          val endblk = System.currentTimeMillis();
 
-    val startblk = System.currentTimeMillis();
-    val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);//extradata,term
-    val endblk = System.currentTimeMillis();
+          log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk) + ",dbh=" + newblk);
 
-    log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" +(endblk - startblk) + ",dbh=" + newblk);
-
-    val newblockheight = VCtrl.curVN().getCurBlock + 1
-    if (newblk == null || newblk.getHeader == null) {
-      log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
-      (null, null)
-    } else if (newblockheight != newblk.getHeader.getNumber) {
-      log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
-      (null, null)
-    } else {
-      (newblk, txs)
+          val newblockheight = VCtrl.curVN().getCurBlock + 1
+          if (newblk == null || newblk.getHeader == null) {
+            log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
+            result = (null, null)
+          } else if (newblockheight != newblk.getHeader.getNumber) {
+            log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
+            result = (null, null)
+          } else {
+            result = (newblk, txs)
+          }
+        } finally {
+          log.info(s"UNLOCK to NewBlock time:${System.currentTimeMillis()}")
+          VCtrl.blockLock.unlock()
+        }
+      }
     }
+    if (keepWait) {
+      log.warn(s"node is apply block now,Lost Block Chance, beacon:${beaconHash}, blockHeight${witnessNode.getBlockheight}")
+      result = (null, null)
+    }
+
+    result
   }
 
   def proc(): Unit = {
@@ -59,11 +80,11 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     MDCSetBCUID(VCtrl.network())
     var newNetBits = netBits; //(VCtrl.network().node_strBits).bigInteger;
     if (netBits.bitCount() < VCtrl.coMinerByUID.size) {
-      log.debug("netBits must change:: bc="+netBits.bitCount()+ " size="+VCtrl.coMinerByUID.size)
-    //  newNetBits = BigInteger.ZERO
-    //  VCtrl.coMinerByUID.map(f => {
-    //    newNetBits = newNetBits.setBit(f._2.getBitIdx);
-    //  })
+      log.debug("netBits must change:: bc=" + netBits.bitCount() + " size=" + VCtrl.coMinerByUID.size)
+      //  newNetBits = BigInteger.ZERO
+      //  VCtrl.coMinerByUID.map(f => {
+      //    newNetBits = newNetBits.setBit(f._2.getBitIdx);
+      //  })
     }
 
     //需要广播的节点数量
@@ -104,7 +125,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
         .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
         .setWitnessBits(hexToMapping(notarybits))
 
-  //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
+      //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
       cn.setCurBlock(newblockheight)
         .setBeaconHash(newblk.getMiner.getTermid)
         .setBeaconSign(beaconSig)

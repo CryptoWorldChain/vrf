@@ -33,31 +33,41 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
-      val vres = Daos.blkHelper.ApplyBlock(block, needBody);
-      if (vres.getTxHashsCount > 0) {
-        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
-        // TODO: Sync Transaction  need Sleep for a while First
+      if (VCtrl.blockLock.tryLock()) {
+        try {
+          val vres = Daos.blkHelper.ApplyBlock(block, needBody);
+          if (vres.getTxHashsCount > 0) {
+            log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
+            // TODO: Sync Transaction  need Sleep for a while First
 
-        val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
-        log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
-        Thread.sleep(sleepMs)
-        trySyncTransaction(b, needBody, vres)
+            val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
+            log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
+            Thread.sleep(sleepMs)
+            trySyncTransaction(b, needBody, vres)
 
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
-      } else if (vres.getCurrentNumber > 0) {
-        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-        //        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
-        if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
-          BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
+            (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+          } else if (vres.getCurrentNumber > 0) {
+            log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
+            //        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
+            if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
+              BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
+            }
+
+            // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+            VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+            (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+          } else {
+            (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+          }
+        } finally {
+          log.info(s"UNLOCK ApplyBlock time:${System.currentTimeMillis()}")
+          VCtrl.blockLock.unlock()
         }
-
-        // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+        log.info(s"apply block lock failed! blockNum:${block.getHeader.getNumber}")
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
+        (b.getBlockHeight, b.getBlockHeight)
       }
-
     } else {
       //      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
       // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
@@ -68,7 +78,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   def tryNotifyState() {
     //    if(VCtrl.instance.b
-    
+
     val nodeBit = VCtrl.network().node_strBits;
     log.debug("tryNotifyState:: pbo=" + pbo + " node_strBits=" + nodeBit)
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, nodeBit)
@@ -260,7 +270,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   def getRandomSleepMS(minerBcuid: String): Long = {
-    var miner: Int= 0
+    var miner: Int = 0
     val self = VCtrl.curVN().getBitIdx
 
     val indexs = VCtrl.coMinerByUID.map(p => {
