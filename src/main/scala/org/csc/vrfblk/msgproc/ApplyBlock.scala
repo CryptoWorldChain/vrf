@@ -34,6 +34,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       val startupApply = System.currentTimeMillis();
       if (VCtrl.blockLock.tryLock()) {
         try {
+          log.info(s"LOCK to ApplyBlock time:${System.currentTimeMillis()}")
           val vres = Daos.blkHelper.ApplyBlock(block, needBody);
           if (vres.getTxHashsCount > 0) {
             log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
@@ -58,6 +59,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
           }
         } finally {
+          log.info(s"UNLOCK ApplyBlock time:${System.currentTimeMillis()}")
           VCtrl.blockLock.unlock()
         }
       } else {

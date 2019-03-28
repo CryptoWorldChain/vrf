@@ -63,6 +63,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       if (VCtrl.blockLock.tryLock(eachTime, TimeUnit.MILLISECONDS)) {
         keepWait = false
         try {
+          log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
           val startblk = System.currentTimeMillis();
           val newblk = Daos.blkHelper.createNewBlock(txs, voteInfos, beaconHash, excitationAddress.asJava); //extradata,term
           val endblk = System.currentTimeMillis();
@@ -80,6 +81,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
             result = (newblk, txs)
           }
         } finally {
+          log.info(s"UNLOCK to NewBlock time:${System.currentTimeMillis()}")
           VCtrl.blockLock.unlock()
         }
       }
