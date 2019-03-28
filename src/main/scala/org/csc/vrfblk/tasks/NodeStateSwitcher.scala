@@ -38,9 +38,9 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
   var notaryCheckHash: String = null;
 
-  def notifyStateChange(netbits1: BigInteger) {
+  def notifyStateChange(hash: String, netbits1: BigInteger) {
     var netBits = netbits1;
-    val hash = VCtrl.curVN().getBeaconHash;
+    // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
     log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
 //    var netBits = BigInteger.ZERO;
@@ -134,7 +134,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           //          if (height >= VCtrl.curVN().getCurBlock) {
           VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
             .setCurBlock(height);
-          notifyStateChange(mapToBigInt(seed).bigInteger);
+          notifyStateChange(hash, mapToBigInt(seed).bigInteger);
           //          } else {
           //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
           //          }
@@ -145,7 +145,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             //@TODO !should verify...
             VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
             //.setCurBlockHash(newhash);
-            notifyStateChange(mapToBigInt(netbits).bigInteger);
+            notifyStateChange(newhash, mapToBigInt(netbits).bigInteger);
           }
         }
         case init: Initialize => {
