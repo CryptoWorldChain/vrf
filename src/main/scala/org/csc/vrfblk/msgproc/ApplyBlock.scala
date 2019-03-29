@@ -80,13 +80,14 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     //    if(VCtrl.instance.b
 
     var nodeBit = mapToBigInt(VCtrl.network().node_strBits).bigInteger;
-    
+
     log.debug("tryNotifyState:: pbo=" + pbo + " node_strBits=" + nodeBit)
     if (nodeBit.bitCount() < VCtrl.coMinerByUID.size) {
       log.debug("netBits must change:: bc=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
       nodeBit = BigInteger.ZERO
       VCtrl.coMinerByUID.map(f => {
-          nodeBit = nodeBit.setBit(f._2.getBitIdx);
+        log.info(s"!!!bcuid=${f._1}, m=${f}")
+        nodeBit = nodeBit.setBit(f._2.getBitIdx);
       })
     }
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, hexToMapping(nodeBit))
