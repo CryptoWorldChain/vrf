@@ -48,18 +48,20 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
           //extradata,term
           val endblk = System.currentTimeMillis();
 
-          log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk) + ",dbh=" + newblk);
+          log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
 
-          val newblockheight = VCtrl.curVN().getCurBlock + 1
-          if (newblk == null || newblk.getHeader == null) {
-            log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
-            result = (null, null)
-          } else if (newblockheight != newblk.getHeader.getNumber) {
-            log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
-            result = (null, null)
-          } else {
-            result = (newblk, txs)
-          }
+          //val newblockheight = VCtrl.curVN().getCurBlock + 1
+          //if (newblk == null || newblk.getHeader == null) {
+          //  log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
+          //  result = (null, null)
+          //} else if (newblockheight != newblk.getHeader.getNumber) {
+          //  log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
+          //  result = (null, null)
+          //} else {
+          //  result = (newblk, txs)
+          //}
+
+          result = (newblk, txs)
         } finally {
           log.info(s"UNLOCK to NewBlock time:${System.currentTimeMillis()}")
           VCtrl.blockLock.unlock()
