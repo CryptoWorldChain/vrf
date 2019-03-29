@@ -86,7 +86,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       log.debug("netBits must change:: bc=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
       nodeBit = BigInteger.ZERO
       VCtrl.coMinerByUID.map(f => {
-        log.info(s"!!!bcuid=${f._1}, m=${f}")
         nodeBit = nodeBit.setBit(f._2.getBitIdx);
       })
     }

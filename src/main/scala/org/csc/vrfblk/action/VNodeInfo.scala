@@ -64,7 +64,6 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
             // 如果消息是自己发的
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
-              log.info(s"!!!pbo.getVn.getBcuid${pbo.getVn.getBcuid}, pbo.getVn=${pbo.getVn}")
               VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId);
               if (pbo.getGossipBlockInfo == 0) {
@@ -135,7 +134,6 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                 if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
                   // 成为打快节点
                   log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
-                  log.info(s"!!!pbo.getVn.getBcuid${pbo.getVn.getBcuid}, pbo.getVn=${pbo.getVn}")
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
                 }
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
