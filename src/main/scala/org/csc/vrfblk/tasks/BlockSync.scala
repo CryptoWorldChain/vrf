@@ -48,7 +48,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
   def runBatch(items: List[SyncInfo]): Unit = {
     MDCSetBCUID(VCtrl.network())
-    items.asScala.map(m => {
+    items.asScala.foreach(m => {
       //should wait
       m match {
         case syncInfo: GossipRecentBlocks =>
@@ -84,7 +84,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.debug("realBlockCount=" + realmap.size);
                       var lastSuccessBlock: BlockEntityOrBuilder = null;
-                      realmap.map { b =>
+                      realmap.foreach { b =>
                         //同步执行 apply 并验证返回结果
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
                         val vres = Daos.blkHelper.ApplyBlock(block, true);

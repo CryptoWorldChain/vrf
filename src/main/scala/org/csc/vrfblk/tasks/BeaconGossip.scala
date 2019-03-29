@@ -32,6 +32,7 @@ case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHas
 
 object BeaconTask extends SRunner {
   def getName() = "beacontask"
+
   def runOnce() = {
     log.debug("time check try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
       + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
@@ -43,6 +44,7 @@ object BeaconTask extends SRunner {
     }
   }
 }
+
 object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHelper with LogHelper {
   var running: Boolean = true;
   val incomingInfos = new ConcurrentHashMap[String, PSNodeInfoOrBuilder]();
@@ -62,6 +64,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         log.debug("error in gossip blocks:", t);
     }
   }
+
   def runBatch(items: List[PSNodeInfoOrBuilder]): Unit = {
     MDCSetBCUID(VCtrl.network())
     items.asScala.map(pn =>
@@ -72,7 +75,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
         } else {
           log.debug("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
-            + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds+"nodeHeight="+VCtrl.curVN().getCurBlock);
+            + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds + "nodeHeight=" + VCtrl.curVN().getCurBlock);
         }
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
@@ -82,6 +85,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     tryMerge();
     tryGossip();
   }
+
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
       || !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
@@ -162,7 +166,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
       }
-      
+
       //Node State Vote 查看自己是不是2/3中的一员
       Votes.vote(checkList).PBFTVote(n => {
         Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
@@ -190,7 +194,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             incomingInfos.clear();
             tryRollbackBlock();
           }
-        case n @ _ =>
+        case n@_ =>
           log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
             + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
             + ",messageid=" + currentBR.messageId);
@@ -206,6 +210,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
     }
   }
+
   def tryRollbackBlock() {
 
     incomingInfos.clear();
