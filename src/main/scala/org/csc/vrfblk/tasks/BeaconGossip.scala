@@ -187,7 +187,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             // syncBlock(maxHeight, suggestStartIdx, frombcuid);
-            syncBlock(height, suggestStartIdx, frombcuid);
+            syncBlock(height, suggestStartIdx.intValue, frombcuid);
           } else {
             NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
           }
@@ -199,7 +199,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             incomingInfos.clear();
-            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
           } else if (size >= currentBR.votebase * 4 / 5) {
             incomingInfos.clear();
             tryRollbackBlock();
@@ -211,7 +211,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             incomingInfos.clear();
-            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
           } else if (size >= currentBR.votebase * 4 / 5) {
             incomingInfos.clear();
             tryRollbackBlock();
