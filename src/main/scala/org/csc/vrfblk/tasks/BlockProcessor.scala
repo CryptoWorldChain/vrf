@@ -59,7 +59,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
-              synchronized(blockMakeCheckHash){
+              blockMakeCheckHash.synchronized{
               log.debug("do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blockMakeCheckHash +  " prebeacon=" + blkInfo.preBeaconHash)
                 if (Daos.chainHelper.GetConnectBestBlock() == null 
                   || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) 
