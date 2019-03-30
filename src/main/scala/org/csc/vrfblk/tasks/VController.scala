@@ -93,10 +93,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
   def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
-    //    log.debug("checkMiner --> updateBlockHeight blockHeight::" + blockHeight + " cur_vnode.getCurBlock::" + cur_vnode.getCurBlock
-    //       +",rand="+extraData);
-    if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
 
+    //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
+
+      log.debug("updateBlockHeight blockHeight=" +blockHeight + " blockHash="+blockHash + " bits=" + extraData)
       Daos.blkHelper.synchronized({
         cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
         cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
@@ -120,7 +120,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
           + ",hash=" + blockHash + ",seed=" + extraData);
         syncToDB()
       })
-    }
+    //}
   }
 
   def startup() = {

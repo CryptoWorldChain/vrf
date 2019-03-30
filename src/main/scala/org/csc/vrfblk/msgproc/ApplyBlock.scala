@@ -47,22 +47,28 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-        //        VCtrl.instance.updateBlockHeight( vres.getCurrentNumber.intValue(), if (vres.getCurrentNumber.intValue() == b.getBlockHeight) b.getSign else null, block.getHeader.getExtraData)
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-
-        // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+        val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+        if (lastBlock != null) {
+          VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+        } else {
+          VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+        }
+        
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       }
 
     } else {
-      //      log.debug("checkMiner --> updateBlockHeight::" + b.getBlockHeight)
-      // VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, new String(block.getHeader.getExtData.toByteArray()))
-      VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+      val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+      if (lastBlock != null) {
+        VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+      } else {
+        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+      }
       (b.getBlockHeight, b.getBlockHeight)
     }
   }

@@ -88,10 +88,9 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         //同步执行 apply 并验证返回结果
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
                         val vres = Daos.blkHelper.ApplyBlock(block, true);
-
+                        lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
                         if (vres.getCurrentNumber >= b.getBlockHeight) {
                           if (vres.getCurrentNumber > maxid) {
-                            lastSuccessBlock = block
                             maxid = block.getHeader.getNumber.intValue();
                           }
                           log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +

@@ -52,6 +52,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()));
       if (parentBlock == null) {
         log.warn("not found parent block:: bh=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()))
+        BlockProcessor.offerMessage(new ApplyBlock(pbo));
       } else {
         val nodebits = if(block.getHeader.getNumber==1) "" else block.getMiner.getBit;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits );
