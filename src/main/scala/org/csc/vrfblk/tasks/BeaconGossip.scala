@@ -233,7 +233,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         val messageId = UUIDGenerator.generate();
         log.debug("rollback --> start to gossip from starBlock:" + (startBlock));
         BeaconGossip.gossipBeaconInfo(startBlock)
-        startBlock = -5;
+        startBlock = -100;
       } else {
         startBlock = startBlock - 1;
       }
