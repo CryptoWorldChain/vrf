@@ -43,7 +43,7 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     //extradata,term
     val endblk = System.currentTimeMillis();
 
-    log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
+    log.debug("new block ok:beaconHash=" + beaconHash+ " txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
 
     //val newblockheight = VCtrl.curVN().getCurBlock + 1
     //if (newblk == null || newblk.getHeader == null) {

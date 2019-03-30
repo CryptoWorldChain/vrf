@@ -78,7 +78,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     var nodeBit = mapToBigInt(VCtrl.network().node_strBits).bigInteger;
 
-    log.debug("tryNotifyState:: pbo=" + pbo + " node_strBits=" + nodeBit)
     if (nodeBit.bitCount() < VCtrl.coMinerByUID.size) {
       log.debug("netBits must change:: bc=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
       nodeBit = BigInteger.ZERO
