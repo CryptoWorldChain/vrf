@@ -147,11 +147,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           maxHeight = p.getVn.getCurBlock;
           frombcuid = p.getVn.getBcuid;
         }
-        //if (p.getSugguestStartSyncBlockId < suggestStartIdx && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
-        //  && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
-        //  log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
-        //  suggestStartIdx = p.getSugguestStartSyncBlockId;
-        //}
+        if (p.getSugguestStartSyncBlockId < suggestStartIdx 
+          && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
+          && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
+          log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
+          suggestStartIdx = p.getSugguestStartSyncBlockId;
+        }
         if (p.getGossipBlockInfo > 0) {
 
           log.debug("rollback setgetGossipBlockInfo= " + p.getGossipMinerInfo.getCurBlock + ",from = " + p.getVn.getBcuid
@@ -170,7 +171,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           checkList.+=(p.getVn);
         }
       })
-      // suggestStartIdx = Math.max(suggestStartIdx, VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT);
+      suggestStartIdx = Math.max(suggestStartIdx, VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT);
 
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
