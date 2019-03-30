@@ -18,7 +18,7 @@ import org.csc.vrfblk.utils.{BlkTxCalc, TxCache, VConfig}
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String,preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
     val starttx = System.currentTimeMillis();
@@ -35,45 +35,29 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
       s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
 
-    @volatile var result: (BlockEntity, java.util.List[Transaction]) = (null, null)
-    @volatile var keepWait = true
-    val eachTime = VConfig.BLK_EPOCH_MS / 10
-    for (i <- 0 until 10 if keepWait) {
-      if (VCtrl.blockLock.tryLock(eachTime, TimeUnit.MILLISECONDS)) {
-        keepWait = false
-        try {
-          log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
-          val startblk = System.currentTimeMillis();
-          val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);
-          //extradata,term
-          val endblk = System.currentTimeMillis();
+    //@volatile var result: (BlockEntity, java.util.List[Transaction]) = (null, null)
 
-          log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
+    log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
+    val startblk = System.currentTimeMillis();
+    val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);
+    //extradata,term
+    val endblk = System.currentTimeMillis();
 
-          //val newblockheight = VCtrl.curVN().getCurBlock + 1
-          //if (newblk == null || newblk.getHeader == null) {
-          //  log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
-          //  result = (null, null)
-          //} else if (newblockheight != newblk.getHeader.getNumber) {
-          //  log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
-          //  result = (null, null)
-          //} else {
-          //  result = (newblk, txs)
-          //}
+    log.debug("new block ok: txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
 
-          result = (newblk, txs)
-        } finally {
-          log.info(s"UNLOCK to NewBlock time:${System.currentTimeMillis()}")
-          VCtrl.blockLock.unlock()
-        }
-      }
-    }
-    if (keepWait) {
-      log.warn(s"node is apply block now,Lost Block Chance, beacon:${beaconHash}, blockHeight${witnessNode.getBlockheight}")
-      result = (null, null)
-    }
+    //val newblockheight = VCtrl.curVN().getCurBlock + 1
+    //if (newblk == null || newblk.getHeader == null) {
+    //  log.debug("new block header is null: ch=" + newblockheight + ",dbh=" + newblk);
+    //  result = (null, null)
+    //} else if (newblockheight != newblk.getHeader.getNumber) {
+    //  log.debug("mining error: ch=" + newblockheight + ",dbh=" + newblk.getHeader.getNumber);
+    //  result = (null, null)
+    //} else {
+    //  result = (newblk, txs)
+    //}
 
-    result
+    (newblk, txs)
+    //result
   }
 
   def proc(): Unit = {

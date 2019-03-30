@@ -136,7 +136,7 @@ object VCtrl extends LogHelper {
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
   def curVN(): VNode.Builder = instance.cur_vnode
   //防止ApplyBlock时节点Make出相同高度的block
-  val blockLock:ReentrantLock = new ReentrantLock();
+  //val blockLock:ReentrantLock = new ReentrantLock();
 
   def getFastNode(): String = {
     var fastNode = curVN().build();
