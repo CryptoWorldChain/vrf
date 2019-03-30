@@ -97,7 +97,15 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val messageId = UUIDGenerator.generate();
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
-    val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
+    val vn = VCtrl.curVN().clone();
+    val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+    if (lastBlock != null) {
+      vn.setCurBlock(lastBlock.getHeader.getNumber.intValue);
+      vn.setCurBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getHash.toByteArray()));
+      vn.setPrevBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getPreHash.toByteArray()));
+    }
+    
+    val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(vn).setIsQuery(true);
     VCtrl.coMinerByUID.map(m => {
       body.addMurs(GossipMiner.newBuilder().setBcuid(m._2.getBcuid).setCurBlock(m._2.getCurBlock))
     })

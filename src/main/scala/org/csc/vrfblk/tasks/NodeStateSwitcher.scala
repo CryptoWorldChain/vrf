@@ -38,7 +38,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
   var notaryCheckHash: String = null;
 
-  def notifyStateChange(hash: String, netbits1: BigInteger) {
+  def notifyStateChange(hash: String, preHash: String, netbits1: BigInteger) {
     var netBits = netbits1;
     // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
@@ -95,7 +95,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           .addAllWitness(myWitness.asJava)
 
         log.debug(" MPCreateBlock netBits="+ netBits.bitCount + " prebh=" + VCtrl.curVN().getCurBlock)
-        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, sign, blockWitness.build);
+        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
         var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
@@ -150,7 +150,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             //@TODO !should verify...
             VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
             //.setCurBlockHash(newhash);
-            notifyStateChange(newhash, mapToBigInt(netbits).bigInteger);
+            notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger);
           }
         }
         case init: Initialize => {

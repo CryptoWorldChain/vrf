@@ -51,6 +51,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
           blockMakeCheckHash = blkInfo.beaconHash;
+
           log.debug("exec create block background running:" + blockMakeCheckHash + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
@@ -58,7 +59,10 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
-              if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
+              //if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
+              if (Daos.chainHelper.GetConnectBestBlock() == null 
+                || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) 
+                || Daos.chainHelper.getLastBlockNumber()==0) {
                 //create block.
                 log.debug("wait up to create block:"+blockMakeCheckHash+ ",sleep still:" + sleepMS);
                 blkInfo.proc();
