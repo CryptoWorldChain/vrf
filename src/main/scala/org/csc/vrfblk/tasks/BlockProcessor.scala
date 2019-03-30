@@ -59,17 +59,21 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
-              //if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
-              if (Daos.chainHelper.GetConnectBestBlock() == null 
-                || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) 
-                || Daos.chainHelper.getLastBlockNumber()==0) {
-                //create block.
-                log.debug("wait up to create block:"+blockMakeCheckHash+ ",sleep still:" + sleepMS);
-                blkInfo.proc();
-                
-              } else {
-                log.debug("cancel create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
+              synchronized(blockMakeCheckHash){
+              log.debug("do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blockMakeCheckHash +  " prebeacon=" + blkInfo.preBeaconHash)
+                if (Daos.chainHelper.GetConnectBestBlock() == null 
+                  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) 
+                  || Daos.chainHelper.getLastBlockNumber()==0) {
+                  //create block.
+                  log.debug("wait up to create block:"+blockMakeCheckHash+ ",sleep still:" + sleepMS);
+                  blkInfo.proc();
+                  
+                } else {
+                  log.debug("cancel create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
+                }
               }
+              //if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
+              
             }
           })
         case blk: ApplyBlock =>

@@ -122,13 +122,6 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
       } else {
         BlkTxCalc.adjustTx(System.currentTimeMillis() - start)
       }
-      // write to
-      //
-      //            log.debug("mindob newblockheight::" + newblockheight + " cn.getCoAddress::" + cn.getCoAddress + " termid::" + DCtrl.termMiner().getTermId + " cn.getBcuid::" + cn.getBcuid)
-
-      log.debug(s"blockHeight:${newblockheight}, HASH:${cn.getCurBlockHash}, miner:${cn.getBcuid}, " +
-        s"coAddr:${cn.getCoAddress}, messageId:${newCoinbase.getMessageId}, confirmation ratio:${VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO}" +
-        s"txHash:${txs.asScala.mkString("[", ",", "]")}")
       VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);
     }
