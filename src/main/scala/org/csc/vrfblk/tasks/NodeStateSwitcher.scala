@@ -66,7 +66,6 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
       }
       VCtrl.coMinerByUID.map(f => {
-        log.info(s"!!!bcuid=${f._1}, m=${f}")
         netBits = netBits.setBit(f._2.getBitIdx);
       })
       log.debug(" netBits::" + netBits);
