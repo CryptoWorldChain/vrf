@@ -59,21 +59,32 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
-              blockMakeCheckHash.synchronized{
-              log.debug("do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blockMakeCheckHash +  " prebeacon=" + blkInfo.preBeaconHash)
-                if (Daos.chainHelper.GetConnectBestBlock() == null 
-                  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) 
-                  || Daos.chainHelper.getLastBlockNumber()==0) {
-                  //create block.
-                  log.debug("wait up to create block:"+blockMakeCheckHash+ ",sleep still:" + sleepMS);
-                  blkInfo.proc();
-                  
-                } else {
-                  log.debug("cancel create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
+
+              if (VCtrl.blockLock.tryLock()) {
+                try {
+                  log.debug("LOCK do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blockMakeCheckHash + " prebeacon=" + blkInfo.preBeaconHash)
+                  if (Daos.chainHelper.GetConnectBestBlock() == null
+                    || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
+                    || Daos.chainHelper.getLastBlockNumber() == 0) {
+                    //create block.
+                    log.debug("wait up to create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
+                    blkInfo.proc();
+
+                  } else {
+                    log.debug("cancel create block:" + blockMakeCheckHash + ",sleep still:" + sleepMS);
+                  }
+                } finally {
+                  log.debug("UNLOCK")
+                  VCtrl.blockLock.unlock()
                 }
+              }else{
+                log.error(s"LOCK Failed! some Thread Working Right now beaconHash:${blockMakeCheckHash}, " +
+                  s"DAOHeight:${Daos.chainHelper.getLastBlockNumber()},sleep still:${sleepMS}")
+
               }
+
               //if (VCtrl.curVN().getBeaconHash.equals(blockMakeCheckHash)) {
-              
+
             }
           })
         case blk: ApplyBlock =>
@@ -82,7 +93,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           blk.proc();
         case blk: NotaryBlock =>
           blk.proc();
-          
+
         case n @ _ =>
           log.warn("unknow info:" + n);
       }
