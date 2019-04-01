@@ -136,14 +136,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   // log.debug("current cominer::" + VCtrl.coMinerByUID);
                 }
 
-                val vn = VCtrl.curVN().clone();
-                val lastBlock = Daos.chainHelper.GetConnectBestBlock();
-                if (lastBlock != null) {
-                  vn.setCurBlock(lastBlock.getHeader.getNumber.intValue);
-                  vn.setCurBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getHash.toByteArray()));
-                  vn.setPrevBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getPreHash.toByteArray()));
-                }
-                val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(vn);
+                val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
 
                 if (pbo.getGossipBlockInfo > 0) {
                   val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);

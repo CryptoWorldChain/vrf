@@ -53,8 +53,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           log.debug("exec create block background running:" + blkInfo.beaconHash + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
-              // while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-              while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
+              while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+              //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
@@ -62,9 +62,10 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
               if (VCtrl.blockLock.tryLock()) {
                 try {
                   log.debug("LOCK do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blkInfo.beaconHash + " prebeacon=" + blkInfo.preBeaconHash)
-                  if (Daos.chainHelper.GetConnectBestBlock() == null
-                    || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
-                    || Daos.chainHelper.getLastBlockNumber() == 0) {
+                  if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+                  //if (Daos.chainHelper.GetConnectBestBlock() == null
+                  //  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
+                  //  || Daos.chainHelper.getLastBlockNumber() == 0) {
                     //create block.
                     log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                     blkInfo.proc();

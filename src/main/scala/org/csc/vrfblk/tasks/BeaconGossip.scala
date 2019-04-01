@@ -97,15 +97,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val messageId = UUIDGenerator.generate();
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
-    val vn = VCtrl.curVN().clone();
-    val lastBlock = Daos.chainHelper.GetConnectBestBlock();
-    if (lastBlock != null) {
-      vn.setCurBlock(lastBlock.getHeader.getNumber.intValue);
-      vn.setCurBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getHash.toByteArray()));
-      vn.setPrevBlockHash(Daos.enc.hexEnc(lastBlock.getHeader.getPreHash.toByteArray()));
-    }
-    
-    val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(vn).setIsQuery(true);
+    val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
     VCtrl.coMinerByUID.map(m => {
       body.addMurs(GossipMiner.newBuilder().setBcuid(m._2.getBcuid).setCurBlock(m._2.getCurBlock))
     })
@@ -139,20 +131,20 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       val checkList = new ListBuffer[VNode]();
       var maxHeight = VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
-      // var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
-      var suggestStartIdx = Math.max(1, Daos.chainHelper.getLastBlockNumber() - 1);
+      var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
+      // var suggestStartIdx = Math.max(1, Daos.chainHelper.getLastBlockNumber() - 1);
 
       incomingInfos.asScala.values.map({ p =>
         if (p.getVn.getCurBlock > maxHeight) {
           maxHeight = p.getVn.getCurBlock;
           frombcuid = p.getVn.getBcuid;
         }
-        //if (p.getSugguestStartSyncBlockId < suggestStartIdx 
-        //  && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
-        //  && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
-        //  log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
-        //  suggestStartIdx = p.getSugguestStartSyncBlockId;
-        //}
+        if (p.getSugguestStartSyncBlockId < suggestStartIdx 
+          && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
+          && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
+          log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
+          suggestStartIdx = p.getSugguestStartSyncBlockId;
+        }
         if (p.getGossipBlockInfo > 0) {
 
           //log.debug("rollback setgetGossipBlockInfo= " + p.getGossipMinerInfo.getCurBlock + ",from = " + p.getVn.getBcuid
@@ -171,7 +163,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           checkList.+=(p.getVn);
         }
       })
-      //suggestStartIdx = Math.max(suggestStartIdx, VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT);
+      suggestStartIdx = Math.max(suggestStartIdx, VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT);
 
       if (maxHeight > VCtrl.instance.heightBlkSeen.get) {
         VCtrl.instance.heightBlkSeen.set(maxHeight);
@@ -187,9 +179,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
-            // syncBlock(maxHeight, suggestStartIdx, frombcuid);
             log.debug("syncblock height=" + height + " suggestStartIdx=" + suggestStartIdx.intValue)
-            syncBlock(height, suggestStartIdx.intValue, frombcuid);
+            syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
             NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
           }
