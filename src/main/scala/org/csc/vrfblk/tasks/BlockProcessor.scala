@@ -54,7 +54,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               // while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-              while (sleepMS > 0 && (blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid) || Daos.chainHelper.GetConnectBestBlock() == null)) {
+              while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               }
