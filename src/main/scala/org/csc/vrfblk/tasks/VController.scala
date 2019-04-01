@@ -202,7 +202,7 @@ object VCtrl extends LogHelper {
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
           val nodebits = if (f.getHeader.getNumber == 1) "" else f.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
-          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber <= 2) {
+          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber == 1) {
             true
           } else {
             log.error("wrong blk :bh=" + Daos.enc.hexEnc(f.getHeader.getHash.toByteArray()));
