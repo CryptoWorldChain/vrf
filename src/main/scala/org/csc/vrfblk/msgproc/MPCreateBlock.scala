@@ -64,10 +64,18 @@ case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits:
     val start = System.currentTimeMillis();
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
-    var newNetBits = netBits; //(VCtrl.network().node_strBits).bigInteger;
 
     //需要广播的节点数量
     val wallAccount: Int = VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+
+    var newNetBits = mapToBigInt(VCtrl.network().node_strBits).bigInteger;
+    // log.debug("tryNotifyState netBits=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
+    if (newNetBits.bitCount() < VCtrl.coMinerByUID.size) {
+      newNetBits = BigInteger.ZERO
+      VCtrl.coMinerByUID.map(f => {
+        newNetBits = newNetBits.setBit(f._2.getBitIdx);
+      })
+    }
 
     val strnetBits = hexToMapping(newNetBits);
     val (newblk, txs) = newBlockFromAccount(

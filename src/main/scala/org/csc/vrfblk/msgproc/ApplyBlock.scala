@@ -28,7 +28,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   val emptyBlock = new AtomicLong(0);
 
-  def saveBlock(b: PBlockEntryOrBuilder, needBody: Boolean = false): (Int, Int) = {
+  def saveBlock(b: PBlockEntryOrBuilder, needBody: Boolean = false): (Int, Int, String) = {
     val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
 
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
@@ -44,7 +44,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         Thread.sleep(sleepMs)
         trySyncTransaction(b, needBody, vres)
 
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), "")
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
@@ -53,45 +53,39 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         val lastBlock = Daos.chainHelper.GetConnectBestBlock();
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+          (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), lastBlock.getMiner.getBit)
         } else {
           VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+          (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
         }
         
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
       } else {
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue())
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
       }
 
     } else {
       val lastBlock = Daos.chainHelper.GetConnectBestBlock();
       if (lastBlock != null) {
         VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+        (b.getBlockHeight, b.getBlockHeight, lastBlock.getMiner.getBit)
       } else {
         VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+        (b.getBlockHeight, b.getBlockHeight, "")
       }
-      (b.getBlockHeight, b.getBlockHeight)
     }
   }
 
-  def tryNotifyState() {
-    var nodeBit = mapToBigInt(VCtrl.network().node_strBits).bigInteger;
-    // log.debug("tryNotifyState netBits=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
-    if (nodeBit.bitCount() < VCtrl.coMinerByUID.size) {
-      nodeBit = BigInteger.ZERO
-      VCtrl.coMinerByUID.map(f => {
-        nodeBit = nodeBit.setBit(f._2.getBitIdx);
-      })
-    }
-    log.debug("tryNotifyState Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + hexToMapping(nodeBit))
-    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, hexToMapping(nodeBit))
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, hexToMapping(nodeBit)));
+  def tryNotifyState(nodeBit: String) {
+    log.debug("tryNotifyState Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + nodeBit)
+    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, nodeBit)
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, nodeBit));
   }
 
   def proc() {
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
-      val (acceptHeight, blockWant) = saveBlock(pbo.getBlockEntry);
+      val (acceptHeight, blockWant, nodebit) = saveBlock(pbo.getBlockEntry);
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
@@ -123,7 +117,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (notaBits.testBit(cn.getBitIdx)) {
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
-          tryNotifyState();
+          tryNotifyState(nodebit);
         case n@_ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
