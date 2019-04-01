@@ -165,7 +165,7 @@ message PBlockEntry{
 	int32	slice_id = 3;		//分片
 	string	blockhash = 4;
 
-	bytes	block_header = 10;	//header
+	bytes	block_header = 10;	//Block对象
 	bytes 	block_miner = 11;   //Miner
 	string 	sign = 50;
 }
