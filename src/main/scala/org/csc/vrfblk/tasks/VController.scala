@@ -200,7 +200,7 @@ object VCtrl extends LogHelper {
         } else {
           // 本地block是否能校验通过，只有通过的才广播
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
-          val nodebits = if (f.getHeader.getNumber == 1) "" else f.getMiner.getBit;
+          val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
           if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber == 1) {
             true

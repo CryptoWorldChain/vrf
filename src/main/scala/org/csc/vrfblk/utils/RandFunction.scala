@@ -25,7 +25,7 @@ object RandFunction extends LogHelper with BitMap {
     val sign = Daos.enc.ecSignHex(
       VCtrl.network().root().pri_key,
       hash);
-    log.debug("curblockHash::" + curblockHash + " prevRandHash::"+prevRandHash + " nodebits::"+nodebits + " result::" + Daos.enc.hexEnc(hash));
+    //log.debug("curblockHash::" + curblockHash + " prevRandHash::"+prevRandHash + " nodebits::"+nodebits + " result::" + Daos.enc.hexEnc(hash));
 
     (Daos.enc.hexEnc(hash), sign)
   }
