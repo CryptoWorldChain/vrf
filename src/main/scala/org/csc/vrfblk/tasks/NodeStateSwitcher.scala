@@ -155,6 +155,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         case init: Initialize => {
           if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
             val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
+            log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
             val nodeBit = VCtrl.curVN().getCurBlock == 0
             val (hash, sign) = RandFunction.genRandHash(
               VCtrl.curVN().getCurBlockHash,

@@ -59,8 +59,8 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         if (StringUtils.isBlank(pack.getFrom())) {
 
         } else {
-          //log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
-          //  + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
+          log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
+            + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
             // 如果消息是自己发的
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
@@ -148,8 +148,8 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                       .setBlockExtrData(blk.getMiner.getBit)
                       .setBeaconHash(blk.getMiner.getTermid)
                       .setCurBlock(pbo.getGossipBlockInfo))
-                    //log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
-                    //    +",rheight="+blk.getHeader.getNumber.intValue());
+                    log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
+                        +",rheight="+blk.getHeader.getNumber.intValue());
                   }
                 } else {
                   var startBlock = pbo.getVn.getCurBlock;

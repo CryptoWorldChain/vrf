@@ -36,14 +36,17 @@ import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
 
 import scala.collection.JavaConverters._
+
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
   def getName() = "VCtrl"
+
   val VRF_NODE_DB_KEY = "CURRENT_VRF_KEY";
   var cur_vnode: VNode.Builder = VNode.newBuilder()
   var isStop: Boolean = false;
 
   val heightBlkSeen = new AtomicInteger(0);
+
   def loadNodeFromDB() = {
     val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY).get
     val root_node = network.root();
@@ -67,8 +70,8 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
     if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
       log.info("vrf block Info load from DB:c=" +
         cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
-      
-      
+
+
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         //读取创世块HASH
@@ -87,6 +90,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
     }
 
   }
+
   def syncToDB() {
     Daos.vrfpropdb.put(
       VRF_NODE_DB_KEY,
@@ -97,30 +101,30 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
     //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
 
-      log.debug("updateBlockHeight blockHeight=" +blockHeight + " blockHash="+blockHash + " bits=" + extraData)
-      Daos.blkHelper.synchronized({
-        cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
-        cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-        val blk = Daos.blkHelper.getBlock(blockHash);
-        if (blk.getHeader.getNumber.intValue() == blockHeight) {
-          if (blockHeight == cur_vnode.getCurBlock + 1) {
-            cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
-          }
-          cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
-          //        cur_vnode.setCurBlock(blockHeight)
-          cur_vnode.setVrfRandseeds(blk.getMiner.getBit);
-          if (blockHash != null) {
-            cur_vnode.setCurBlockHash(blockHash)
-            
-            // beaconhash = blockMiner.termId
-            // cur_vnode.setBeaconHash(blockHash);
-            cur_vnode.setBeaconHash(blk.getMiner.getTermid);
-          }
+    log.debug("updateBlockHeight blockHeight=" + blockHeight + " blockHash=" + blockHash + " bits=" + extraData)
+    Daos.blkHelper.synchronized({
+      cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
+      cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
+      val blk = Daos.blkHelper.getBlock(blockHash);
+      if (blk.getHeader.getNumber.intValue() == blockHeight) {
+        if (blockHeight == cur_vnode.getCurBlock + 1) {
+          cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
         }
-        log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
-          + ",hash=" + blockHash + ",seed=" + extraData);
-        syncToDB()
-      })
+        cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
+        //        cur_vnode.setCurBlock(blockHeight)
+        cur_vnode.setVrfRandseeds(blk.getMiner.getBit);
+        if (blockHash != null) {
+          cur_vnode.setCurBlockHash(blockHash)
+
+          // beaconhash = blockMiner.termId
+          // cur_vnode.setBeaconHash(blockHash);
+          cur_vnode.setBeaconHash(blk.getMiner.getTermid);
+        }
+      }
+      log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
+        + ",hash=" + blockHash + ",seed=" + extraData);
+      syncToDB()
+    })
     //}
   }
 
@@ -131,13 +135,17 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
 }
+
 object VCtrl extends LogHelper {
   var instance: VRFController = VRFController(null);
+
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
+
   def curVN(): VNode.Builder = instance.cur_vnode
+
   //防止ApplyBlock时节点Make出相同高度的block,或打出beaconHash错误的block
-  val blockLock:ReentrantLock = new ReentrantLock();
+  val blockLock: ReentrantLock = new ReentrantLock();
 
   def getFastNode(): String = {
     var fastNode = curVN().build();
@@ -148,6 +156,7 @@ object VCtrl extends LogHelper {
     }
     fastNode.getBcuid
   }
+
   def ensureNode(trybcuid: String): Node = {
     val net = instance.network;
     net.nodeByBcuid(trybcuid) match {
@@ -157,6 +166,7 @@ object VCtrl extends LogHelper {
         n;
     }
   }
+
   //  def curTermMiner(): PSDutyTermVoteOrBuilder = instance.term_Miner
 
   def isReady(): Boolean = {
@@ -171,6 +181,7 @@ object VCtrl extends LogHelper {
   def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
   }
+
   def loadFromBlock(block: Int, needBody: Boolean): Iterable[PBlockEntry.Builder] = {
     //    val ov = Daos.dposdb.get("D" + block).get
     //    if (ov != null) {
@@ -184,26 +195,31 @@ object VCtrl extends LogHelper {
       //      }
       val blks = Daos.chainHelper.getBlocksByNumber(block);
       if (blks != null) {
-        blks.asScala.map(f => {
+        blks.asScala.filter(f => if (block == 0) {
+          true
+        } else {
           // 本地block是否能校验通过，只有通过的才广播
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
-          
-          val nodebits = if(f.getHeader.getNumber==1) "" else f.getMiner.getBit;
-          val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits );
-          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber==1) {
-            if (needBody) {
-              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
-              recentBlocks.put(block, b);
-              b
-            } else {
-              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
-              recentBlocks.put(block, b);
-              b
-            }
+          val nodebits = if (f.getHeader.getNumber == 1) "" else f.getMiner.getBit;
+          val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
+          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber <= 2) {
+            true
           } else {
             log.error("wrong blk :bh=" + Daos.enc.hexEnc(f.getHeader.getHash.toByteArray()));
-            null;
+            false
           }
+        }).map(f => {
+          // 本地block是否能校验通过，只有通过的才广播
+          if (needBody) {
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
+            recentBlocks.put(block, b);
+            b
+          } else {
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
+            recentBlocks.put(block, b);
+            b
+          }
+
         })
       } else {
         log.error("blk not found in AccountDB:" + block);
