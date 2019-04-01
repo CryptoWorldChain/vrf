@@ -59,18 +59,18 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         if (StringUtils.isBlank(pack.getFrom())) {
 
         } else {
-          log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
-            + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
+          //log.debug("getNodeInfo::" + pack.getFrom() + ",blockheight=" + pbo.getVn.getCurBlock + ",remotestate=" + pbo.getVn.getState
+          //  + ",curheight=" + VCtrl.curVN().getCurBlock + ",curstate=" + VCtrl.curVN().getState + ",DN=" + network.directNodes.size + ",MN=" + VCtrl.coMinerByUID.size)
           if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
             // 如果消息是自己发的
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
               VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+              // log.debug("current cominer::" + VCtrl.coMinerByUID);
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId);
               if (pbo.getGossipBlockInfo == 0) {
                 // 取vn的currentBlock
                 val blk = Daos.blkHelper.getBlock(pbo.getVn.getCurBlockHash);
                 if (blk == null) {
-                  log.debug("blk=null");
                    BeaconGossip.offerMessage(pbo);
                 } else {
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
@@ -97,9 +97,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                         .setBeaconHash(blk.getMiner.getTermid)
                         .setCurBlock(pbo.getGossipBlockInfo))
                         
-                  log.debug("set beancon bh=" + Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()) + " hash::" + blk.getMiner.getTermid)
                   psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTermid).setVrfRandseeds(blk.getMiner.getBit));
-                       
                 }
                  BeaconGossip.offerMessage(psret);
               }
@@ -133,8 +131,9 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               case n: PNode =>
                 if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
                   // 成为打快节点
-                  log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
+                  //log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
                   VCtrl.coMinerByUID.put(pbo.getVn.getBcuid, pbo.getVn);
+                  // log.debug("current cominer::" + VCtrl.coMinerByUID);
                 }
 
                 val vn = VCtrl.curVN().clone();
@@ -156,8 +155,8 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                       .setBlockExtrData(blk.getMiner.getBit)
                       .setBeaconHash(blk.getMiner.getTermid)
                       .setCurBlock(pbo.getGossipBlockInfo))
-                    log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
-                        +",rheight="+blk.getHeader.getNumber.intValue());
+                    //log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
+                    //    +",rheight="+blk.getHeader.getNumber.intValue());
                   }
                 } else {
                   var startBlock = pbo.getVn.getCurBlock;

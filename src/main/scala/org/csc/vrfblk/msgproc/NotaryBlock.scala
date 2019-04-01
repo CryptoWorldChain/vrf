@@ -20,14 +20,14 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
     //块确认
     //to notify other.
     MDCSetBCUID(VCtrl.network())
-    log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-      + ",MN=" + VCtrl.coMinerByUID.size
-      + ",from=" + pbo.getBcuid
-      + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-      + ",VB=" + pbo.getWitnessBits
-      + ",VBC=" + mapToHex(pbo.getWitnessBits).bitCount
-      + ",B=" + pbo.getBlockEntry.getSign
-      + ",TX=" + pbo.getTxcount);
+    //log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+    //  + ",MN=" + VCtrl.coMinerByUID.size
+    //  + ",from=" + pbo.getBcuid
+    //  + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+    //  + ",VB=" + pbo.getWitnessBits
+    //  + ",VBC=" + mapToHex(pbo.getWitnessBits).bitCount
+    //  + ",B=" + pbo.getBlockEntry.getSign
+    //  + ",TX=" + pbo.getTxcount);
 
     //save to db
     val key = OEntityBuilder.byteKey2OKey(pbo.getBlockEntry.getBlockhashBytes);
@@ -40,12 +40,12 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       Some(n.getValue.getInfo)
     }, mapToHex(pbo.getWitnessBits).bitCount) match {
       case Converge(blockhash) =>
-        log.info("get merge blockhash :" + blockhash + ",height=" + pbo.getBlockHeight);
+        //log.info("get merge blockhash :" + blockhash + ",height=" + pbo.getBlockHeight);
         //Daos.chainHelper.confirmBlock(blockhash.toString());
       case n: NotConverge =>
-        log.info("cannot get converge for pbft vote:" + vs.get.size);
+        //log.info("cannot get converge for pbft vote:" + vs.get.size);
       case n @ _ =>
-        log.debug("need more results:" + vs.get.size);
+        //log.debug("need more results:" + vs.get.size);
     };
 
   }

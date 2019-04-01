@@ -74,20 +74,17 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   def tryNotifyState() {
-    //    if(VCtrl.instance.b
-
     var nodeBit = mapToBigInt(VCtrl.network().node_strBits).bigInteger;
-
+    // log.debug("tryNotifyState netBits=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
     if (nodeBit.bitCount() < VCtrl.coMinerByUID.size) {
-      log.debug("netBits must change:: bc=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
       nodeBit = BigInteger.ZERO
       VCtrl.coMinerByUID.map(f => {
         nodeBit = nodeBit.setBit(f._2.getBitIdx);
       })
     }
+    log.debug("tryNotifyState Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + hexToMapping(nodeBit))
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, hexToMapping(nodeBit))
     NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, hexToMapping(nodeBit)));
-
   }
 
   def proc() {

@@ -46,12 +46,12 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",H=" + pbo.getBlockEntry.getBlockHeight);
+      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash );
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
       val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()));
       if (parentBlock == null) {
-        log.warn("not found parent block:: bh=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()))
+        log.warn("not found parent block:: bh=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + " height=" + block.getHeader.getNumber)
         BlockProcessor.offerMessage(new ApplyBlock(pbo));
       } else {
         val nodebits = if(block.getHeader.getNumber==1) "" else block.getMiner.getBit;
@@ -59,6 +59,8 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
         if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber==1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
+          // try to remove it from db
+          Daos.
           log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)
         }
       }
