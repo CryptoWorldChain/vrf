@@ -30,6 +30,7 @@ import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
 import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
+import org.csc.vrfblk.utils.RandFunction
 
 import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
@@ -184,14 +185,24 @@ object VCtrl extends LogHelper {
       val blks = Daos.chainHelper.getBlocksByNumber(block);
       if (blks != null) {
         blks.asScala.map(f => {
-          if (needBody) {
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
-            recentBlocks.put(block, b);
-            b
+          // 本地block是否能校验通过，只有通过的才广播
+          val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
+          
+          val nodebits = if(f.getHeader.getNumber==1) "" else f.getMiner.getBit;
+          val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits );
+          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber==1) {
+            if (needBody) {
+              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
+              recentBlocks.put(block, b);
+              b
+            } else {
+              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
+              recentBlocks.put(block, b);
+              b
+            }
           } else {
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
-            recentBlocks.put(block, b);
-            b
+            log.error("wrong blk :bh=" + Daos.enc.hexEnc(f.getHeader.getHash.toByteArray()));
+            null;
           }
         })
       } else {
