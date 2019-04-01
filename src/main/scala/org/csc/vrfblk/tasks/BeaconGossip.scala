@@ -179,8 +179,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
+            // 投出来的最大高度
             log.debug("syncblock height=" + height + " suggestStartIdx=" + suggestStartIdx.intValue)
-            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+            syncBlock(height, suggestStartIdx, frombcuid);
           } else {
             NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
           }

@@ -54,7 +54,9 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
           val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
           if (b != null) {
             b.map(bs => {
-              ret.addBlockHeaders(bs);
+              if (bs !=null) {
+                ret.addBlockHeaders(bs);
+              }
             })
           }
         }
