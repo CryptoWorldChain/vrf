@@ -59,8 +59,6 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
         if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber==1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
-          // try to remove it from db
-          Daos.
           log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)
         }
       }
