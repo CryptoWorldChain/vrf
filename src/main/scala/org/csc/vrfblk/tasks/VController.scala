@@ -195,10 +195,11 @@ object VCtrl extends LogHelper {
       //      }
       val blks = Daos.chainHelper.getBlocksByNumber(block);
       if (blks != null) {
-        blks.asScala.filter(f => if (block == 0) {
+        blks.asScala.filter(f => if (block == 0 || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT ) {
+          //创世块安全块允许直接广播
           true
         } else {
-          // 本地block是否能校验通过，只有通过的才广播
+          // 本地block不在安全高度内的是否能校验通过，只有通过的才广播
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
           val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
