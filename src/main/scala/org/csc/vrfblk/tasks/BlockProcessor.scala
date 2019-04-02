@@ -98,12 +98,16 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock => 
-          blk.proc();
+          if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)) {
+             blk.proc();
+          } else {
+            log.debug("cancel create block:" + blk.beaconHash + " current:"+ VCtrl.curVN().getBeaconHash);
+          }
         case n @ _ =>
           log.warn("unknow info:" + n);
       }
       //      Daos.ddc.executeNow(arg0, arg1, arg2)
-    })
+    }
   }
 
 }
