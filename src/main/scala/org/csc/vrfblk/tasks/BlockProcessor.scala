@@ -43,7 +43,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   val NewBlockFP = PacketHelper.genPack("NEWBLOCK", "__VRF", "", true, 9);
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
-    items.asScala.map(m => {
+    //单线程执行
+    for(m <- items.asScala){
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
@@ -62,7 +63,6 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
 
               //if (VCtrl.blockLock.tryLock()) {
                 //try {
-                  log.debug("LOCK do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blkInfo.beaconHash + " prebeacon=" + blkInfo.preBeaconHash)
                   if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
                   //if (Daos.chainHelper.GetConnectBestBlock() == null
                   //  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
