@@ -24,6 +24,7 @@ import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
 import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.msgproc.MPCreateBlock
+import org.csc.vrfblk.msgproc.MPRealCreateBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
 import scala.collection.JavaConverters._
 import org.csc.vrfblk.msgproc.NotaryBlock
@@ -68,8 +69,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                   //  || Daos.chainHelper.getLastBlockNumber() == 0) {
                     //create block.
                     log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
-                    blkInfo.proc();
-
+                    // blkInfo.proc();
+                     BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode))
                   } else {
                     log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                   }
@@ -77,17 +78,23 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                   log.debug("UNLOCK")
                   VCtrl.blockLock.unlock()
                 }
-              }else{
+              } else {
                 log.error(s"LOCK Failed! some Thread Working Right now beaconHash:${blkInfo.beaconHash}, " +
                   s"DAOHeight:${Daos.chainHelper.getLastBlockNumber()},sleep still:${sleepMS}")
-
               }
             }
           })
         case blk: ApplyBlock =>
           log.debug("apply block:" + blk.pbo.getBeaconHash + ",netbits=" + new String(blk.pbo.getVrfCodes.toByteArray()) + ",blockheight="
             + blk.pbo.getBlockHeight);
-          blk.proc();
+            if (VCtrl.blockLock.tryLock()) {
+              try {
+                blk.proc();
+              } finally {
+                log.debug("UNLOCK")
+                VCtrl.blockLock.unlock()
+              }
+            }
         case blk: NotaryBlock =>
           blk.proc();
 

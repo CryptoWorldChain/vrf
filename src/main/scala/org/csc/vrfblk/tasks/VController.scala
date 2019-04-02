@@ -198,7 +198,7 @@ object VCtrl extends LogHelper {
         blks.asScala.filter(f => if (block == 0) {
           true
         } else {
-          // 本地block是否能校验通过，只有通过的才广播
+          // 本地block是否能校验通过，只有通过的才广播，并且在安全块之内的才校验
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
           val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);

@@ -140,7 +140,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           frombcuid = p.getVn.getBcuid;
         }
         if (p.getSugguestStartSyncBlockId < suggestStartIdx 
-          && suggestStartIdx > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
+          && p.getSugguestStartSyncBlockId > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
           && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
           log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
           suggestStartIdx = p.getSugguestStartSyncBlockId;
