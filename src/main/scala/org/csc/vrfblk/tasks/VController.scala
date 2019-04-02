@@ -1,41 +1,22 @@
 package org.csc.vrfblk.tasks
 
-import java.util.ArrayList
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
-
-import scala.collection.mutable.Map
-import org.apache.commons.lang3.StringUtils
-import org.csc.bcapi.JodaTimeHelper
-import org.csc.bcapi.exec.SRunner
-import org.csc.evmapi.gens.Block.BlockEntity
-import org.csc.p22p.action.PMNodeHelper
-import org.csc.p22p.node.Network
-import org.csc.p22p.node.Node
-import org.csc.p22p.utils.LogHelper
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
-import onight.tfw.async.CallBack
-import onight.tfw.otransio.api.beans.FramePacket
-import org.csc.bcapi.gens.Oentity.OValue
-import java.math.BigInteger
-
-import org.csc.ckrand.pbgens.Ckrand.VNode
-import org.csc.vrfblk.Daos
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
-import org.csc.vrfblk.utils.VConfig
-import org.csc.ckrand.pbgens.Ckrand.VNodeState
-import org.csc.ckrand.pbgens.Ckrand.PBlockEntryOrBuilder
-import org.csc.ckrand.pbgens.Ckrand.PSNodeInfo
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
-import org.csc.vrfblk.utils.RandFunction
 
+import com.google.common.cache.{Cache, CacheBuilder}
+import org.apache.commons.lang3.StringUtils
 import org.csc.bcapi.crypto.BitMap
-import com.google.protobuf.ByteString
+import org.csc.bcapi.gens.Oentity.OValue
+import org.csc.ckrand.pbgens.Ckrand.{PBlockEntry, VNode, VNodeState}
+import org.csc.p22p.action.PMNodeHelper
+import org.csc.p22p.node.{Network, Node}
+import org.csc.p22p.utils.LogHelper
+import org.csc.vrfblk.Daos
+import org.csc.vrfblk.utils.{RandFunction, VConfig}
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.Map
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -199,6 +180,7 @@ object VCtrl extends LogHelper {
           //创世块安全块允许直接广播
           true
         } else {
+          // 本地block超出安全高度的是否能校验通过，只有通过的才广播
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
           val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
