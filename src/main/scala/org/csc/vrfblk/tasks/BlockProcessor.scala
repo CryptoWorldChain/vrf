@@ -60,8 +60,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 sleepMS = sleepMS - 100;
               }
 
-              if (VCtrl.blockLock.tryLock()) {
-                try {
+              //if (VCtrl.blockLock.tryLock()) {
+                //try {
                   log.debug("LOCK do make block:: lastheight=" + Daos.chainHelper.getLastBlockNumber() + " curbeacon=" + blkInfo.beaconHash + " prebeacon=" + blkInfo.preBeaconHash)
                   if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
                   //if (Daos.chainHelper.GetConnectBestBlock() == null
@@ -74,30 +74,31 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                   } else {
                     log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                   }
-                } finally {
+                //} finally {
                   log.debug("UNLOCK")
-                  VCtrl.blockLock.unlock()
-                }
-              } else {
-                log.error(s"LOCK Failed! some Thread Working Right now beaconHash:${blkInfo.beaconHash}, " +
-                  s"DAOHeight:${Daos.chainHelper.getLastBlockNumber()},sleep still:${sleepMS}")
-              }
+                  //VCtrl.blockLock.unlock()
+                //}
+              //} else {
+              //  log.error(s"LOCK Failed! some Thread Working Right now beaconHash:${blkInfo.beaconHash}, " +
+              //    s"DAOHeight:${Daos.chainHelper.getLastBlockNumber()},sleep still:${sleepMS}")
+              //}
             }
           })
         case blk: ApplyBlock =>
           log.debug("apply block:" + blk.pbo.getBeaconHash + ",netbits=" + new String(blk.pbo.getVrfCodes.toByteArray()) + ",blockheight="
             + blk.pbo.getBlockHeight);
-            if (VCtrl.blockLock.tryLock()) {
+            //if (VCtrl.blockLock.tryLock()) {
               try {
                 blk.proc();
               } finally {
-                log.debug("UNLOCK")
-                VCtrl.blockLock.unlock()
+                //log.debug("UNLOCK")
+                //VCtrl.blockLock.unlock()
               }
-            }
+            //}
         case blk: NotaryBlock =>
           blk.proc();
-
+        case blk: MPRealCreateBlock => 
+          blk.proc();
         case n @ _ =>
           log.warn("unknow info:" + n);
       }
