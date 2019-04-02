@@ -194,7 +194,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (counter > 3) {
             vNetwork = randomNodeInNetwork(network)
           }
-          network.asendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
+          network.sendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
             override def onSuccess(v: FramePacket): Unit = {
               try {
                 if (notSuccess) {
@@ -210,7 +210,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     notSuccess = false
                     log.debug(s"SRTVRF success !!!cost:${System.currentTimeMillis() - start}")
                     saveBlock(block, needBody)
-
+                    
                     cdl.countDown()
                   } else {
                     log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
