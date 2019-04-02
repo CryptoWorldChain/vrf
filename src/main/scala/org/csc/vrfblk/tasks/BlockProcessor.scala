@@ -103,7 +103,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           log.warn("unknow info:" + n);
       }
       //      Daos.ddc.executeNow(arg0, arg1, arg2)
-    })
+    }
   }
 
 }
