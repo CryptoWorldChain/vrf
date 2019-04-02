@@ -175,7 +175,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
       val reqTx = buildReqTx(res)
       if (reqTx == null) {
-        // saveBlock(block, needBody)
+        saveBlock(block, needBody)
         return
       }
 
@@ -209,6 +209,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
                     notSuccess = false
                     log.debug(s"SRTVRF success !!!cost:${System.currentTimeMillis() - start}")
+                    saveBlock(block, needBody)
+
                     cdl.countDown()
                   } else {
                     log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
@@ -235,7 +237,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           case t: Throwable => log.error("get Transaction failed:", t)
         }
       }
-      BlockProcessor.offerMessage(new ApplyBlock(pbo));
+      // BlockProcessor.offerMessage(new ApplyBlock(pbo));
       // saveBlock(block, needBody)
     })
 
