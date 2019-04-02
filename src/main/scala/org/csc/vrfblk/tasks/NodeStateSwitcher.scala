@@ -43,18 +43,18 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
     log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
-//    var netBits = BigInteger.ZERO;
-//    try {
-//      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
-//        netBits = mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger;
-//        log.debug(" netBits::" + netBits);
-//      }
-//      netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
-//      log.debug(" netBits::" + netBits);
-//    } catch {
-//      case t: Throwable =>
-//        log.debug("set netbits error:" + t.getMessage, t);
-//    }
+    //    var netBits = BigInteger.ZERO;
+    //    try {
+    //      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
+    //        netBits = mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger;
+    //        log.debug(" netBits::" + netBits);
+    //      }
+    //      netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
+    //      log.debug(" netBits::" + netBits);
+    //    } catch {
+    //      case t: Throwable =>
+    //        log.debug("set netbits error:" + t.getMessage, t);
+    //    }
     if (netBits.bitCount() <= 0) {
       if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.size > 0) {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
@@ -70,10 +70,10 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       })
       log.debug(" netBits::" + netBits);
     }
-    log.debug("try get new state == netBits=" +netBits.bitCount)
+    log.debug("try get new state == netBits=" + netBits.bitCount)
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
     log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2)
-      + ",hash=" + hash + ",curblk=" + VCtrl.curVN().getCurBlock + " netBits="+ netBits);
+      + ",hash=" + hash + ",curblk=" + VCtrl.curVN().getCurBlock + " netBits=" + netBits);
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
@@ -93,7 +93,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           .setNetbitx(netBits.toString(16))
           .addAllWitness(myWitness.asJava)
 
-        log.debug(" MPCreateBlock netBits="+ netBits.bitCount + " prebh=" + VCtrl.curVN().getCurBlock)
+        log.debug(" MPCreateBlock netBits=" + netBits.bitCount + " prebh=" + VCtrl.curVN().getCurBlock)
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
@@ -109,10 +109,10 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             }
             if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
               //decide to make block
-              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS);
               BeaconGossip.gossipBlocks();
             } else {
-              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS );
+              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS);
             }
           }
         })
@@ -126,46 +126,49 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
   def runBatch(items: List[StateMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
-    items.asScala.map(m => {
-      m match {
-        case BeaconConverge(height, blockHash, hash, seed) => {
+    if (items != null) {
+      items.asScala.map(m => {
+        m match {
+          case BeaconConverge(height, blockHash, hash, seed) => {
 
-          log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
-          //          if (height >= VCtrl.curVN().getCurBlock) {
-          VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
-            .setCurBlock(height);
-          
-          val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
-          NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed));
+            log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
+            //          if (height >= VCtrl.curVN().getCurBlock) {
+            VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
+              .setCurBlock(height);
 
-          // notifyStateChange(VCtrl.curVN().getBeaconHash, mapToBigInt(seed).bigInteger);
-          //          } else {
-          //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
-          //          }
-        }
-        case StateChange(newsign, newhash, prevhash, netbits) => {
-          log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
-          if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
-            //@TODO !should verify...
-            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
-            //.setCurBlockHash(newhash);
-            notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger);
+            val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
+            NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed));
+
+            // notifyStateChange(VCtrl.curVN().getBeaconHash, mapToBigInt(seed).bigInteger);
+            //          } else {
+            //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
+            //          }
+          }
+          case StateChange(newsign, newhash, prevhash, netbits) => {
+            log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
+            if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
+              //@TODO !should verify...
+              VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
+              //.setCurBlockHash(newhash);
+              notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger);
+            }
+          }
+          case init: Initialize => {
+            if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
+              val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
+              log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
+              val nodeBit = VCtrl.curVN().getCurBlock == 0
+              val (hash, sign) = RandFunction.genRandHash(
+                VCtrl.curVN().getCurBlockHash,
+                VCtrl.curVN().getPrevBlockHash, block.getMiner.getBit);
+              VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
+              BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
+            }
           }
         }
-        case init: Initialize => {
-          if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
-            val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
-            log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
-            val nodeBit = VCtrl.curVN().getCurBlock == 0
-            val (hash, sign) = RandFunction.genRandHash(
-              VCtrl.curVN().getCurBlockHash,
-              VCtrl.curVN().getPrevBlockHash, block.getMiner.getBit);
-            VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
-            BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
-          }
-        }
-      }
-    })
+      })
+    }
+
   }
 
 }
