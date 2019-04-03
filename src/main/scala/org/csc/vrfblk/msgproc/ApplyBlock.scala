@@ -34,7 +34,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
 
-      val vres = Daos.blkHelper.ApplyBlock(block, needBody);
+      var vres = Daos.blkHelper.ApplyBlock(block, needBody);
       if (vres.getTxHashsCount > 0) {
         log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
         // TODO: Sync Transaction  need Sleep for a while First
@@ -44,7 +44,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         Thread.sleep(sleepMs)
         trySyncTransaction(b, needBody, vres)
 
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), "")
+        //(vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
@@ -153,8 +153,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     (VCtrl.coMinerByUID.size + stepRange) % stepBits.bitCount() * VConfig.SYNC_TX_SLEEP_MS
   }
-
-  def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
+def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
+  //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
     this.synchronized({
       val miner = BlockEntity.parseFrom(block.getBlockHeader)
       val network = VCtrl.network
@@ -171,12 +171,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           vNetwork = randomNode
         }
       }
-
+      log.debug("pick node=" + vNetwork);
 
       val reqTx = buildReqTx(res)
       if (reqTx == null) {
-        saveBlock(block, needBody)
-        return
+        return saveBlock(block, needBody)
       }
 
       var rspTx = PRetGetTransaction.newBuilder()
@@ -209,9 +208,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
                     notSuccess = false
                     log.debug(s"SRTVRF success !!!cost:${System.currentTimeMillis() - start}")
-                    saveBlock(block, needBody)
-                    
+                    var trySaveRes = saveBlock(block, needBody)
                     cdl.countDown()
+
+                    log.debug("sync tx complete =" + trySaveRes)
+                    trySaveRes
                   } else {
                     log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
                       s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
@@ -231,7 +232,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
           counter += 1
           cdl.await(40, TimeUnit.SECONDS)
-
         }
         catch {
           case t: Throwable => log.error("get Transaction failed:", t)
@@ -239,6 +239,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       }
       // BlockProcessor.offerMessage(new ApplyBlock(pbo));
       // saveBlock(block, needBody)
+      
+       (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
     })
 
 
