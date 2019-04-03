@@ -34,7 +34,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
 
-      var vres = Daos.blkHelper.ApplyBlock(block, needBody);
+      val vres = Daos.blkHelper.ApplyBlock(block, needBody);
       if (vres.getTxHashsCount > 0) {
         log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
         // TODO: Sync Transaction  need Sleep for a while First
@@ -42,9 +42,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
         log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
         Thread.sleep(sleepMs)
-        trySyncTransaction(b, needBody, vres)
 
-        //(vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
+        //同步交易, 同步完成后, 继续保存applyBlock
+        trySyncTransaction(b, needBody, vres)
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
@@ -58,7 +58,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
         }
-        
+
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
       }
@@ -153,11 +153,12 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     (VCtrl.coMinerByUID.size + stepRange) % stepBits.bitCount() * VConfig.SYNC_TX_SLEEP_MS
   }
-def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
-  //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
+
+  def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
+    //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
     this.synchronized({
       val miner = BlockEntity.parseFrom(block.getBlockHeader)
-      val network = VCtrl.network
+      val network = VCtrl.network()
 
       var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
       if (vNetwork.isEmpty) {
@@ -171,7 +172,7 @@ def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, r
           vNetwork = randomNode
         }
       }
-      log.debug("pick node=" + vNetwork);
+      log.debug("pick node=" + vNetwork)
 
       val reqTx = buildReqTx(res)
       if (reqTx == null) {
@@ -184,7 +185,7 @@ def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, r
       var notSuccess = true
       var counter = 0
       val start = System.currentTimeMillis()
-
+      var trySaveRes: (Int, Int, String) = (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
 
       log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
 
@@ -208,11 +209,10 @@ def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, r
                     Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
                     notSuccess = false
                     log.debug(s"SRTVRF success !!!cost:${System.currentTimeMillis() - start}")
-                    var trySaveRes = saveBlock(block, needBody)
+                    trySaveRes = saveBlock(block, needBody)
                     cdl.countDown()
 
                     log.debug("sync tx complete =" + trySaveRes)
-                    trySaveRes
                   } else {
                     log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
                       s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
@@ -237,10 +237,11 @@ def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, r
           case t: Throwable => log.error("get Transaction failed:", t)
         }
       }
+
+      return trySaveRes
       // BlockProcessor.offerMessage(new ApplyBlock(pbo));
       // saveBlock(block, needBody)
-      
-       (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
+      //(res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
     })
 
 
