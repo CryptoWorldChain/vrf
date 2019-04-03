@@ -11,7 +11,7 @@ enum PCommand {
 
 	CBN = 2; //发送coinbase,new
 
-	CBW = 3; //发送coinbase,witness
+	CBW = 3; //发送coinbase,witness; PSCoinbaseWitness
 
 	CBR = 4; //发送coinbase,reply
 
@@ -21,7 +21,7 @@ enum PCommand {
 
 	BRT = 8; //同步交易
 
-	SRT = 9; //同步单笔交易
+	SRT = 9; //同步单笔交易, applyBlock时,如果交易没有同步, 需要批量同步交易
 
 	SOS = 10;//节点退出
 	RHR = 31;//给运维使用的心跳
