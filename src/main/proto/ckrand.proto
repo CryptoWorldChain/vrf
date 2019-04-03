@@ -51,13 +51,13 @@ message VNode{
 	int64		cur_block_make_time = 6;//收到当前区块时候的时间戳
 	string		cur_block_hash = 7;//当前blockhash
 	string		prev_block_hash = 8;//当前blockhash
-
 	int32		bit_idx = 9;//bitidx;
 	string 		vrf_randseeds = 10;
 	string		vrf_codes = 11;//
 	string		vrf_groups = 12;//
 	string		beacon_hash = 13;//
 	string		beacon_sign = 14;//
+	bool        do_mine = 15;
 }
 
 message GossipMiner{
@@ -259,12 +259,7 @@ message PRetRhrCheck{//加入的返回信息
 message PRetHealthCheck {
     int32 ret_code = 1; //返回
     string ret_message = 2; //返回信息
-    int32 net_idx = 3; // net_id
-    string bcuid = 4; // bcuid
-    int64 block_height = 5; //块高
-    string beacon_hash = 6; //beacon
-    string co_addr = 10; //联合账户地址
-    VNodeState state = 12; //
+    VNode cn_node = 3; // net_id
     string pending_node = 13; //coMiner
     string direct_node = 14; //coMiner
     repeated VNode coMiners = 15; //coMiner
