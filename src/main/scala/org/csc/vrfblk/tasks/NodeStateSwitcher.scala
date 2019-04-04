@@ -23,7 +23,7 @@ trait StateMessage {
 case class BeaconConverge(height: Int, beaconSign: String, beaconHash: String, randseed: String) extends StateMessage;
 
 //状态转化器
-case class StateChange(newsign: String, newhash: String, prevhash: String, netbits: String) extends StateMessage;
+case class StateChange(newsign: String, newhash: String, prevhash: String, netbits: String, height: Int) extends StateMessage;
 
 case class Initialize() extends StateMessage;
 
@@ -38,7 +38,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
   var notaryCheckHash: String = null;
 
-  def notifyStateChange(hash: String, preHash: String, netbits1: BigInteger) {
+  def notifyStateChange(hash: String, preHash: String, netbits1: BigInteger, height: Int) {
     var netBits = netbits1;
     // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
@@ -73,7 +73,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     log.debug("try get new state == netBits=" + netBits.bitCount)
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
     log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2)
-      + ",hash=" + hash + ",curblk=" + VCtrl.curVN().getCurBlock + " netBits=" + netBits);
+      + ",hash=" + hash + ",curblk=" + height + " netBits=" + netBits);
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
@@ -89,12 +89,12 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
         val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
           .setBeaconHash(hash)
-          .setBlockheight(VCtrl.curVN().getCurBlock)
+          .setBlockheight(height)
           .setNetbitx(netBits.toString(16))
           .addAllWitness(myWitness.asJava)
 
-        log.debug(" MPCreateBlock netBits=" + netBits.bitCount + " prebh=" + VCtrl.curVN().getCurBlock)
-        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build);
+        log.debug(" MPCreateBlock netBits=" + netBits.bitCount + " prebh=" + height)
+        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build, height + 1);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
         var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
@@ -137,20 +137,20 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
               .setCurBlock(height);
 
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
-            NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed));
+            NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
 
             // notifyStateChange(VCtrl.curVN().getBeaconHash, mapToBigInt(seed).bigInteger);
             //          } else {
             //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
             //          }
           }
-          case StateChange(newsign, newhash, prevhash, netbits) => {
+          case StateChange(newsign, newhash, prevhash, netbits, height) => {
             log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
             if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
               //@TODO !should verify...
               VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
               //.setCurBlockHash(newhash);
-              notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger);
+              notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);
             }
           }
           case init: Initialize => {

@@ -18,7 +18,7 @@ import org.csc.vrfblk.utils.{BlkTxCalc, TxCache, VConfig}
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class MPCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
     def proc(): Unit = {
     }
 }
