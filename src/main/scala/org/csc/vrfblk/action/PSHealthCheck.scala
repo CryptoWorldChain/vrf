@@ -37,12 +37,7 @@ object PSHealthCheckService extends LogHelper with PBUtils with LService[VNode] 
 
       ret.setRetCode(1)
         .setRetMessage("SUCCESS")
-        .setBcuid(current.getBcuid)
-        .setNetIdx(VCtrl.network.root().node_idx)
-        .setCoAddr(current.getCoAddress)
-        .setBlockHeight(current.getCurBlock)
-        .setState(current.getState)
-        .setBeaconHash(current.getBeaconHash)
+        .setCnNode(current)
         .setDirectNode(VCtrl.network.directNodes.map(b => b.bcuid).mkString("[", ",", "]"))
         .setDirectNode(VCtrl.network.pendingNodes.map(b => b.bcuid).mkString("[", ",", "]"))
         .addAllCoMiners(miners.asJava)

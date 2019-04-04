@@ -70,7 +70,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                     //create block.
                     log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                     // blkInfo.proc();
-                     BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode))
+                     BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
                   } else {
                     log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                   }
@@ -98,7 +98,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock => 
-          if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)) {
+          if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
+            && blk.needHeight == (Daos.chainHelper.getLastBlockNumber() + 1)) {
              blk.proc();
           } else {
             log.debug("cancel create block:" + blk.beaconHash + " current:"+ VCtrl.curVN().getBeaconHash);

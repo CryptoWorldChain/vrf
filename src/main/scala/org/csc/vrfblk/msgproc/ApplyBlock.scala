@@ -76,9 +76,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   def tryNotifyState(nodeBit: String) {
-    log.debug("tryNotifyState Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + nodeBit)
+    log.debug("tryNotifyState height=" + pbo.getBlockHeight + " Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + nodeBit)
     val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, nodeBit)
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, nodeBit));
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, nodeBit, pbo.getBlockHeight));
   }
 
   def proc() {

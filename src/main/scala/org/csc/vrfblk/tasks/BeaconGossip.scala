@@ -139,7 +139,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           maxHeight = p.getVn.getCurBlock;
           frombcuid = p.getVn.getBcuid;
         }
-        if (p.getSugguestStartSyncBlockId < suggestStartIdx 
+        if (p.getSugguestStartSyncBlockId < suggestStartIdx
           && p.getSugguestStartSyncBlockId > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT
           && !p.getVn.getBcuid.equals(VCtrl.curVN().getBcuid)) {
           log.debug("set SugguestStartSyncBlockId = " + p.getSugguestStartSyncBlockId + ",from = " + p.getVn.getBcuid);
@@ -180,7 +180,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             // 投出来的最大高度
-            log.debug("syncblock height=" + height +  " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
+            log.debug("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
             NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));

@@ -19,7 +19,7 @@ dependencies {
 	compile ("org.fc.zippo:org.fc.zippo.oapi:4.0.2")
 	compile ("org.csc:chainapi:4.1.0")
 	compile ("org.csc:p22p:4.0.2")
-	compile ("org.csc:account.api:4.1.1")
+	compile ("org.csc:account.api:4.1.3")
 }
 
 jar {

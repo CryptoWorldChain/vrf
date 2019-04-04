@@ -69,6 +69,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       heightBlkSeen.set(cur_vnode.getCurBlock);
       syncToDB();
     }
+    if (VConfig.RUN_COMINER == 1) {
+      //成为BackUp节点，不参与挖矿
+      cur_vnode.setDoMine(true)
+    }
 
   }
 
@@ -176,7 +180,7 @@ object VCtrl extends LogHelper {
       //      }
       val blks = Daos.chainHelper.getBlocksByNumber(block);
       if (blks != null) {
-        blks.asScala.filter(f => if (block == 0 || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT ) {
+        blks.asScala.filter(f => if (block == 0 || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
           //创世块安全块允许直接广播
           true
         } else {

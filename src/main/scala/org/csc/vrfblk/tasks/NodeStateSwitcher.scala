@@ -72,8 +72,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     }
     log.debug("try get new state == netBits=" + netBits.bitCount)
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    log.debug("get new state == " + state + ",blockbits=" + blockbits.toString(2) + ",notarybits=" + notarybits.toString(2)
-      + ",hash=" + hash + ",curblk=" + height + " netBits=" + netBits);
+    log.debug(s"get new state == ${state},blockbits=${blockbits.toString(2)},notarybits=${notarybits.toString(2)}" +
+      s",hash=${hash},curblk=${VCtrl.curVN().getCurBlock}netBits=${netBits}, coMinerSize=${VCtrl.coMinerByUID.size}");
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
