@@ -51,6 +51,7 @@ object TransactionConfirmHashProcessor extends SingletonWorkShop[(String, BigInt
 
   //List(transactionHash, bits)
   override def runBatch(list: util.List[(String, BigInteger)]): Unit = {
+    log.debug("====> start ConfirmTxProcessor size=" + list.size);
     list.asScala.foreach {
       case (txHash, bits) => {
         Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Hex.decodeHex(txHash)), bits)

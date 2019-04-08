@@ -98,7 +98,6 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       running.set(true);
       Thread.currentThread().setName("DPosTx-BatchRunner-" + id);
       while (dbBatchSaveList == null) {
-        log.debug("wait for batch :")
         Thread.sleep(1000)
       }
 
@@ -243,6 +242,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
 
         if (confirmNode != VCtrl.instance.network.noneNode) {
           bits = bits.or(BigInteger.ZERO.setBit(confirmNode.node_idx));
+
           pbo.getSyncType match {
             case SyncType.ST_WALLOUT =>
               //              ArrayList[MultiTransaction.Builder]
@@ -250,7 +250,8 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 dbBatchSaveList.addElement((pbo.toByteArray(), bits))
                 //TransactionSyncProcessor.offerMessage((SyncTransaction2TransactionBuilder(pbo.toByteArray()), bits, null))
               }
-              if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
+              // if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
+              if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
                 pbo.getTxHashList.map {
                   f => wallHashList.offer(f);
                   //f => TransactionHashBrodcastor.offerMessage(f)

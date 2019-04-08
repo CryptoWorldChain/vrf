@@ -90,7 +90,7 @@ def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInf
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
       log.debug("mining check ok :new block=" + newblockheight + ",CO=" + cn.getCoAddress
-        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" + Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()));
+        + ",MaxTnx=" + VConfig.MAX_TNX_EACH_BLOCK + ",hash=" + Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()) + " wall=" + wallAccount);
       val newCoinbase = PSCoinbase.newBuilder()
         .setBlockHeight(newblockheight).setCoAddress(cn.getCoAddress)
         .setCoAddress(cn.getCoAddress)

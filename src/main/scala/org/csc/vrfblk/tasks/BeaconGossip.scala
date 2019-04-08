@@ -129,7 +129,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     if (size > 0 && size >= currentBR.votebase * 2 / 3) {
       //
       val checkList = new ListBuffer[VNode]();
-      var maxHeight = VCtrl.instance.heightBlkSeen.get;
+      var maxHeight = 0; //VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
       var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
       // var suggestStartIdx = Math.max(1, Daos.chainHelper.getLastBlockNumber() - 1);

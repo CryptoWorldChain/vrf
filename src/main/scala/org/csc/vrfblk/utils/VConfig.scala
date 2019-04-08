@@ -169,7 +169,7 @@ object VConfig {
   val RUN_COMINER = prop.get(PROP_DOMAIN + "run.cominer", 1);
 
   //打块时，tx需要经过多少节点确认才能进行打块，按照百分比计算
-  val CREATE_BLOCK_TX_CONFIRM_PERCENT = prop.get(PROP_DOMAIN + "create.block.tx.confirm.percent", 80); //80%
+  //val CREATE_BLOCK_TX_CONFIRM_PERCENT = prop.get(PROP_DOMAIN + "create.block.tx.confirm.percent", 80); //80%
 
   //同步交易时，在本地的缓存，给其他节点调用
   val TX_MAX_CACHE_SIZE = prop.get(PROP_DOMAIN + "tx.max.cache.size", 300000); //80%
