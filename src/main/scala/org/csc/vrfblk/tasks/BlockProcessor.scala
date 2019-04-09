@@ -99,7 +99,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           blk.proc();
         case blk: MPRealCreateBlock => 
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
-            && blk.needHeight == (Daos.chainHelper.getLastBlockNumber() + 1)) {
+            && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
              blk.proc();
           } else {
             log.debug("cancel create block:" + blk.beaconHash + " current:"+ VCtrl.curVN().getBeaconHash);

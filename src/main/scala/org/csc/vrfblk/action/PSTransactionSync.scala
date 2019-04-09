@@ -96,7 +96,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
 
     override def run() {
       running.set(true);
-      Thread.currentThread().setName("DPosTx-BatchRunner-" + id);
+      Thread.currentThread().setName("VRFTx-BatchRunner-" + id);
       while (dbBatchSaveList == null) {
         Thread.sleep(1000)
       }
@@ -174,7 +174,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   case class WalloutRunner(id: Int) extends Runnable {
     override def run() {
       running.set(true);
-      Thread.currentThread().setName("DPosTx-WalloutRunner-" + id);
+      Thread.currentThread().setName("VRFTx-WalloutRunner-" + id);
       while (running.get) {
         try {
           var h = wallHashList.poll(10, TimeUnit.SECONDS);
