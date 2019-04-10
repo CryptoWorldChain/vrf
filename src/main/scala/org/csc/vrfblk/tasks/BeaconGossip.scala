@@ -119,8 +119,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     incomingInfos.clear();
 
     VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
-    suggestStartIdx = Math.min(Daos.chainHelper.getLastBlockNumber + 1, suggestStartIdx)
-    val sync = PSSyncBlocks.newBuilder().setStartId(suggestStartIdx)
+    //从AccountDB中读取丢失高度，防止回滚时当前节点错误块过高或缺失导致起始位置错误
+    val dbHeight: Int = Math.toIntExact(Daos.chainHelper.getLastBlockNumber) + 1
+    val sync = PSSyncBlocks.newBuilder().setStartId(Math.min(dbHeight, suggestStartIdx))
       .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
     BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
   }
