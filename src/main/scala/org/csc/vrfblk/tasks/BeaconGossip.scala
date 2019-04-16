@@ -191,7 +191,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           }
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
-            + ",messageid=" + currentBR.messageId + ",curblk=" + VCtrl.curVN().getCurBlock + ",maxHeight=" + maxHeight);
+            + ",messageid=" + currentBR.messageId + ",curblk=" + VCtrl.curVN().getCurBlock + ",maxHeight=" + maxHeight + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
 
           if (lastSyncBlockHeight != suggestStartIdx.intValue()) {
             lastSyncBlockCount = 0;
@@ -204,7 +204,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
             lastSyncBlockHeight = suggestStartIdx;
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
-          } else if (size >= currentBR.votebase * 4 / 5) {
+          } else {
             incomingInfos.clear();
             tryRollbackBlock(suggestStartIdx);
           }
@@ -228,7 +228,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryRollbackBlock(suggestGossipBlock: Int = VCtrl.curVN().getCurBlock) {
 
     incomingInfos.clear();
-    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock);
+    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock+",suggestGossipBlock="+suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
     var startBlock = suggestGossipBlock - 1;
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
