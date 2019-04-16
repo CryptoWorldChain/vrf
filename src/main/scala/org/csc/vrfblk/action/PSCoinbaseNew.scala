@@ -26,6 +26,8 @@ import org.csc.vrfblk.msgproc.ApplyBlock
 import org.csc.vrfblk.tasks.NodeStateSwitcher
 import org.csc.vrfblk.tasks.Initialize
 import org.csc.vrfblk.Daos
+import org.csc.vrfblk.tasks.BeaconGossip
+import org.apache.commons.lang3.StringUtils
 
 @NActorProvider
 @Instantiate
@@ -46,7 +48,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash );
+      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
       val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()));
@@ -56,13 +58,29 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       } else {
         val nodebits = parentBlock.getMiner.getBit;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
-        if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber==1) {
+        if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber == 1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
-          log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)
+          //if rollback
+          if (StringUtils.isNotBlank(BeaconGossip.rollbackGossipNetBits)) {
+            val (rollbackhash, rollblacksign) = RandFunction.genRandHash(Daos.enc.hexEnc(parentBlock.getHeader.getHash.toByteArray()), parentBlock.getMiner.getTermid, BeaconGossip.rollbackGossipNetBits);
+            if (rollbackhash.equals(block.getMiner.getTermid)) {
+              log.info("rollback hash apply:rollbackhash=" + rollbackhash + ",blockheight=" + pbo.getBlockHeight);
+              BlockProcessor.offerMessage(new ApplyBlock(pbo));
+            } else {
+              log.warn("beaconhash.rollback not equal:height="+block.getHeader.getNumber+":: BH=" + pbo.getBlockEntry.getBlockhash
+                  + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray())+" dbprevbh="+Daos.enc.hexEnc(parentBlock.getHeader.getHash.toByteArray())
+                  + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid
+                  + " need=" + rollbackhash + " get=" + pbo.getBeaconHash
+                  + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits
+                + ",rollbackseed=" + BeaconGossip.rollbackGossipNetBits)
+            }
+          } else {
+            log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " termid=" + block.getMiner.getTermid + " ptermid=" + parentBlock.getMiner.getTermid + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)
+          }
         }
       }
-      
+
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }

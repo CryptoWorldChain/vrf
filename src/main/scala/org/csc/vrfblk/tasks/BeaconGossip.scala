@@ -52,6 +52,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   var lastSyncBlockHeight: Int = 0;
   var lastSyncBlockCount: Int = 0;
 
+  var rollbackGossipNetBits = "";
+
   def isRunning(): Boolean = {
     return running;
   }
@@ -180,7 +182,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx+",rollbackBlock="+rollbackBlock);
+            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
@@ -188,7 +190,20 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             log.info("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
-            NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+            if (rollbackBlock) {
+              rollbackGossipNetBits = randseed;
+              val dbblock = Daos.blkHelper.getBlock(blockHash);
+              if (dbblock != null && dbblock.getHeader.getNumber == height) {
+                log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
+                NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+              }else{
+                log.info("ConvergeToRollback.failed:height=" + height + ",blockHash=" + blockHash + ",dbblock=" + dbblock);
+              }
+            } else {
+              rollbackGossipNetBits = "";
+              NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+            }
+
           }
         case n: NotConverge =>
           log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx

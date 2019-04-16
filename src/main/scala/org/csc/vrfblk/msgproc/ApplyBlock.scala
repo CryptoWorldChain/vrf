@@ -260,10 +260,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   def randomNodeInNetwork(network: Network): Option[Node] = {
     val self = VCtrl.curVN()
-    val indexRange = network.directNodes.size - 1
     val temp: List[Node] = network.directNodes
-      .filter(p => p.bcuid.equals(self.getBcuid))
+      .filter(p => !p.bcuid.equals(self.getBcuid))
       .toList
+    val indexRange = temp.size;
 
     if (indexRange < 0 || temp.isEmpty) {
       Option.empty
