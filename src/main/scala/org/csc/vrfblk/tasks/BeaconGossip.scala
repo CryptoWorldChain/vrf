@@ -214,14 +214,13 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           } else {
             lastSyncBlockCount = lastSyncBlockCount + 1;
           }
+          incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && lastSyncBlockCount < 3) {
             //sync first
-            incomingInfos.clear();
             log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
             lastSyncBlockHeight = suggestStartIdx;
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
-          } else {
-            incomingInfos.clear();
+          } else if(suggestStartIdx>0){
             tryRollbackBlock(suggestStartIdx);
           }
         case n @ _ =>
