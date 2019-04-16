@@ -135,6 +135,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       val checkList = new ListBuffer[VNode]();
       var maxHeight = 0; //VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
+      var rollbackBlock = false;
       var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
       // var suggestStartIdx = Math.max(1, Daos.chainHelper.getLastBlockNumber() - 1);
 
@@ -150,7 +151,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           suggestStartIdx = p.getSugguestStartSyncBlockId;
         }
         if (p.getGossipBlockInfo > 0) {
-
+          rollbackBlock = true;
           //log.debug("rollback setgetGossipBlockInfo= " + p.getGossipMinerInfo.getCurBlock + ",from = " + p.getVn.getBcuid
           //  + ",hash=" + p.getGossipMinerInfo.getBeaconHash + ",b=" + p.getGossipMinerInfo.getCurBlock);
 
@@ -179,12 +180,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx);
+            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx+",rollbackBlock="+rollbackBlock);
           incomingInfos.clear();
-          if (maxHeight > VCtrl.curVN().getCurBlock) {
+          if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
             // 投出来的最大高度
-            log.debug("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
+            log.info("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
             NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
@@ -228,7 +229,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryRollbackBlock(suggestGossipBlock: Int = VCtrl.curVN().getCurBlock) {
 
     incomingInfos.clear();
-    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock+",suggestGossipBlock="+suggestGossipBlock);
+    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
     var startBlock = suggestGossipBlock - 1;
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
