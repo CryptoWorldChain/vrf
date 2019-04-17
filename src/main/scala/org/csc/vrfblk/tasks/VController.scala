@@ -191,7 +191,6 @@ object VCtrl extends LogHelper {
           if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber == 1) {
             true
           } else {
-            log.error("wrong blk :bh=" + Daos.enc.hexEnc(f.getHeader.getHash.toByteArray()));
             false
           }
         }).map(f => {

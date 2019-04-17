@@ -78,8 +78,9 @@ def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInf
     //}
 
     val strnetBits = hexToMapping(newNetBits);
+    // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
     val (newblk, txs) = newBlockFromAccount(
-      BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK), wallAccount, beaconHash,
+      VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
       strnetBits);
 
     if (newblk == null) {
