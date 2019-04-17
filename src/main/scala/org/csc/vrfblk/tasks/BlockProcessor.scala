@@ -26,6 +26,7 @@ import com.google.protobuf.ByteString
 import org.csc.vrfblk.msgproc.MPCreateBlock
 import org.csc.vrfblk.msgproc.MPRealCreateBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
+import org.csc.vrfblk.msgproc.SyncApplyBlock
 import scala.collection.JavaConverters._
 import org.csc.vrfblk.msgproc.NotaryBlock
 
@@ -95,6 +96,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 //VCtrl.blockLock.unlock()
               }
             //}
+        case blk: SyncApplyBlock =>
+          blk.proc();
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock => 

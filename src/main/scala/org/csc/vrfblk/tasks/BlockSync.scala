@@ -25,6 +25,7 @@ import org.csc.bcapi.crypto.BitMap
 import com.google.protobuf.ByteString
 import org.csc.vrfblk.msgproc.MPCreateBlock
 import org.csc.vrfblk.msgproc.ApplyBlock
+import org.csc.vrfblk.msgproc.SyncApplyBlock
 import org.csc.ckrand.pbgens.Ckrand.PSSyncBlocks
 import onight.tfw.async.CallBack
 import org.csc.ckrand.pbgens.Ckrand.PRetSyncBlocks
@@ -79,31 +80,14 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
                     if (ret.getRetCode() == 0) { //same message
 
-                      var maxid: Int = 0
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.debug("realBlockCount=" + realmap.size);
-                      var lastSuccessBlock: BlockEntityOrBuilder = null;
                       realmap.foreach { b =>
                         //同步执行 apply 并验证返回结果
+                        // applyblock
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
-                        val vres = Daos.blkHelper.ApplyBlock(block, true);
-                        lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
-                        if (vres.getCurrentNumber >= b.getBlockHeight) {
-                          if (vres.getCurrentNumber > maxid) {
-                            maxid = block.getHeader.getNumber.intValue();
-                          }
-                          log.info("sync block height ok=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +
-                            block.getMiner.getBit);
-                        } else {
-                          log.debug("sync block height failed=" + b.getBlockHeight + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
-                            + ",prev=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + ",seed=" +
-                            block.getMiner.getBit);
-                        }
-                      }
-                      log.debug("checkMiner --> maxid::" + maxid)
-                      if (maxid > 0) {
-                        VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
+                        BlockProcessor.offerMessage(new SyncApplyBlock(block));
                       }
                     }
                   }
