@@ -49,6 +49,10 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   var running: Boolean = true;
   val incomingInfos = new ConcurrentHashMap[String, PSNodeInfoOrBuilder]();
   var currentBR: BRDetect = BRDetect(null, 0, 0, null);
+  var lastSyncBlockHeight: Int = 0;
+  var lastSyncBlockCount: Int = 0;
+
+  var rollbackGossipNetBits = "";
 
   def isRunning(): Boolean = {
     return running;
@@ -133,6 +137,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       val checkList = new ListBuffer[VNode]();
       var maxHeight = 0; //VCtrl.instance.heightBlkSeen.get;
       var frombcuid = "";
+      var rollbackBlock = false;
       var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
       // var suggestStartIdx = Math.max(1, Daos.chainHelper.getLastBlockNumber() - 1);
 
@@ -148,7 +153,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           suggestStartIdx = p.getSugguestStartSyncBlockId;
         }
         if (p.getGossipBlockInfo > 0) {
-
+          rollbackBlock = true;
           //log.debug("rollback setgetGossipBlockInfo= " + p.getGossipMinerInfo.getCurBlock + ",from = " + p.getVn.getBcuid
           //  + ",hash=" + p.getGossipMinerInfo.getBeaconHash + ",b=" + p.getGossipMinerInfo.getCurBlock);
 
@@ -177,29 +182,48 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx);
+            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
           incomingInfos.clear();
-          if (maxHeight > VCtrl.curVN().getCurBlock) {
+          if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
             // 投出来的最大高度
-            log.debug("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
+            log.info("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
-            NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+            if (rollbackBlock) {
+              rollbackGossipNetBits = randseed;
+              val dbblock = Daos.blkHelper.getBlock(blockHash);
+              if (dbblock != null && dbblock.getHeader.getNumber == height) {
+                log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
+                NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+              }else{
+                log.info("ConvergeToRollback.failed:height=" + height + ",blockHash=" + blockHash + ",dbblock=" + dbblock);
+              }
+            } else {
+              rollbackGossipNetBits = "";
+              NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+            }
+
           }
         case n: NotConverge =>
-          log.info("cannot get converge for pbft vote:" + checkList.size + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
-            + ",messageid=" + currentBR.messageId);
+          log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
+            + ",messageid=" + currentBR.messageId + ",curblk=" + VCtrl.curVN().getCurBlock + ",maxHeight=" + maxHeight + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
 
-          if (maxHeight > VCtrl.curVN().getCurBlock) {
-            //sync first
-            incomingInfos.clear();
-            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
-          } else if (size >= currentBR.votebase * 4 / 5) {
-            incomingInfos.clear();
-            tryRollbackBlock();
+          if (lastSyncBlockHeight != suggestStartIdx.intValue()) {
+            lastSyncBlockCount = 0;
+          } else {
+            lastSyncBlockCount = lastSyncBlockCount + 1;
           }
-        case n@_ =>
+          incomingInfos.clear();
+          if (maxHeight > VCtrl.curVN().getCurBlock && lastSyncBlockCount < 3) {
+            //sync first
+            log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
+            lastSyncBlockHeight = suggestStartIdx;
+            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
+          } else if(suggestStartIdx>0){
+            tryRollbackBlock(suggestStartIdx);
+          }
+        case n @ _ =>
           log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
             + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
             + ",messageid=" + currentBR.messageId);
@@ -216,12 +240,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     }
   }
 
-  def tryRollbackBlock() {
+  def tryRollbackBlock(suggestGossipBlock: Int = VCtrl.curVN().getCurBlock) {
 
     incomingInfos.clear();
-    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock);
+    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
-    var startBlock = VCtrl.curVN().getCurBlock - 1;
+    var startBlock = suggestGossipBlock - 1;
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
       val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
       if (blks != null && blks.size() == 1) {

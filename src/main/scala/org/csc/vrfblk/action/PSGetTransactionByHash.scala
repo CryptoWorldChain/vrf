@@ -1,20 +1,20 @@
 package org.csc.vrfblk.action
 
 import com.google.protobuf.ByteString
-import onight.oapi.scala.commons.{LService, PBUtils}
+import onight.oapi.scala.commons.{ LService, PBUtils }
 import onight.osgi.annotation.NActorProvider
 import onight.tfw.async.CompleteHandler
 import onight.tfw.ntrans.api.ActorService
-import onight.tfw.otransio.api.{PackHeader, PacketHelper}
+import onight.tfw.otransio.api.{ PackHeader, PacketHelper }
 import onight.tfw.otransio.api.beans.FramePacket
 import onight.tfw.otransio.api.session.CMDService
 import onight.tfw.proxy.IActor
 import org.apache.commons.codec.binary.Hex
-import org.apache.felix.ipojo.annotations.{Instantiate, Provides}
-import org.csc.ckrand.pbgens.Ckrand.{PCommand, PRetGetTransaction, PSGetTransaction}
+import org.apache.felix.ipojo.annotations.{ Instantiate, Provides }
+import org.csc.ckrand.pbgens.Ckrand.{ PCommand, PRetGetTransaction, PSGetTransaction }
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
-import org.csc.vrfblk.{Daos, PSMVRFNet}
+import org.csc.vrfblk.{ Daos, PSMVRFNet }
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.utils.TxCache
 
@@ -60,12 +60,16 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
         ret.setRetCode(1).setRetMessage("SUCCESS")
 
       } catch {
-        case t: Throwable => ret.clear().setRetCode(-3).setRetMessage(t.getMessage)
+        case t: Throwable =>
+          log.info("get txerror");
+          ret.clear().setRetCode(-3).setRetMessage("" + t)
+      } finally {
+        handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
       }
-
     } else {
       ret.setRetCode(-1).setRetMessage("V Node Not ready")
+      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+
     }
-    handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
   }
 }
