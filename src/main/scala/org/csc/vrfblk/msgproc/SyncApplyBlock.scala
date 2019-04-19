@@ -34,12 +34,10 @@ case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with 
             log.info("sync block height ok=" + block.getHeader.getNumber + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +
             block.getMiner.getBit);
         } else {
-            log.debug("sync block height failed=" + block.getHeader.getNumber + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
+            log.info("sync block height failed=" + block.getHeader.getNumber + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
             + ",prev=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + ",seed=" +
             block.getMiner.getBit);
         }
-
-        log.debug("checkMiner --> maxid::" + maxid)
         if (maxid > 0) {
             VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
         }
