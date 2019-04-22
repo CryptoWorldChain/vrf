@@ -61,7 +61,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
               } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)
-                && Daos.confirmMapDB.getQueueSize > VConfig.WAIT_BLOCK_MIN_TXN);
+                && Daos.confirmMapDB.getQueueSize < VConfig.WAIT_BLOCK_MIN_TXN);
 
               //if (VCtrl.blockLock.tryLock()) {
               //try {
