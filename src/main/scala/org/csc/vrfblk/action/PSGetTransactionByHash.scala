@@ -35,8 +35,6 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
     if (VCtrl.isReady()) {
       try {
         val from = pack.getExtProp(PackHeader.PACK_FROM)
-        log.info(s"SRT SYNCTX request ${from}, need TX COUNT${pbo.getTxHashList.size()} ,self bcuid=${VCtrl.curVN().getBcuid}")
-
         var i = 0
         for (wantedHash: String <- pbo.getTxHashList.asScala) {
           val transactionX = TxCache.getTx(wantedHash) match {
@@ -61,7 +59,7 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
 
       } catch {
         case t: Throwable =>
-          log.info("get txerror");
+          log.error("get txerror", t);
           ret.clear().setRetCode(-3).setRetMessage("" + t)
       } finally {
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))

@@ -32,22 +32,22 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       excitationAddress.appendAll(witnessNode.getWitnessList.asScala.map(node => node.getCoAddress).toList)
     }
 
-    log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
-      s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
+    // log.info(s"netbits:${witnessNode.getNetbitx}; witnessBits:${witnessNode.getWitnessList.asScala.map(_.getBitIdx)}; " +
+    //  s"beaconHash:${beaconHash}; excitationAddress:${excitationAddress.mkString("[", ",", "]")};")
 
     //@volatile var result: (BlockEntity, java.util.List[Transaction]) = (null, null)
 
-    log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
+    // log.info(s"LOCK to NewBlock time:${System.currentTimeMillis()}")
     val startblk = System.currentTimeMillis();
     if (Daos.chainHelper.getLastBlockNumber >= needHeight && needHeight > 0) {
-      log.info("account.rollbacktoBlock:" + (needHeight - 1) + ",current=" + Daos.chainHelper.getLastBlockNumber);
+      // log.info("account.rollbacktoBlock:" + (needHeight - 1) + ",current=" + Daos.chainHelper.getLastBlockNumber);
       Daos.chainHelper.rollbackTo(needHeight - 1);
     }
     val newblk = Daos.blkHelper.createNewBlock(txs, "", beaconHash, excitationAddress.asJava, voteInfos);
-    //extradata,term
+    // extradata,term
     val endblk = System.currentTimeMillis();
 
-    log.debug("new block ok:beaconHash=" + beaconHash + " txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
+    // log.debug("new block ok:beaconHash=" + beaconHash + " txms=" + (startblk - starttx) + ",blkms=" + (endblk - startblk));
 
     //val newblockheight = VCtrl.curVN().getCurBlock + 1
     //if (newblk == null || newblk.getHeader == null) {
@@ -83,6 +83,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
+
     val (newblk, txs) = newBlockFromAccount(
       VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
       strnetBits);

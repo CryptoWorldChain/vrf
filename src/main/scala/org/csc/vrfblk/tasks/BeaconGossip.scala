@@ -181,23 +181,23 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
-          log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
+          //log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
+          //  + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
             // 投出来的最大高度
-            log.info("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
+            // log.info("syncblock height=" + height + " maxHeight=" + maxHeight + " suggestStartIdx=" + suggestStartIdx.intValue)
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
             if (rollbackBlock) {
               rollbackGossipNetBits = randseed;
               val dbblock = Daos.blkHelper.getBlock(blockHash);
               if (dbblock != null && dbblock.getHeader.getNumber == height) {
-                log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
+                // log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
                 NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
               }else{
-                log.info("ConvergeToRollback.failed:height=" + height + ",blockHash=" + blockHash + ",dbblock=" + dbblock);
+                // log.info("ConvergeToRollback.failed:height=" + height + ",blockHash=" + blockHash + ",dbblock=" + dbblock);
               }
             } else {
               rollbackGossipNetBits = "";
@@ -206,8 +206,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
           }
         case n: NotConverge =>
-          log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
-            + ",messageid=" + currentBR.messageId + ",curblk=" + VCtrl.curVN().getCurBlock + ",maxHeight=" + maxHeight + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
+          // log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
+          //   + ",messageid=" + currentBR.messageId + ",curblk=" + VCtrl.curVN().getCurBlock + ",maxHeight=" + maxHeight + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
 
           if (lastSyncBlockHeight != suggestStartIdx.intValue()) {
             lastSyncBlockCount = 0;
@@ -217,16 +217,16 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && lastSyncBlockCount < 3) {
             //sync first
-            log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
+            // log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
             lastSyncBlockHeight = suggestStartIdx;
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
           } else if(suggestStartIdx>0){
             tryRollbackBlock(suggestStartIdx);
           }
         case n @ _ =>
-          log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
-            + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
-            + ",messageid=" + currentBR.messageId);
+          // log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
+          //   + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
+          //   + ",messageid=" + currentBR.messageId);
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             incomingInfos.clear();
@@ -243,7 +243,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryRollbackBlock(suggestGossipBlock: Int = VCtrl.curVN().getCurBlock) {
 
     incomingInfos.clear();
-    log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
+    // log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
     var startBlock = suggestGossipBlock - 1;
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {

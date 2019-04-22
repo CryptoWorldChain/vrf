@@ -45,12 +45,12 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setBcuid(root_node.bcuid);
         syncToDB();
       } else {
-        log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ") + "}")
+        // log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ") + "}")
       }
     }
     if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
-      log.info("vrf block Info load from DB:c=" +
-        cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
+      //log.info("vrf block Info load from DB:c=" +
+      //  cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
 
 
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {

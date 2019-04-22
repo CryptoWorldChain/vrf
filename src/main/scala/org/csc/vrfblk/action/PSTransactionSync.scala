@@ -48,7 +48,6 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   }
 
   def setBlocksPendingQ(ddc: IPengingQueue[Object]) = {
-    log.info("setBlocksPendingQ==" + ddc);
     this.blocksPendingQ = ddc;
     PSTransactionSyncService.dbBatchSaveList = ddc;
   }
@@ -119,7 +118,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             }
           }
           if (p == null) {
-            Thread.sleep(500);
+            Thread.sleep(10);
           }
         } catch {
           case ier: IllegalStateException =>
@@ -160,12 +159,6 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         } catch {
           case t: Throwable =>
             log.error("get error", t);
-        } finally {
-          try {
-            Thread.sleep(100)
-          } catch {
-            case t: Throwable =>
-          }
         }
       }
     }
@@ -202,11 +195,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
           case t: Throwable =>
             log.error("get error", t);
         } finally {
-          try {
-            Thread.sleep(10)
-          } catch {
-            case t: Throwable =>
-          }
+          //try {
+          //  Thread.sleep(10)
+          //} catch {
+          //  case t: Throwable =>
+          //}
         }
       }
     }

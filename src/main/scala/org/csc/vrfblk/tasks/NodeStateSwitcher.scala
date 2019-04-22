@@ -42,7 +42,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
     var netBits = netbits1;
     // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
-    log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
+    // log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
     //    var netBits = BigInteger.ZERO;
     //    try {
     //      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
@@ -131,7 +131,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         m match {
           case BeaconConverge(height, blockHash, hash, seed) => {
 
-            log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
+            // log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
             //          if (height >= VCtrl.curVN().getCurBlock) {
             VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
               .setCurBlock(height);
@@ -145,7 +145,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             //          }
           }
           case StateChange(newsign, newhash, prevhash, netbits, height) => {
-            log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
+            // log.info("get new statechange,hash={},prevhash={},localbeanhash={}", newhash, prevhash, VCtrl.curVN().getBeaconHash);
             if (VCtrl.curVN().getBeaconHash.equals(prevhash)) {
               //@TODO !should verify...
               VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
@@ -158,7 +158,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
               val block = Daos.chainHelper.GetConnectBestBlock;
               // val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
               if (block != null) {
-                log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
+                // log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
                 val nodeBit = VCtrl.curVN().getCurBlock == 0
                 val (hash, sign) = RandFunction.genRandHash(
                   VCtrl.curVN().getCurBlockHash,
