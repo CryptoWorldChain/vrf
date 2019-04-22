@@ -47,7 +47,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
   def isRunning(): Boolean = {
     return running;
   }
-  
+
   val syncBlockInQueue = new AtomicLong(0);
 
   def runBatch(items: List[SyncInfo]): Unit = {
@@ -59,13 +59,25 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
         case syncInfo: SyncBlock =>
           log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
+          Thread.sleep(500);
+
+          if (syncBlockInQueue.get > 0 || syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
+            return ;
+          }
+
+          val reqbody =
+            if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+              syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock).build();
+            } else {
+              syncInfo.reqBody
+            }
 
           val messageid = UUIDGenerator.generate();
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
           // 请求一组block，执行applyBlock方法
-          VCtrl.network().asendMessage("SYNVRF", syncInfo.reqBody, randn,
+          VCtrl.network().asendMessage("SYNVRF", reqbody, randn,
             new CallBack[FramePacket] {
               def onSuccess(fp: FramePacket) = {
                 val end = System.currentTimeMillis();
