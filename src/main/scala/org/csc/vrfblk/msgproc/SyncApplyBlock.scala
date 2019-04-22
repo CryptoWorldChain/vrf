@@ -23,7 +23,6 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
   def proc() {
-    BlockSync.syncBlockInQueue.decrementAndGet();
     try {
       val vres = Daos.blkHelper.ApplyBlock(block, true);
       var lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
@@ -45,6 +44,8 @@ case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with 
         // VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
       }
     } finally {
+      BlockSync.syncBlockInQueue.decrementAndGet();
+//      log.info("value=" + BlockSync.syncBlockInQueue.get);
       if (BlockSync.syncBlockInQueue.get <= 0) {
         BeaconGossip.gossipBlocks();
       }

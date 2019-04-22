@@ -15,6 +15,7 @@ import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.Daos
 import org.csc.vrfblk.utils.{RandFunction, VConfig}
 
+import org.csc.evmapi.gens.Block.BlockEntity
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 
@@ -82,11 +83,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(block: BlockEntity) = {
-     updateBlockHeight(block.getHeader.getNumber, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+  def updateBlockHeight(block: BlockEntity) : Unit = {
+     updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String)  : Unit = {
 
     //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
 
