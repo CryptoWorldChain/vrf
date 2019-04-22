@@ -78,10 +78,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     }
   }
 
-  def tryNotifyState(nodeBit: String) {
-    log.debug("tryNotifyState height=" + pbo.getBlockHeight + " Blockhash=" + pbo.getBlockEntry.getBlockhash + " BeaconHash=" + pbo.getBeaconHash + " nodeBit=" + nodeBit)
-    val (hash, sign) = RandFunction.genRandHash(pbo.getBlockEntry.getBlockhash, pbo.getBeaconHash, nodeBit)
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, pbo.getBeaconHash, nodeBit, pbo.getBlockHeight));
+  def tryNotifyState(blockHash: String, blockHeight: Int, beaconHash: String, nodeBit: String) {
+    log.info("tryNotifyState height=" + blockHeight + " Blockhash=" + blockHash + " BeaconHash=" + beaconHash + " nodeBit=" + nodeBit)
+    val (hash, sign) = RandFunction.genRandHash(blockHash, beaconHash, nodeBit)
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, beaconHash, nodeBit, blockHeight));
   }
 
   def proc() {
@@ -120,7 +120,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (notaBits.testBit(cn.getBitIdx)) {
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
-          tryNotifyState(nodebit);
+          tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
         case n@_ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
