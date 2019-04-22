@@ -23,10 +23,11 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
     def proc() {
+      BlockSync.syncBlockInQueue.decrementAndGet();
         val vres = Daos.blkHelper.ApplyBlock(block, true);
         var lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
         var maxid: Int = 0
-        BlockSync.syncBlockInQueue.decrementAndGet();
+        
         if (vres.getCurrentNumber >= block.getHeader.getNumber) {
             if (vres.getCurrentNumber > maxid) {
             maxid = block.getHeader.getNumber.intValue();
