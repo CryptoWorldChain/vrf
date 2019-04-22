@@ -52,7 +52,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         }
         val lastBlock = Daos.chainHelper.GetConnectBestBlock();
         if (lastBlock != null) {
-          VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+          VCtrl.instance.updateBlockHeight(lastBlock);
+          
+          // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), lastBlock.getMiner.getBit)
         } else {
           VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
@@ -66,7 +68,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     } else {
       val lastBlock = Daos.chainHelper.GetConnectBestBlock();
       if (lastBlock != null) {
-        VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
+        VCtrl.instance.updateBlockHeight(lastBlock);
+        // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
         (b.getBlockHeight, b.getBlockHeight, lastBlock.getMiner.getBit)
       } else {
         VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)

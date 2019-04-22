@@ -41,7 +41,8 @@ case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with 
           block.getMiner.getBit);
       }
       if (maxid > 0) {
-        VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
+        VCtrl.instance.updateBlockHeight(lastSuccessBlock)
+        // VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
       }
     } finally {
       if (BlockSync.syncBlockInQueue.get <= 0) {

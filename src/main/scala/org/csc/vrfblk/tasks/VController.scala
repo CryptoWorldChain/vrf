@@ -82,11 +82,15 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
+  def updateBlockHeight(block: BlockEntity) = {
+     updateBlockHeight(block.getHeader.getNumber, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+  }
+
   def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String) = {
 
     //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
 
-    log.debug("updateBlockHeight blockHeight=" + blockHeight + " blockHash=" + blockHash + " bits=" + extraData)
+    // log.debug("updateBlockHeight blockHeight=" + blockHeight + " blockHash=" + blockHash + " bits=" + extraData)
     Daos.blkHelper.synchronized({
       cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
       cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
@@ -106,8 +110,8 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
           cur_vnode.setBeaconHash(blk.getMiner.getTermid);
         }
       }
-      log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
-        + ",hash=" + blockHash + ",seed=" + extraData);
+      // log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
+      //   + ",hash=" + blockHash + ",seed=" + extraData);
       syncToDB()
     })
     //}
