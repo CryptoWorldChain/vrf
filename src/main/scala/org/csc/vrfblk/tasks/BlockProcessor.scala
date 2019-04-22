@@ -45,7 +45,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
     //单线程执行
-    for(m <- items.asScala){
+    for (m <- items.asScala) {
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
@@ -56,29 +56,30 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           log.debug("exec create block background running:" + blkInfo.beaconHash + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
-              while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-              //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
+              do {
+                //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
-              }
+              } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)
+                && Daos.confirmMapDB.getQueueSize > VConfig.WAIT_BLOCK_MIN_TXN);
 
               //if (VCtrl.blockLock.tryLock()) {
-                //try {
-                  if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-                  //if (Daos.chainHelper.GetConnectBestBlock() == null
-                  //  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
-                  //  || Daos.chainHelper.getLastBlockNumber() == 0) {
-                    //create block.
-                    log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
-                    // blkInfo.proc();
-                     BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
-                  } else {
-                    log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
-                  }
-                //} finally {
-                  log.debug("UNLOCK")
-                  //VCtrl.blockLock.unlock()
-                //}
+              //try {
+              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+                //if (Daos.chainHelper.GetConnectBestBlock() == null
+                //  || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid)
+                //  || Daos.chainHelper.getLastBlockNumber() == 0) {
+                //create block.
+                log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
+                // blkInfo.proc();
+                BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
+              } else {
+                log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
+              }
+              //} finally {
+              log.debug("UNLOCK")
+              //VCtrl.blockLock.unlock()
+              //}
               //} else {
               //  log.error(s"LOCK Failed! some Thread Working Right now beaconHash:${blkInfo.beaconHash}, " +
               //    s"DAOHeight:${Daos.chainHelper.getLastBlockNumber()},sleep still:${sleepMS}")
@@ -88,24 +89,24 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: ApplyBlock =>
           log.debug("apply block:" + blk.pbo.getBeaconHash + ",netbits=" + new String(blk.pbo.getVrfCodes.toByteArray()) + ",blockheight="
             + blk.pbo.getBlockHeight);
-            //if (VCtrl.blockLock.tryLock()) {
-              try {
-                blk.proc();
-              } finally {
-                //log.debug("UNLOCK")
-                //VCtrl.blockLock.unlock()
-              }
-            //}
+          //if (VCtrl.blockLock.tryLock()) {
+          try {
+            blk.proc();
+          } finally {
+            //log.debug("UNLOCK")
+            //VCtrl.blockLock.unlock()
+          }
+        //}
         case blk: SyncApplyBlock =>
           blk.proc();
         case blk: NotaryBlock =>
           blk.proc();
-        case blk: MPRealCreateBlock => 
+        case blk: MPRealCreateBlock =>
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
-             blk.proc();
+            blk.proc();
           } else {
-            log.debug("cancel create block:" + blk.beaconHash + " current:"+ VCtrl.curVN().getBeaconHash);
+            log.debug("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash);
           }
         case n @ _ =>
           log.warn("unknow info:" + n);

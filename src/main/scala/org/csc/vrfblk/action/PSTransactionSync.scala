@@ -144,7 +144,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   case class ConfirmRunner(id: Int) extends Runnable {
     override def run() {
       running.set(true);
-      Thread.currentThread().setName("DPosTx-ConfirmRunner-" + id);
+      Thread.currentThread().setName("VRFTx-ConfirmRunner-" + id);
       while (running.get) {
         try {
           var h = confirmHashList.poll(10, TimeUnit.SECONDS);

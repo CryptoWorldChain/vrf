@@ -153,7 +153,7 @@ object VConfig {
   val SYNC_TX_TPS_LIMIT = prop.get(PROP_DOMAIN + "sync.tx.tps.limit", 50000); //每秒钟最多1万笔交易同步
 
   //当有交易时，低于这个值，则不做立即打块请求，需要sleep一段时间，介于【WAIT_BLOCK_MIN_TXN，WAIT_BLOCK_MAX_TXN】之间，则需要等待BLK_MIN_EPOCH_MS时间
-  val WAIT_BLOCK_MIN_TXN = prop.get(PROP_DOMAIN + "wait.block.min.txn", 100); //至少100笔以上就不等了
+  val WAIT_BLOCK_MIN_TXN = prop.get(PROP_DOMAIN + "wait.block.min.txn", 500); //至少100笔以上就不等了
 
   //当有交易时，大于这个值，则立即打块，不sleep，介于【WAIT_BLOCK_MIN_TXN，WAIT_BLOCK_MAX_TXN】之间，则需要等待BLK_MIN_EPOCH_MS时间
   val WAIT_BLOCK_MAX_TXN = prop.get(PROP_DOMAIN + "wait.block.max.txn", 5000); //超过5000笔以上就不等了
