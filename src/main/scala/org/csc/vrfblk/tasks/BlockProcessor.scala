@@ -52,7 +52,10 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           //          log.debug("get newblock info:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits));
           var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
-
+          var isFirstMaker = false;
+          if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+            isFirstMaker = true;
+          }
           log.debug("exec create block background running:" + blkInfo.beaconHash + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
@@ -60,8 +63,12 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
-              } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)
-                && Daos.confirmMapDB.getQueueSize < VConfig.WAIT_BLOCK_MIN_TXN);
+                if (isFirstMaker && Daos.confirmMapDB.getQueueSize < VConfig.WAIT_BLOCK_MIN_TXN) {
+                  log.error("wait up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS);
+                  sleepMS = 0;
+
+                }
+              } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
 
               //if (VCtrl.blockLock.tryLock()) {
               //try {
