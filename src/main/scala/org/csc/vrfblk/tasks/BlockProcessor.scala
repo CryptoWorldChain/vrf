@@ -64,7 +64,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
                 if (isFirstMaker && Daos.confirmMapDB.getQueueSize > VConfig.WAIT_BLOCK_MIN_TXN) {
-                  log.error("wait up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS);
+                  log.error("wait up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS+",queuesize="+Daos.confirmMapDB.getQueueSize);
                   sleepMS = 0;
 
                 }
