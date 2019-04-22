@@ -59,9 +59,13 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
         case syncInfo: SyncBlock =>
           log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
-          Thread.sleep(500);
+          if (syncBlockInQueue.get > 0) {
+            Thread.sleep(1000);
+          } else {
+            Thread.sleep(100);
+          }
 
-          if (syncBlockInQueue.get > 0 || syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
+          if (syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
             return ;
           }
 
@@ -112,7 +116,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     log.warn("error In SyncBlock:" + t.getMessage, t);
                 } finally {
                   //try gossip againt
-                  BeaconGossip.gossipBlocks();
+
                 }
               }
               def onFailed(e: java.lang.Exception, fp: FramePacket) {
@@ -120,7 +124,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
                 log.error("send SYNDOB ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
-                BeaconGossip.gossipBlocks();
+                //               BeaconGossip.gossipBlocks();
               }
             })
         case n @ _ =>
