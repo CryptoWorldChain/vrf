@@ -32,6 +32,7 @@ import org.csc.ckrand.pbgens.Ckrand.PRetSyncBlocks
 import scala.collection.JavaConverters._
 import org.csc.evmapi.gens.Block.BlockEntity
 import org.csc.evmapi.gens.Block.BlockEntityOrBuilder
+import java.util.concurrent.atomic.AtomicLong
 
 trait SyncInfo {
   //  def proc(): Unit;
@@ -46,6 +47,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
   def isRunning(): Boolean = {
     return running;
   }
+  
+  val syncBlockInQueue = new AtomicLong(0);
 
   def runBatch(items: List[SyncInfo]): Unit = {
     MDCSetBCUID(VCtrl.network())
@@ -87,6 +90,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         //同步执行 apply 并验证返回结果
                         // applyblock
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
+                        syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerMessage(new SyncApplyBlock(block));
                       }
                     }
