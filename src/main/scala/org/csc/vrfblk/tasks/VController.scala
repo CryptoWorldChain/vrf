@@ -6,7 +6,6 @@ import java.util.concurrent.locks.ReentrantLock
 
 import com.google.common.cache.{ Cache, CacheBuilder }
 import org.apache.commons.lang3.StringUtils
-import org.csc.bcapi.crypto.BitMap
 import org.csc.bcapi.gens.Oentity.OValue
 import org.csc.ckrand.pbgens.Ckrand.{ PBlockEntry, VNode, VNodeState }
 import org.csc.p22p.action.PMNodeHelper
@@ -14,12 +13,13 @@ import org.csc.p22p.node.{ Network, Node }
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.Daos
 import org.csc.vrfblk.utils.{ RandFunction, VConfig }
-
 import org.csc.evmapi.gens.Block.BlockEntity
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
 import org.csc.evmapi.gens.Block.BlockHeader
 import com.google.protobuf.ByteString
+import org.csc.bcapi.crypto.BitMap
+import scala.collection.JavaConversions._
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -89,10 +89,6 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
   def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String): Unit = {
-
-    //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
-
-    // log.debug("updateBlockHeight blockHeight=" + blockHeight + " blockHash=" + blockHash + " bits=" + extraData)
     Daos.blkHelper.synchronized({
       cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
       cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
@@ -102,21 +98,14 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
           cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
         }
         cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
-        //        cur_vnode.setCurBlock(blockHeight)
         cur_vnode.setVrfRandseeds(blk.getMiner.getBit);
         if (blockHash != null) {
           cur_vnode.setCurBlockHash(blockHash)
-
-          // beaconhash = blockMiner.termId
-          // cur_vnode.setBeaconHash(blockHash);
           cur_vnode.setBeaconHash(blk.getMiner.getTermid);
         }
       }
-      // log.debug("checkMiner --> cur_vnode.setCurBlock::" + cur_vnode.getCurBlock
-      //   + ",hash=" + blockHash + ",seed=" + extraData);
       syncToDB()
     })
-    //}
   }
 
   def startup() = {
@@ -127,7 +116,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
 }
 
-object VCtrl extends LogHelper {
+object VCtrl extends LogHelper with BitMap {
   var instance: VRFController = VRFController(null);
 
   def network(): Network = instance.network;
@@ -173,19 +162,26 @@ object VCtrl extends LogHelper {
     loadFromBlock(block, false)
   }
 
-  def getBestBlock(): PBlockEntry.Builder = {
-    val bestblk = Daos.chainHelper.GetConnectBestBlock();
-    val bestPrevBlock = Daos.chainHelper.getBlockByHash(bestblk.getHeader.getPreHash);
-    
-    loadFromBlock(bestblk.getHeader.getNumber, false).filter { p =>
-      BlockHeader.parseFrom(p.getBlockHeader).getPreHash.equals(parentHash)
-    }.map(f=>{
-      
-      var sleepMS = RandFunction.getRandMakeBlockSleep(bestPrevBlock.getMiner.getTermid, 
-          bestPrevBlock.getMiner.getBit, f.getBlockMiner);
-      
-    })
-    null
+  // 判断这个block是否是当前beacon中的第一个块
+  def getPriorityBlockInBeaconHash(blk: BlockEntity): BlockEntity = {
+    // 如果已经有更高的高度了，直接返回最高块
+    // 如果相同高度的区块只有1个，返回true
+    val bestblks = Daos.chainHelper.getConnectBlocksByNumber(blk.getHeader.getNumber);
+    if (bestblks.size == 1) {
+      blk
+    } else {
+      // 判断是否是beaconhash中更高优先级的块
+      // 循环所有相同高度的块，排序sleepMS
+      val priorityBlk = bestblks.map(p => {
+        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getPreHash);
+        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getBcuid);
+        val sleepMS = RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTermid, mapToBigInt(prevBlock.getMiner.getBit).bigInteger, blknode.node_idx)
+        
+        (sleepMS, p)
+      }).sortBy(_._1).get(0)._2
+     
+      priorityBlk
+    }
   }
 
   def loadFromBlock(block: Int, needBody: Boolean): Iterable[PBlockEntry.Builder] = {
