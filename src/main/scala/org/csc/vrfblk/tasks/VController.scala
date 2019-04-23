@@ -168,6 +168,7 @@ object VCtrl extends LogHelper with BitMap {
     // 如果相同高度的区块只有1个，返回true
     val bestblks = Daos.chainHelper.getConnectBlocksByNumber(blk.getHeader.getNumber);
     if (bestblks.size == 1) {
+      log.info("ready to update blk=" + blk.getHeader.getNumber + " hash=" + Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
       blk
     } else {
       // 判断是否是beaconhash中更高优先级的块
@@ -180,6 +181,7 @@ object VCtrl extends LogHelper with BitMap {
         (sleepMS, p)
       }).sortBy(_._1).get(0)._2
      
+      log.info("ready to update blk=" + priorityBlk.getHeader.getNumber + " hash=" + Daos.enc.hexEnc(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
     }
   }
