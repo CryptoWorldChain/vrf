@@ -50,6 +50,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
   val syncBlockInQueue = new AtomicLong(0);
 
+  var lastSyncBlockHeight: Int = -1;
   def runBatch(items: List[SyncInfo]): Unit = {
     MDCSetBCUID(VCtrl.network())
     items.asScala.foreach(m => {
@@ -68,12 +69,18 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           if (syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
             return ;
           }
+          if (lastSyncBlockHeight <= -1) {
+            lastSyncBlockHeight = syncInfo.reqBody.getStartId;
+          }
+          else if(lastSyncBlockHeight==syncInfo.reqBody.getStartId){
+            lastSyncBlockHeight =  syncInfo.reqBody.getStartId - 1; 
+          }
 
           val reqbody =
             if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
               syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock).build();
             } else {
-              syncInfo.reqBody
+              syncInfo.reqBody.toBuilder().setStartId(lastSyncBlockHeight).build();
             }
 
           val messageid = UUIDGenerator.generate();
