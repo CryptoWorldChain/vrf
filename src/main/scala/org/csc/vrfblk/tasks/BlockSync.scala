@@ -123,7 +123,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 val end = System.currentTimeMillis();
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
-                log.error("send SYNDOB ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
+                log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
                 //               BeaconGossip.gossipBlocks();
               }
             })

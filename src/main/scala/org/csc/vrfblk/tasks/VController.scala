@@ -4,20 +4,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 
-import com.google.common.cache.{Cache, CacheBuilder}
+import com.google.common.cache.{ Cache, CacheBuilder }
 import org.apache.commons.lang3.StringUtils
 import org.csc.bcapi.crypto.BitMap
 import org.csc.bcapi.gens.Oentity.OValue
-import org.csc.ckrand.pbgens.Ckrand.{PBlockEntry, VNode, VNodeState}
+import org.csc.ckrand.pbgens.Ckrand.{ PBlockEntry, VNode, VNodeState }
 import org.csc.p22p.action.PMNodeHelper
-import org.csc.p22p.node.{Network, Node}
+import org.csc.p22p.node.{ Network, Node }
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.Daos
-import org.csc.vrfblk.utils.{RandFunction, VConfig}
+import org.csc.vrfblk.utils.{ RandFunction, VConfig }
 
 import org.csc.evmapi.gens.Block.BlockEntity
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
+import org.csc.evmapi.gens.Block.BlockHeader
+import com.google.protobuf.ByteString
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -53,7 +55,6 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       //log.info("vrf block Info load from DB:c=" +
       //  cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
 
-
       if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
         //读取创世块HASH
@@ -83,11 +84,11 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
   }
 
-  def updateBlockHeight(block: BlockEntity) : Unit = {
-     updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+  def updateBlockHeight(block: BlockEntity): Unit = {
+    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String)  : Unit = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String): Unit = {
 
     //if (blockHeight != cur_vnode.getCurBlock || (blockHeight == cur_vnode.getCurBlock && !blockHash.equals(cur_vnode.getCurBlockHash))) {
 
@@ -170,6 +171,21 @@ object VCtrl extends LogHelper {
 
   def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
+  }
+
+  def getBestBlock(): PBlockEntry.Builder = {
+    val bestblk = Daos.chainHelper.GetConnectBestBlock();
+    val bestPrevBlock = Daos.chainHelper.getBlockByHash(bestblk.getHeader.getPreHash);
+    
+    loadFromBlock(bestblk.getHeader.getNumber, false).filter { p =>
+      BlockHeader.parseFrom(p.getBlockHeader).getPreHash.equals(parentHash)
+    }.map(f=>{
+      
+      var sleepMS = RandFunction.getRandMakeBlockSleep(bestPrevBlock.getMiner.getTermid, 
+          bestPrevBlock.getMiner.getBit, f.getBlockMiner);
+      
+    })
+    null
   }
 
   def loadFromBlock(block: Int, needBody: Boolean): Iterable[PBlockEntry.Builder] = {

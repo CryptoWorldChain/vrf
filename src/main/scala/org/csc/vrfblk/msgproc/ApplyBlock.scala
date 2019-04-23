@@ -50,7 +50,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-        val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+        val lastBlock = VCtrl.getBestBlock();
+//          Daos.chainHelper.GetConnectBestBlock();
+        
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(lastBlock);
           
