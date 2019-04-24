@@ -48,16 +48,22 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         //
         val cn = VCtrl.curVN()
         ret.setRetCode(0).setRetMessage("SUCCESS")
+        var totalSize = 0        
         for (
-          id <- pbo.getStartId to pbo.getEndId
+          id <- pbo.getStartId to pbo.getEndId if (totalSize <= (8 * 1024 * 1024))
         ) {
-          val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
+          val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);          
           if (b != null) {
             b.map(bs => {
-              if (bs !=null) {
-                ret.addBlockHeaders(bs);
-              }
+              totalSize = totalSize + bs.build().toByteArray().size;
             })
+            if (totalSize <= (8 * 1024 * 1024)) {
+              b.map(bs => {
+                if (bs !=null) {
+                  ret.addBlockHeaders(bs);
+                }
+              })
+            }
           }
         }
         pbo.getBlockIdxList.map { id =>

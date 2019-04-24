@@ -66,14 +66,12 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
       }
       VCtrl.coMinerByUID.map(f => {
-        netBits = netBits.setBit(f._2.getBitIdx);
+        if (f._2.getCurBlock >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)) {
+          netBits = netBits.setBit(f._2.getBitIdx);
+        }
       })
-      log.debug(" netBits::" + netBits);
     }
-    log.debug("try get new state == netBits=" + netBits.bitCount)
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    log.debug(s"get new state == ${state},blockbits=${blockbits.toString(2)},notarybits=${notarybits.toString(2)}" +
-      s",hash=${hash},curblk=${VCtrl.curVN().getCurBlock}netBits=${netBits}, coMinerSize=${VCtrl.coMinerByUID.size}");
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
@@ -93,13 +91,11 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           .setNetbitx(netBits.toString(16))
           .addAllWitness(myWitness.asJava)
 
-        log.debug(" MPCreateBlock netBits=" + netBits.bitCount + " prebh=" + height)
         val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build, height + 1);
         BlockProcessor.offerMessage(blkInfo);
       case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
         var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
         notaryCheckHash = VCtrl.curVN().getBeaconHash;
-        log.debug("exec notary block background running:" + notaryCheckHash + ",sleep still:" + timeOutMS);
 
         Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
           def run() {
@@ -131,10 +127,10 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         m match {
           case BeaconConverge(height, blockHash, hash, seed) => {
 
-            // log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); //String pubKey, String hexHash, String sign hex
+            log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash); 
             //          if (height >= VCtrl.curVN().getCurBlock) {
-            VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
-              .setCurBlock(height);
+            // VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
+            //   .setCurBlock(height);
 
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
             NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
