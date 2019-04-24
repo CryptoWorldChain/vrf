@@ -64,7 +64,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
               val self = pbo.getVn
 
-              if (self.getDoMine) {
+              if (StringUtils.equals(pack.getFrom(), network.root.bcuid) && self.getDoMine) {
                 VCtrl.coMinerByUID.put(self.getBcuid, self);
               }
               // log.debug("current cominer::" + VCtrl.coMinerByUID);
