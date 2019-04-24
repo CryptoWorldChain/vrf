@@ -63,7 +63,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
         MDCSetBCUID(vrfnet)
       }
       log.debug("vrf ctrl not ready. vrfnet=" + vrfnet + ",ddc=" + Daos.ddc)
-      Thread.sleep(5000);
+      Thread.sleep(1000);
     }
     //    RSM.instance = RaftStateManager(raftnet);
 
