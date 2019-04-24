@@ -2,22 +2,22 @@ package org.csc.vrfblk.msgproc
 
 import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.{ CountDownLatch, TimeUnit }
 
 import onight.tfw.async.CallBack
 import onight.tfw.otransio.api.beans.FramePacket
 import org.apache.commons.lang3.StringUtils
 import org.csc.account.gens.Blockimpl.AddBlockResponse
 import org.csc.bcapi.crypto.BitMap
-import org.csc.ckrand.pbgens.Ckrand.{PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction}
+import org.csc.ckrand.pbgens.Ckrand.{ PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction }
 import org.csc.evmapi.gens.Block.BlockEntity
 import org.csc.evmapi.gens.Tx.Transaction
 import org.csc.p22p.action.PMNodeHelper
-import org.csc.p22p.node.{Network, Node}
+import org.csc.p22p.node.{ Network, Node }
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.Daos
 import org.csc.vrfblk.tasks._
-import org.csc.vrfblk.utils.{BlkTxCalc, RandFunction, VConfig}
+import org.csc.vrfblk.utils.{ BlkTxCalc, RandFunction, VConfig }
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -27,7 +27,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   val bestheight = new AtomicLong(0);
 
   val emptyBlock = new AtomicLong(0);
-//b: PBlockEntryOrBuilder
+  //b: PBlockEntryOrBuilder
   def saveBlock(block: BlockEntity.Builder, needBody: Boolean = false): (Int, Int, String) = {
     // val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
 
@@ -53,7 +53,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         val lastBlock = Daos.chainHelper.GetConnectBestBlock();
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
-        
+
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
@@ -101,9 +101,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-          if(pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
-          {
-             BeaconGossip.gossipBlocks();
+          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+            BeaconGossip.gossipBlocks();
           }
         case n if n > 0 =>
           val vstr =
@@ -125,14 +124,17 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
           // tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
-          tryNotifyState(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) ,block.getHeader.getNumber.intValue,block.getMiner.getTermid, nodebit);
-        case n@_ =>
+          tryNotifyState(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getHeader.getNumber.intValue, block.getMiner.getTermid, nodebit);
+        case n @ _ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
             + ",VB=" + pbo.getWitnessBits
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
+          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+            BeaconGossip.gossipBlocks();
+          }
       }
     }
 
@@ -228,8 +230,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                       s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
                   }
                 }
-              }
-              catch {
+              } catch {
                 case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
               }
             }
@@ -237,13 +238,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             override def onFailed(e: Exception, v: FramePacket): Unit =
               log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
                 s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
-          }
-            , '9')
+          }, '9')
 
           counter += 1
           cdl.await(40, TimeUnit.SECONDS)
-        }
-        catch {
+        } catch {
           case t: Throwable => log.error("get Transaction failed:", t)
         }
       }
@@ -254,14 +253,12 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       //(res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
     })
 
-
     //1. waiting to sync( get distance to sleep)
     //A. getBlockMiner
     //B. sleep distance clc
 
     //2. how Much Transaction,witch TxHash waiting for sync
     //block.getBody.getTxsList
-
 
     //3.rquest success and save transaction
 
