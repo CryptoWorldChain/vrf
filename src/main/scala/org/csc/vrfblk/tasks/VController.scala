@@ -85,25 +85,18 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
   def updateBlockHeight(block: BlockEntity): Unit = {
-    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getTermid, block.getMiner.getBit)
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, extraData: String): Unit = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, beaconHash: String, bits: String): Unit = {
     Daos.blkHelper.synchronized({
       cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
       cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
-      val blk = Daos.blkHelper.getBlock(blockHash);
-      if (blk.getHeader.getNumber.intValue() == blockHeight) {
-        if (blockHeight == cur_vnode.getCurBlock + 1) {
-          cur_vnode.setPrevBlockHash(cur_vnode.getCurBlockHash);
-        }
-        cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
-        cur_vnode.setVrfRandseeds(blk.getMiner.getBit);
-        if (blockHash != null) {
-          cur_vnode.setCurBlockHash(blockHash)
-          cur_vnode.setBeaconHash(blk.getMiner.getTermid);
-        }
-      }
+      cur_vnode.setCurBlock(blockHeight);
+      cur_vnode.setCurBlockHash(blockHash)
+      cur_vnode.setBeaconHash(beaconHash);
+      cur_vnode.setVrfRandseeds(bits);
+
       syncToDB()
     })
   }

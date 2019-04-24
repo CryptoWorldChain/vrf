@@ -59,10 +59,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), lastBlock.getMiner.getBit)
         } else {
-          VCtrl.instance.updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+          VCtrl.instance.updateBlockHeight(vres.getCurrentNumber.intValue(), "", "", "")
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
         }
-
       } else {
         (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
       }
@@ -73,8 +72,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
         (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, lastBlock.getMiner.getBit)
       } else {
-        VCtrl.instance.updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
-        (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, "")
+        VCtrl.instance.updateBlockHeight(vres.getCurrentNumber.intValue(), "", "", "")
+        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), "")
       }
     }
   }
