@@ -181,8 +181,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
         Some((n.getCurBlock, n.getCurBlockHash, n.getBeaconHash, n.getVrfRandseeds))
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
-          //log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",currentheight="
-          //  + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
+          log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
+            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
@@ -203,7 +203,6 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
               rollbackGossipNetBits = "";
               NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
             }
-
           }
         case n: NotConverge =>
           // log.info("cannot get converge for pbft vote:" + checkList.size + "/" + currentBR.votebase + ",incomingInfos=" + incomingInfos.size + ",suggestStartIdx=" + suggestStartIdx
@@ -236,7 +235,6 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             tryRollbackBlock();
           }
       };
-
     }
   }
 
