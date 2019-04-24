@@ -72,7 +72,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
         (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, lastBlock.getMiner.getBit)
       } else {
-        VCtrl.instance.updateBlockHeight(block)
+        VCtrl.instance.updateBlockHeight(block.build())
         (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, "")
       }
     }
