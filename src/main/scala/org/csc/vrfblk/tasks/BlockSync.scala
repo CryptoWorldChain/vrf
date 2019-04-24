@@ -61,9 +61,9 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
         case syncInfo: SyncBlock =>
           log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
           if (syncBlockInQueue.get > 0) {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
           } else {
-            Thread.sleep(100);
+            Thread.sleep(1000);
           }
 
           if (syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
@@ -74,6 +74,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           }
           else if(lastSyncBlockHeight==syncInfo.reqBody.getStartId){
             lastSyncBlockHeight =  syncInfo.reqBody.getStartId - 1; 
+          }else{
+            lastSyncBlockHeight =  syncInfo.reqBody.getStartId;
           }
 
           val reqbody =
@@ -82,7 +84,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
             } else {
               syncInfo.reqBody.toBuilder().setStartId(lastSyncBlockHeight).build();
             }
-
+          
           val messageid = UUIDGenerator.generate();
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
