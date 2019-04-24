@@ -21,9 +21,35 @@ import org.csc.vrfblk.utils.{ BlkTxCalc, RandFunction, VConfig }
 
 import scala.collection.JavaConverters._
 import scala.util.Random
+import org.csc.ckrand.pbgens.Ckrand.PBlockEntry
+import com.google.protobuf.ByteString
+
 case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
   def proc() {
     try {
+      
+//      val newCoinbase = PSCoinbase.newBuilder()
+//      .setBlockHeight(block.getHeader.getNumber.intValue()).setCoAddress(
+//          Daos.enc.hexEnc(block.getMiner.getAddress.toByteArray()))
+//      .setMessageId(block.getMiner.getTermid)
+//      .setBcuid(block.getMiner.getBcuid)
+//      .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(block.getHeader.getNumber.intValue())
+//        .setCoinbaseBcuid(block.getMiner.getBcuid).setBlockhash(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()))
+//        .setBlockHeader(block.getHeader.toByteString())
+//        //.setBlockMiner(newblk)
+//        .setSign(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())))
+//      .setSliceId(VConfig.SLICE_ID)
+//      .setTxcount(block.getBody.getTxsCount)
+//      .setBeaconBits(block.getMiner.getBit)
+//      .setBeaconSign(block.getMiner.getTermid)
+//      .setBeaconHash(block.getMiner.getTermid)
+//      .setBlockSeeds(block.bo
+//          ByteString.copyFrom(blockbits.toByteArray()))
+//      .setPrevBeaconHash(cn.getBeaconHash)
+//      .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
+//      .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
+//      .setWitnessBits(hexToMapping(notarybits))
+      
       val vres = Daos.blkHelper.ApplyBlock(block, true);
       var lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
       var maxid: Int = 0

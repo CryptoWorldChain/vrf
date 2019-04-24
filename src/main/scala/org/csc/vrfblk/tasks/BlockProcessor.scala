@@ -56,7 +56,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-          log.info("exec create block background running:" + blkInfo + ",sleep :" + sleepMS);
+          log.info("exec create block background running:" +  blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits) + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {

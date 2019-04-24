@@ -77,7 +77,11 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     //if (newNetBits.bitCount() < VCtrl.coMinerByUID.size) {
     var newNetBits = BigInteger.ZERO
     VCtrl.coMinerByUID.foreach(f => {
-      newNetBits = newNetBits.setBit(f._2.getBitIdx);
+      if(f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
+          ||f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) 
+      {
+        newNetBits = newNetBits.setBit(f._2.getBitIdx);
+      }
     })
     //}
 
