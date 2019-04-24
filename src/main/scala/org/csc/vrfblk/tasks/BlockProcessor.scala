@@ -56,7 +56,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-          log.debug("exec create block background running:" + blkInfo.beaconHash + ",sleep :" + sleepMS);
+          log.info("exec create block background running:" + blkInfo + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
@@ -109,6 +109,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock =>
+          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock + " blk=" + blk)
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();

@@ -27,9 +27,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   val bestheight = new AtomicLong(0);
 
   val emptyBlock = new AtomicLong(0);
-
-  def saveBlock(b: PBlockEntryOrBuilder, needBody: Boolean = false): (Int, Int, String) = {
-    val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
+//b: PBlockEntryOrBuilder
+  def saveBlock(block: BlockEntity.Builder, needBody: Boolean = false): (Int, Int, String) = {
+    // val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
 
     if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
@@ -89,7 +89,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
-      val (acceptHeight, blockWant, nodebit) = saveBlock(pbo.getBlockEntry);
+      val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+      val (acceptHeight, blockWant, nodebit) = saveBlock(block);
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
@@ -121,7 +122,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (notaBits.testBit(cn.getBitIdx)) {
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
-          tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
+          // tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
+          tryNotifyState(block.getHeader.getHash ,block.getHeader.getNumber,block.getMiner.getTermId, nodebit);
         case n@_ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
