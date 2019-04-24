@@ -95,6 +95,8 @@ object VConfig {
   //城为挖矿节点，需要追上当前全网高度的差距
   val BLOCK_DISTANCE_COMINE = prop.get(PROP_DOMAIN + "block.distance.comine", 5);
 
+  val BLOCK_DISTANCE_NETBITS = prop.get(PROP_DOMAIN + "block.distance.netbits", 2);
+
   //term投票被否决是最少等待时间，sleep = random(BAN_MINSEC_FOR_VOTE_REJECT,BAN_MAXSEC_FOR_VOTE_REJECT)
   val BAN_MINSEC_FOR_VOTE_REJECT = prop.get(PROP_DOMAIN + "ban.minsec.for.vote.reject", 10);
   //term投票被否决是最大等待时间，sleep = random(BAN_MINSEC_FOR_VOTE_REJECT,BAN_MAXSEC_FOR_VOTE_REJECT)

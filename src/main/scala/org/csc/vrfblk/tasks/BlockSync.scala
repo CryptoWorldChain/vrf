@@ -89,6 +89,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
+
+          log.info("reqbody=" + reqbody);
           // 请求一组block，执行applyBlock方法
           VCtrl.network().asendMessage("SYNVRF", reqbody, randn,
             new CallBack[FramePacket] {
@@ -103,11 +105,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     log.debug("send SYNVRF error:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo.reqBody + ",ret=null")
                   } else {
                     val ret = PRetSyncBlocks.newBuilder().mergeFrom(fp.getBody);
-                    log.debug("send SYNVRF success:to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo.reqBody.getStartId + ",ret=" +
-                      ret.getRetCode + ",count=" + ret.getBlockHeadersCount)
-
-                    if (ret.getRetCode() == 0) { //same message
-
+                    if (ret.getRetCode() == 0) {
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.debug("realBlockCount=" + realmap.size);
@@ -133,7 +131,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
                 log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
-                //               BeaconGossip.gossipBlocks();
+                BeaconGossip.gossipBlocks();
               }
             })
         case n @ _ =>
