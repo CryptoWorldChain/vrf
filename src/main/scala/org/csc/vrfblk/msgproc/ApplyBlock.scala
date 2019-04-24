@@ -31,12 +31,12 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   def saveBlock(block: BlockEntity.Builder, needBody: Boolean = false): (Int, Int, String) = {
     // val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
 
-    if (!b.getCoinbaseBcuid.equals(VCtrl.curVN().getBcuid)) {
+    if (!block.getMiner.getBcuid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
 
       val vres = Daos.blkHelper.ApplyBlock(block, needBody);
       if (vres.getTxHashsCount > 0) {
-        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + b.getBlockHeight)
+        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + block.getHeader.getNumber)
         // TODO: Sync Transaction  need Sleep for a while First
 
         val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
@@ -44,10 +44,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         Thread.sleep(sleepMs)
 
         //同步交易, 同步完成后, 继续保存applyBlock
-        trySyncTransaction(b, needBody, vres)
+        trySyncTransaction(block, needBody, vres)
       } else if (vres.getCurrentNumber > 0) {
-        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + b.getBlockHeight + ",wantNumber=" + vres.getWantNumber.intValue())
-        if (vres.getCurrentNumber.intValue() == b.getBlockHeight) {
+        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + block.getHeader.getNumber + ",wantNumber=" + vres.getWantNumber.intValue())
+        if (vres.getCurrentNumber.intValue() == block.getHeader.getNumber) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
         val lastBlock = Daos.chainHelper.GetConnectBestBlock();
@@ -59,7 +59,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), lastBlock.getMiner.getBit)
         } else {
-          VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
+          VCtrl.instance.updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
           (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
         }
 
@@ -71,10 +71,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       val lastBlock = Daos.chainHelper.GetConnectBestBlock();
       if (lastBlock != null) {
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
-        (b.getBlockHeight, b.getBlockHeight, lastBlock.getMiner.getBit)
+        (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, lastBlock.getMiner.getBit)
       } else {
-        VCtrl.instance.updateBlockHeight(b.getBlockHeight, b.getSign, block.getMiner.getBit)
-        (b.getBlockHeight, b.getBlockHeight, "")
+        VCtrl.instance.updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getBit)
+        (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, "")
       }
     }
   }
@@ -123,7 +123,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
           // tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
-          tryNotifyState(block.getHeader.getHash ,block.getHeader.getNumber,block.getMiner.getTermId, nodebit);
+          tryNotifyState(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) ,block.getHeader.getNumber.intValue,block.getMiner.getTermid, nodebit);
         case n@_ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
@@ -160,10 +160,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     (VCtrl.coMinerByUID.size + stepRange) % stepBits.bitCount() * VConfig.SYNC_TX_SLEEP_MS
   }
 
-  def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
+  //block: PBlockEntryOrBuilder
+  def trySyncTransaction(miner: BlockEntity.Builder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
     //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
     this.synchronized({
-      val miner = BlockEntity.parseFrom(block.getBlockHeader)
+      // val miner = BlockEntity.parseFrom(block.getBlockHeader)
       val network = VCtrl.network()
 
       var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
@@ -182,7 +183,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
       val reqTx = buildReqTx(res)
       if (reqTx == null) {
-        return saveBlock(block, needBody)
+        return saveBlock(miner, needBody)
       }
 
       var rspTx = PRetGetTransaction.newBuilder()
@@ -216,7 +217,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
                     notSuccess = false
                     log.debug(s"SRTVRF success height:${miner.getHeader.getNumber} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
-                    trySaveRes = saveBlock(block, needBody)
+                    trySaveRes = saveBlock(miner, needBody)
                     cdl.countDown()
 
                     log.debug("sync tx complete =" + trySaveRes)
