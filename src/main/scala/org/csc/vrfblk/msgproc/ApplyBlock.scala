@@ -101,8 +101,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-
-          BeaconGossip.gossipBlocks();
+          if(pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
+          {
+             BeaconGossip.gossipBlocks();
+          }
         case n if n > 0 =>
           val vstr =
             if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress)) {
