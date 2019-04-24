@@ -199,12 +199,14 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
               if (dbblock != null && dbblock.getHeader.getNumber == height) {
                 // log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
                 NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
-              }else{
+              } else {
                 // log.info("ConvergeToRollback.failed:height=" + height + ",blockHash=" + blockHash + ",dbblock=" + dbblock);
               }
             } else {
               rollbackGossipNetBits = "";
-              NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+              if (height >= VCtrl.curVN().getCurBlock) {
+                NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
+              }
             }
           }
         case n: NotConverge =>
@@ -224,19 +226,18 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             // log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
             lastSyncBlockHeight = suggestStartIdx;
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
-          } else if(suggestStartIdx>0){
+          } else if (suggestStartIdx > 0) {
             tryRollbackBlock(suggestStartIdx);
           }
         case n @ _ =>
           // log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
           //   + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
           //   + ",messageid=" + currentBR.messageId);
+          incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
-            incomingInfos.clear();
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
           } else if (size >= currentBR.votebase * 4 / 5) {
-            incomingInfos.clear();
             tryRollbackBlock();
           }
       };
