@@ -100,7 +100,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS) {
             BeaconGossip.gossipBlocks();
           }
         case n if n > 0 =>
@@ -122,6 +122,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (notaBits.testBit(cn.getBitIdx)) {
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
+          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS) {
+            BeaconGossip.gossipBlocks();
+          }
+
           // tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
           tryNotifyState(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getHeader.getNumber.intValue, block.getMiner.getTermid, nodebit);
         case n @ _ =>
