@@ -63,7 +63,7 @@ object RandFunction extends LogHelper with BitMap {
   }
 
   def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
-    val blockMakerCount: Int = Math.max(1, netBits.bitCount() / 3);
+    val blockMakerCount: Int = Math.max(1, netBits.bitCount() / 2);
     val notaryCount: Int = Math.max(1, netBits.bitCount() / 3);
     val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
     log.debug("chooseGroups,blockbits=" + blockbits.toString(2) + ",votebits=" +  votebits.toString(2) + ",curIdx=" + curIdx
