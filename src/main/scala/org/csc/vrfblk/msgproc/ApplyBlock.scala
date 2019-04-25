@@ -135,6 +135,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             BeaconGossip.gossipBlocks();
           }
       }
+      //更新PZP节点信息，用于区块浏览器查看块高
+      VCtrl.network().root().counter.blocks.set(VCtrl.curVN().getCurBlock)
     }
 
   }
