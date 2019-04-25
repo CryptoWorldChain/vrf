@@ -122,5 +122,4 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //      Daos.ddc.executeNow(arg0, arg1, arg2)
     }
   }
-
 }

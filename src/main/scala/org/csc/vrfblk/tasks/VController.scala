@@ -209,6 +209,7 @@ object VCtrl extends LogHelper with BitMap {
           // 本地block是否能校验通过，只有通过的才广播
           if (needBody) {
             val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
+            log.info("f.getBody.getTxsCount=" + f.getBody.getTxsCount)
             recentBlocks.put(block, b);
             b
           } else {

@@ -126,7 +126,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     //从AccountDB中读取丢失高度，防止回滚时当前节点错误块过高或缺失导致起始位置错误
     val dbHeight: Int = Math.toIntExact(Daos.chainHelper.getLastBlockNumber)
 
-    val sync = PSSyncBlocks.newBuilder().setStartId(Math.min(dbHeight, suggestStartIdx - 1))
+    val sync = PSSyncBlocks.newBuilder().setStartId(Math.min(dbHeight, suggestStartIdx))
       .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
 
     log.info("start sync block::" + sync);

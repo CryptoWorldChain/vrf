@@ -50,11 +50,12 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         ret.setRetCode(0).setRetMessage("SUCCESS")
         var totalSize = 0        
         for (
-          id <- pbo.getStartId to pbo.getEndId if (totalSize <= (8 * 1024 * 1024))
+          id <- pbo.getStartId to pbo.getEndId if (totalSize <= (10 * 1024 * 1024))
         ) {
           val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);          
           if (b != null) {
             b.map(bs => {
+              log.info("blk=" + id + " size=" + bs.build().toByteArray().size)
               totalSize = totalSize + bs.build().toByteArray().size;
             })
             if (totalSize <= (8 * 1024 * 1024)) {
@@ -63,6 +64,8 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
                   ret.addBlockHeaders(bs);
                 }
               })
+            } else {
+              log.info("package too large. size=" + totalSize + " blk=" + id);
             }
           }
         }
@@ -72,12 +75,14 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
             b.map(bs => {
               totalSize = totalSize + bs.build().toByteArray().size;
             })
-            if (totalSize <= (8 * 1024 * 1024)) {
+            if (totalSize <= (10 * 1024 * 1024)) {
               b.map(bs => {
                 if (bs !=null) {
                   ret.addBlockHeaders(bs);
                 }
               })
+            } else {
+              log.info("package too large. size=" + totalSize + " blk=" + id);
             }
           }
         }

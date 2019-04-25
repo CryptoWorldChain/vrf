@@ -117,6 +117,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         //同步执行 apply 并验证返回结果
                         // applyblock
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
+
+                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount())
                         syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerMessage(new SyncApplyBlock(block));
                       }
