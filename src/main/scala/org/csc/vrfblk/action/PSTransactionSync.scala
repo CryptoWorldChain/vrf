@@ -112,8 +112,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             p._1.clear();
             p = null;
             //should sleep when too many tx to confirm.
-            if (Daos.confirmMapDB.getQueueSize() < Daos.confirmMapDB.getMaxElementsInMemory
-              && Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
+            if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
               p = poll();
             }
           }
@@ -152,7 +151,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Hex.decodeHex(h._1)), h._2);
             h = null;
             //should sleep when too many tx to confirm.
-            if (Daos.confirmMapDB.getQueueSize() < Daos.confirmMapDB.getMaxElementsInMemory) {
+            if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
               h = confirmHashList.poll();
             }
           }
