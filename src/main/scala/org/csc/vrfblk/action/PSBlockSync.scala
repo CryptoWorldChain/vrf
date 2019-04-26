@@ -48,7 +48,7 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         //同步块总大小(K)
         var totalSize = 0
         //同步block总共40M
-        val maxTotalSize = 40 * 1024 * 1024
+        val maxTotalSize = 80 * 1024 * 1024
 
         for (
           id <- pbo.getStartId to pbo.getEndId if totalSize <= maxTotalSize

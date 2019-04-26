@@ -85,7 +85,7 @@ object TransactionHashBrodcastor extends SingletonWorkShop[ByteString] with PMNo
 
     syncTransaction.addAllTxHash(wallHashList)
     if (syncTransaction.getTxHashCount > 0) {
-      VCtrl.instance.network.wallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+      VCtrl.instance.network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
     }
   }
 

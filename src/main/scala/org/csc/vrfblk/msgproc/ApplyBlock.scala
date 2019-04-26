@@ -90,7 +90,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
-      val (acceptHeight, blockWant, nodebit) = saveBlock(block);
+      val (acceptHeight, blockWant, nodebit) = saveBlock(block,block.hasBody());
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
