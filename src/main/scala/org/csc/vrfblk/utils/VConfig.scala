@@ -43,6 +43,8 @@ object VConfig {
   val SYNCBLK_PAGE_SIZE = prop.get(PROP_DOMAIN + "syncblk.page.size", 10);
 
   val SYNC_TX_SLEEP_MS = prop.get(PROP_DOMAIN + "synctx.sleep.ms", 0);
+  
+  val SYNC_TX_SLEEP_MAX_MS = prop.get(PROP_DOMAIN + "synctx.sleep.max.ms", 3000);
 
   //Term投票的比例
   val VOTE_QUORUM_RATIO = prop.get(PROP_DOMAIN + "vote.quorum.ratio", 60); //60%
