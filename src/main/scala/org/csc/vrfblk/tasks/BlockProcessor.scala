@@ -109,7 +109,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock =>
-          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock + " blk=" + blk)
+          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock)
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();

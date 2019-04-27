@@ -187,7 +187,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
             }
             if (syncTransaction.getTxHashCount > 0) {
-              VCtrl.instance.network.wallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+              VCtrl.instance.network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
             }
           }
         } catch {

@@ -19,14 +19,42 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import org.csc.vrfblk.utils.RandFunction
 import org.csc.ckrand.pbgens.Ckrand.VNodeState
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.ArrayList
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockEntity, java.util.List[Transaction]) = {
     val starttx = System.currentTimeMillis();
-    val txs = Daos.txHelper.getWaitBlockTx(
-      txc, //只是打块！其中某些成功广播的tx，默认是80%
-      confirmTimes);
+
+    val LOAD_THREADS = 10;
+    val cdl = new CountDownLatch(LOAD_THREADS);
+    val txs = new ArrayList[Transaction];
+    for (i <- 1 to LOAD_THREADS) {
+      new Thread(new Runnable() {
+        def run() = {
+          try {
+            val tx = Daos.txHelper.getWaitBlockTx(
+              txc / LOAD_THREADS, //只是打块！其中某些成功广播的tx，默认是80%
+              confirmTimes);
+            if (tx != null && tx.size() > 0) {
+              txs.synchronized({
+                txs.addAll(tx);
+              })
+
+            }
+          } finally {
+            cdl.countDown();
+          }
+        }
+      }).start();
+    }
+    cdl.await();
+
+    //    val txs = Daos.txHelper.getWaitBlockTx(
+    //      txc, //只是打块！其中某些成功广播的tx，默认是80%
+    //      confirmTimes);
 
     //奖励节点
     val excitationAddress: ListBuffer[String] = new ListBuffer()
@@ -109,8 +137,8 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         .setBcuid(cn.getBcuid)
         .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
           .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
-//          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-          .setBlockHeader(newblk.toByteString())//.toBuilder().clearBody().build().toByteString())
+          //          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
+          .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
           .setSign(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray())))
         .setSliceId(VConfig.SLICE_ID)
         .setTxcount(txs.size())
@@ -153,15 +181,15 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, cn.getBcuid, '9')
           }
         }
-        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits)
+        //        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits)
 
       })
       //      val nextmaker =
-      
+
       newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
-          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-          .setSign(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray())))
+        .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
+        .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
+        .setSign(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray())))
 
       VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
       TxCache.cacheTxs(txs);

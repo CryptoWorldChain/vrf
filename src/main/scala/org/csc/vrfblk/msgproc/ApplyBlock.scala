@@ -189,7 +189,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       {
         ByteString.copyFrom(Daos.enc.hexDec(f));
       });
-    while (sleepw > 0 && lackList.size > 0) {
+    while (sleepw > 100 && lackList.size > 0) {
       //check.
       lackList = lackList.filter(f =>
         {

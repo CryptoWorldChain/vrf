@@ -92,7 +92,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
-      || !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
+      ){//|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
       gossipBeaconInfo();
     }
   }
@@ -185,7 +185,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock);
+            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock
+            +",msgid="+currentBR.messageId);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
             //sync first
@@ -220,7 +221,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           }
           incomingInfos.clear();
 
-          log.info("maxHeight=" + maxHeight + " curblk=" + VCtrl.curVN().getCurBlock + " lastSyncBlockCount=" + lastSyncBlockCount)
+          log.info("maxHeight=" + maxHeight + " curblk=" + VCtrl.curVN().getCurBlock + " lastSyncBlockCount=" + lastSyncBlockCount+",lastSyncBlockHeight="+lastSyncBlockHeight)
           if (maxHeight > VCtrl.curVN().getCurBlock && lastSyncBlockCount < 3) {
             //sync first
             // log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
