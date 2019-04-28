@@ -18,7 +18,6 @@ import onight.tfw.otransio.api.beans.FramePacket
 import onight.tfw.otransio.api.session.CMDService
 import onight.tfw.outils.serialize.UUIDGenerator
 import onight.tfw.proxy.IActor
-import org.apache.commons.codec.binary.Hex
 import org.apache.commons.lang3.StringUtils
 import org.apache.felix.ipojo.annotations.{Instantiate, Provides}
 import org.csc.account.api.IPengingQueue
@@ -148,7 +147,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         try {
           var h = confirmHashList.poll(10, TimeUnit.SECONDS);
           while (h != null) {
-            Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Hex.decodeHex(h._1)), h._2);
+            Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Daos.enc.hexDec(h._1)), h._2);
             h = null;
             //should sleep when too many tx to confirm.
             if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
@@ -256,7 +255,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
               val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
               pbo.getTxHashList.map { txHash =>
-                tmpList.add((Hex.encodeHexString(txHash.toByteArray()), bits))
+                tmpList.add((Daos.enc.hexEnc(txHash.toByteArray()), bits))
                 //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
               }
               confirmHashList.addAll(tmpList)
