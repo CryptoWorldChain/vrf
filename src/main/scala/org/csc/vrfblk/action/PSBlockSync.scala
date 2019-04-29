@@ -50,14 +50,15 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         ret.setRetCode(0).setRetMessage("SUCCESS")
         var totalSize = 0        
         for (
-          id <- pbo.getStartId to pbo.getEndId if (totalSize <= (40 * 1024 * 1024))
+          id <- pbo.getStartId to pbo.getEndId if (totalSize <= (100 * 1024 * 1024))
         ) {
           val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);          
           if (b != null) {
               b.map(bs => {
-                if (bs !=null && totalSize <= (40 * 1024 * 1024)) {
+                if (bs !=null && totalSize <= (100 * 1024 * 1024)) {
                   totalSize = totalSize + bs.build().toByteArray().size;
-                  if (totalSize <= (40 * 1024 * 1024)) {
+                  log.info("blk=" + id + " size=" + bs.build().toByteArray().size)
+                  if (totalSize <= (100 * 1024 * 1024)) {
                     ret.addBlockHeaders(bs);
                   } else {
                     log.info("package too large. size=" + totalSize + " blk=" + id);
@@ -69,13 +70,16 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         pbo.getBlockIdxList.map { id =>
           val b = VCtrl.loadFromBlock(id, pbo.getNeedBody);
           if (b != null) {
-            b.map(bs => {
-              totalSize = totalSize + bs.build().toByteArray().size;
-            })
-            if (totalSize <= (40 * 1024 * 1024)) {
+            if (totalSize <= (100 * 1024 * 1024)) {
               b.map(bs => {
                 if (bs !=null) {
-                  ret.addBlockHeaders(bs);
+                  totalSize = totalSize + bs.build().toByteArray().size;
+                  log.info("blk=" + id + " size=" + bs.build().toByteArray().size)
+                  if (totalSize <= (100 * 1024 * 1024)) {
+                    ret.addBlockHeaders(bs);
+                  } else {
+                    log.info("package too large. size=" + totalSize + " blk=" + id);
+                  }
                 }
               })
             } else {

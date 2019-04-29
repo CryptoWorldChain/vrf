@@ -94,7 +94,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
 
-          log.info("reqbody=" + reqbody);
+          log.info("reqbody=" + reqbody + " randn=" + randn);
           // 请求一组block，执行applyBlock方法
           VCtrl.network().asendMessage("SYNVRF", reqbody, randn,
             new CallBack[FramePacket] {
