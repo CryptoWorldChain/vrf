@@ -63,8 +63,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
-                if (isFirstMaker && Daos.confirmMapDB.getQueueSize > VConfig.WAIT_BLOCK_MIN_TXN) {
-                  log.error("wait up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS+",queuesize="+Daos.confirmMapDB.getQueueSize);
+                if (isFirstMaker && Daos.confirmMapDB.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
+                  log.error("wake up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS+",waitBlock.size="+Daos.confirmMapDB.size);
                   sleepMS = 0;
 
                 }
@@ -109,7 +109,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
         case blk: NotaryBlock =>
           blk.proc();
         case blk: MPRealCreateBlock =>
-          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock + " blk=" + blk)
+          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock)
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();

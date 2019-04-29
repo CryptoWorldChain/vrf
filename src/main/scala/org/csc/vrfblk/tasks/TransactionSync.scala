@@ -58,7 +58,7 @@ object TxSync extends LogHelper {
           syncTransaction.addTxDatas(x)
         }
 
-        network.wallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)
         lastSyncCount.set(res.getTxHashCount)
       } else {

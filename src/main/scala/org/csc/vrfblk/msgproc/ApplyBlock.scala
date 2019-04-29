@@ -21,6 +21,8 @@ import org.csc.vrfblk.utils.{ BlkTxCalc, RandFunction, VConfig }
 
 import scala.collection.JavaConverters._
 import scala.util.Random
+import com.google.protobuf.ByteString
+import scala.collection.mutable.Buffer
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -39,12 +41,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + block.getHeader.getNumber)
         // TODO: Sync Transaction  need Sleep for a while First
 
-        val sleepMs = getRandomSleepMS(block.getMiner.getBcuid)
+        val sleepMs = Math.min(VConfig.SYNC_TX_SLEEP_MAX_MS, getRandomSleepMS(block.getMiner.getBcuid))
         log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
-        Thread.sleep(sleepMs)
 
         //同步交易, 同步完成后, 继续保存applyBlock
-        trySyncTransaction(block, needBody, vres)
+        trySyncTransaction(block, needBody, vres, sleepMs)
       } else if (vres.getCurrentNumber > 0) {
         log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + block.getHeader.getNumber + ",wantNumber=" + vres.getWantNumber.intValue())
         if (vres.getCurrentNumber.intValue() == block.getHeader.getNumber) {
@@ -89,7 +90,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
-      val (acceptHeight, blockWant, nodebit) = saveBlock(block);
+      val (acceptHeight, blockWant, nodebit) = saveBlock(block,block.hasBody());
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
@@ -145,20 +146,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   }
 
-  def buildReqTx(res: AddBlockResponse): PSGetTransaction.Builder = {
+  def buildReqTx(lackList: Buffer[ByteString]): PSGetTransaction.Builder = {
     val reqTx = PSGetTransaction.newBuilder()
-    if (res.getTxHashsCount > 0) {
-      for (txHash <- res.getTxHashsList.asScala) {
-        if (res.getTxHashsCount < 20) {
-          log.info(s"request Hash:${txHash}, blockNum=${res.getCurrentNumber}")
-        }
-        reqTx.addTxHash(txHash)
-      }
-      reqTx
-    } else {
-      log.info("no transaction need sync in BlockResponse")
-      null
-    }
+    lackList.map(f => {
+      val txHash = Daos.enc.hexEnc(f.toByteArray());
+      reqTx.addTxHash(txHash)
+    })
+    return reqTx;
   }
 
   def getRandomSleepTime(blockHash: String): Long = {
@@ -170,93 +164,110 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   //block: PBlockEntryOrBuilder
-  def trySyncTransaction(miner: BlockEntity.Builder, needBody: Boolean = false, res: AddBlockResponse): (Int, Int, String) = {
+  def trySyncTransaction(miner: BlockEntity.Builder, needBody: Boolean = false, res: AddBlockResponse, sleepMs: Long): (Int, Int, String) = {
     //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
-    this.synchronized({
-      // val miner = BlockEntity.parseFrom(block.getBlockHeader)
-      val network = VCtrl.network()
+    //    this.synchronized({
+    // val miner = BlockEntity.parseFrom(block.getBlockHeader)
+    val network = VCtrl.network()
 
-      var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
-      if (vNetwork.isEmpty) {
-        log.info("not find miner in network")
-        val miners = VCtrl.coMinerByUID
-          .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
-        if (miners.isDefined) {
-          vNetwork = network.directNodeByBcuid.get(miners.get._1)
-        } else {
-          val randomNode = randomNodeInNetwork(network)
-          vNetwork = randomNode
+    var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
+    if (vNetwork.isEmpty) {
+      log.info("not find miner in network")
+      val miners = VCtrl.coMinerByUID
+        .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
+      if (miners.isDefined) {
+        vNetwork = network.directNodeByBcuid.get(miners.get._1)
+      } else {
+        val randomNode = randomNodeInNetwork(network)
+        vNetwork = randomNode
+      }
+    }
+    log.debug("pick node=" + vNetwork)
+
+    var sleepw = sleepMs;
+    var lackList = res.getTxHashsList.asScala.map(f =>
+      {
+        ByteString.copyFrom(Daos.enc.hexDec(f));
+      });
+    while (sleepw > 100 && lackList.size > 0) {
+      //check.
+      lackList = lackList.filter(f =>
+        {
+          val tx = Daos.txHelper.GetTransaction(f)
+          tx == null
+        });
+      sleepw -= 100;
+      Thread.sleep(100)
+    }
+    if (lackList.size <= 0) {
+      log.info("no need to get tx body:"+res.getTxHashsCount+",sleep="+sleepw+"/"+sleepMs);
+      return saveBlock(miner, needBody)
+    }
+    log.info("need to get tx body:"+lackList.size+"/"+res.getTxHashsCount+",sleep="+sleepw+"/"+sleepMs);
+    val reqTx = buildReqTx(lackList)
+
+    var rspTx = PRetGetTransaction.newBuilder()
+
+    val cdl = new CountDownLatch(1)
+    var notSuccess = true
+    var counter = 0
+    val start = System.currentTimeMillis()
+    var trySaveRes: (Int, Int, String) = (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
+
+    log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
+
+    while (cdl.getCount > 0 && counter < 6 && notSuccess) {
+      try {
+        if (counter > 3) {
+          vNetwork = randomNodeInNetwork(network)
         }
-      }
-      log.debug("pick node=" + vNetwork)
-
-      val reqTx = buildReqTx(res)
-      if (reqTx == null) {
-        return saveBlock(miner, needBody)
-      }
-
-      var rspTx = PRetGetTransaction.newBuilder()
-
-      val cdl = new CountDownLatch(1)
-      var notSuccess = true
-      var counter = 0
-      val start = System.currentTimeMillis()
-      var trySaveRes: (Int, Int, String) = (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
-
-      log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
-
-      while (cdl.getCount > 0 && counter < 6 && notSuccess) {
-        try {
-          if (counter > 3) {
-            vNetwork = randomNodeInNetwork(network)
-          }
-          network.sendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
-            override def onSuccess(v: FramePacket): Unit = {
-              try {
-                if (notSuccess) {
-                  rspTx = if (v.getBody != null) {
-                    PRetGetTransaction.newBuilder().mergeFrom(v.getBody)
-                  } else {
-                    log.info(s"no transaction find from ${vNetwork.get.bcuid}")
-                    null
-                  }
-                  if (rspTx != null && rspTx.getTxContentCount > 0) {
-                    val startSave = System.currentTimeMillis()
-                    val txList = rspTx.getTxContentList.asScala.map(Transaction.newBuilder().mergeFrom(_)).toList
-                    Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
-                    notSuccess = false
-                    log.debug(s"SRTVRF success height:${miner.getHeader.getNumber} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
-                    trySaveRes = saveBlock(miner, needBody)
-                    cdl.countDown()
-
-                    log.debug("sync tx complete =" + trySaveRes)
-                  } else {
-                    log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
-                      s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
-                  }
+        network.sendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
+          override def onSuccess(v: FramePacket): Unit = {
+            try {
+              if (notSuccess) {
+                rspTx = if (v.getBody != null) {
+                  PRetGetTransaction.newBuilder().mergeFrom(v.getBody)
+                } else {
+                  log.info(s"no transaction find from ${vNetwork.get.bcuid}")
+                  null
                 }
-              } catch {
-                case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
+                if (rspTx != null && rspTx.getTxContentCount > 0) {
+                  val startSave = System.currentTimeMillis()
+                  val txList = rspTx.getTxContentList.asScala.map(Transaction.newBuilder().mergeFrom(_)).toList
+                  Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
+                  notSuccess = false
+                  log.debug(s"SRTVRF success height:${miner.getHeader.getNumber} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
+                  trySaveRes = saveBlock(miner, needBody)
+                  cdl.countDown()
+
+                  log.debug("sync tx complete =" + trySaveRes)
+                } else {
+                  log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
+                    s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
+                }
               }
+            } catch {
+              case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
             }
+          }
 
-            override def onFailed(e: Exception, v: FramePacket): Unit =
-              log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
-                s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
-          }, '9')
+          override def onFailed(e: Exception, v: FramePacket): Unit =
+            log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
+              s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
+        }, '9')
 
-          counter += 1
-          cdl.await(40, TimeUnit.SECONDS)
-        } catch {
-          case t: Throwable => log.error("get Transaction failed:", t)
-        }
+        counter += 1
+        cdl.await(40, TimeUnit.SECONDS)
+      } catch {
+        case t: Throwable => log.error("get Transaction failed:", t)
       }
+    }
 
-      return trySaveRes
-      // BlockProcessor.offerMessage(new ApplyBlock(pbo));
-      // saveBlock(block, needBody)
-      //(res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
-    })
+    return trySaveRes
+    // BlockProcessor.offerMessage(new ApplyBlock(pbo));
+    // saveBlock(block, needBody)
+    //(res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
+    //    })
 
     //1. waiting to sync( get distance to sleep)
     //A. getBlockMiner

@@ -20,6 +20,8 @@ import org.csc.evmapi.gens.Block.BlockHeader
 import com.google.protobuf.ByteString
 import org.csc.bcapi.crypto.BitMap
 import scala.collection.JavaConversions._
+import org.csc.evmapi.gens.Tx.Transaction
+import java.util.ArrayList
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -169,11 +171,19 @@ object VCtrl extends LogHelper with BitMap {
       val priorityBlk = bestblks.map(p => {
         val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getPreHash);
         val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getBcuid);
-        val sleepMS = RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTermid, mapToBigInt(prevBlock.getMiner.getBit).bigInteger, blknode.node_idx)
-        
+
+        var sleepMS =  10l
+        if(blk.getHeader.getNumber>1&&StringUtils.isNotBlank(prevBlock.getMiner.getTermid))
+        try {
+         sleepMS =  RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTermid, mapToBigInt(prevBlock.getMiner.getBit).bigInteger, blknode.node_idx)
+        } catch {
+          case t: Throwable =>
+          
+        }
+
         (sleepMS, p)
       }).sortBy(_._1).get(0)._2
-     
+
       log.info("ready to update blk=" + priorityBlk.getHeader.getNumber + " hash=" + Daos.enc.hexEnc(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
     }
@@ -208,8 +218,16 @@ object VCtrl extends LogHelper with BitMap {
         }).map(f => {
           // 本地block是否能校验通过，只有通过的才广播
           if (needBody) {
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
-            log.info("f.getBody.getTxsCount=" + f.getBody.getTxsCount)
+            val txbodys = f.getBody.toBuilder();
+            val txlist = new ArrayList[Transaction]();
+            f.getBody.getTxsList.map(tx=>{
+              txlist.add(Daos.txHelper.GetTransaction(tx.getHash));
+            })
+            txbodys.addAllTxs(txlist);
+             
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
+
+            //            log.info("f.getBody.getTxsCount=" + f.getBody.getTxsCount)
             recentBlocks.put(block, b);
             b
           } else {
