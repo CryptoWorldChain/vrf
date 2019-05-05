@@ -129,7 +129,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     log.warn("error In SyncBlock:" + t.getMessage, t);
                 } finally {
                   //try gossip againt
-
+                   BeaconGossip.tryGossip(); 
                 }
               }
               def onFailed(e: java.lang.Exception, fp: FramePacket) {
