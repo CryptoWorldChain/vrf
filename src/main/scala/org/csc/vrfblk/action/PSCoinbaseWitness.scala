@@ -24,6 +24,7 @@ import org.csc.vrfblk.msgproc.ApplyBlock
 import org.csc.vrfblk.msgproc.NotaryBlock
 import org.csc.vrfblk.tasks.Initialize
 import org.csc.vrfblk.tasks.NodeStateSwitcher
+import org.csc.vrfblk.utils.VConfig
 
 @NActorProvider
 @Instantiate
@@ -42,7 +43,10 @@ object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
 //     ! NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
-      BlockProcessor.offerNotaryBlock(new NotaryBlock(pbo));
+      if(VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) 
+      {
+        BlockProcessor.offerMessage(new NotaryBlock(pbo));
+      }
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }

@@ -49,8 +49,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   def offerBlock(t: ApplyBlock): Unit = {
     var put = false;
     processHash.synchronized({
-      if (processHash.containsKey(t.pbo.getMessageId) ||
-        processHash.containsKey(t.pbo.getBeaconHash)) {
+      if (processHash.containsKey(t.pbo.getBeaconHash)) {
         log.debug("omit applyblock:" + t.pbo.getMessageId + ",beaconhash=" + t.pbo.getBeaconHash);
       } else {
         processHash.put(t.pbo.getMessageId, t.pbo.getBeaconHash)

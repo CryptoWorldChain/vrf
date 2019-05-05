@@ -68,14 +68,14 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
         val nodebits = parentBlock.getMiner.getBit;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
         if (hash.equals(block.getMiner.getTermid) || block.getHeader.getNumber == 1) {
-          BlockProcessor.offerBlock(new ApplyBlock(pbo));
+          BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
           //if rollback
           if (StringUtils.isNotBlank(BeaconGossip.rollbackGossipNetBits)) {
             val (rollbackhash, rollblacksign) = RandFunction.genRandHash(Daos.enc.hexEnc(parentBlock.getHeader.getHash.toByteArray()), parentBlock.getMiner.getTermid, BeaconGossip.rollbackGossipNetBits);
             if (rollbackhash.equals(block.getMiner.getTermid)) {
               log.info("rollback hash apply:rollbackhash=" + rollbackhash + ",blockheight=" + pbo.getBlockHeight);
-              BlockProcessor.offerBlock(new ApplyBlock(pbo));
+              BlockProcessor.offerMessage(new ApplyBlock(pbo));
             } else {
               log.warn("beaconhash.rollback not equal:height=" + block.getHeader.getNumber + ":: BH=" + pbo.getBlockEntry.getBlockhash
                 + " prvbh=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + " dbprevbh=" + Daos.enc.hexEnc(parentBlock.getHeader.getHash.toByteArray())
