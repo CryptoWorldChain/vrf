@@ -57,7 +57,9 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
         log.warn("not found parent block:: bh=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + " height=" + block.getHeader.getNumber)
         if (VCtrl.curVN().getState != VNodeState.VN_INIT
           && VCtrl.curVN().getState != VNodeState.VN_SYNC_BLOCK) {
-          BlockProcessor.offerMessage(new ApplyBlock(pbo)); //need to sync or gossip
+          BlockProcessor.offerBlock(new ApplyBlock(pbo)); //need to sync or gossip
+        }else{
+          
         }
 
       } else {

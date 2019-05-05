@@ -42,7 +42,7 @@ object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
 //     ! NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
-      BlockProcessor.offerMessage(new NotaryBlock(pbo));
+      BlockProcessor.offerNotaryBlock(new NotaryBlock(pbo));
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }
