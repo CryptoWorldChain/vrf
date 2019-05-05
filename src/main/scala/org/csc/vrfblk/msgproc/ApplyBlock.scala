@@ -85,12 +85,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     NodeStateSwitcher.offerMessage(new StateChange(sign, hash, beaconHash, nodeBit, blockHeight));
   }
 
+  var lastGossipTime = 0L;
   def proc() {
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
       val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
-      val (acceptHeight, blockWant, nodebit) = saveBlock(block,block.hasBody());
+      val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
           //                  ret.setResult(CoinbaseResult.CR_PROVEN)
@@ -101,7 +102,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS) {
+          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS && BlockProcessor.getQueue.size() < 2
+            && (System.currentTimeMillis() - lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+            lastGossipTime = System.currentTimeMillis();
             BeaconGossip.gossipBlocks();
           }
         case n if n > 0 =>
@@ -200,10 +203,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       Thread.sleep(100)
     }
     if (lackList.size <= 0) {
-      log.info("no need to get tx body:"+res.getTxHashsCount+",sleep="+sleepw+"/"+sleepMs);
+      log.info("no need to get tx body:" + res.getTxHashsCount + ",sleep=" + sleepw + "/" + sleepMs);
       return saveBlock(miner, needBody)
     }
-    log.info("need to get tx body:"+lackList.size+"/"+res.getTxHashsCount+",sleep="+sleepw+"/"+sleepMs);
+    log.info("need to get tx body:" + lackList.size + "/" + res.getTxHashsCount + ",sleep=" + sleepw + "/" + sleepMs);
     val reqTx = buildReqTx(lackList)
 
     var rspTx = PRetGetTransaction.newBuilder()

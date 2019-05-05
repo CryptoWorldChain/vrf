@@ -40,7 +40,6 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
   def isRunning(): Boolean = {
     return running;
   }
-
   val NewBlockFP = PacketHelper.genPack("NEWBLOCK", "__VRF", "", true, 9);
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())

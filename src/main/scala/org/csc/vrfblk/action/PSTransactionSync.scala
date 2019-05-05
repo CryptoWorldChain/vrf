@@ -5,10 +5,10 @@ import java.util
 import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import java.util.concurrent.{LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit}
+import java.util.concurrent.{ LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit }
 
 import com.google.protobuf.ByteString
-import onight.oapi.scala.commons.{LService, PBUtils}
+import onight.oapi.scala.commons.{ LService, PBUtils }
 import onight.osgi.annotation.NActorProvider
 import onight.tfw.async.CompleteHandler
 import onight.tfw.ntrans.api.ActorService
@@ -19,18 +19,21 @@ import onight.tfw.otransio.api.session.CMDService
 import onight.tfw.outils.serialize.UUIDGenerator
 import onight.tfw.proxy.IActor
 import org.apache.commons.lang3.StringUtils
-import org.apache.felix.ipojo.annotations.{Instantiate, Provides}
+import org.apache.felix.ipojo.annotations.{ Instantiate, Provides }
 import org.csc.account.api.IPengingQueue
 import org.csc.ckrand.pbgens.Ckrand.PSSyncTransaction.SyncType
-import org.csc.ckrand.pbgens.Ckrand.{PCommand, PRetSyncTransaction, PSSyncTransaction}
+import org.csc.ckrand.pbgens.Ckrand.{ PCommand, PRetSyncTransaction, PSSyncTransaction }
 import org.csc.evmapi.gens.Tx.Transaction
 import org.csc.p22p.action.PMNodeHelper
 import org.csc.p22p.utils.LogHelper
 import org.csc.vrfblk.tasks.VCtrl
 import org.csc.vrfblk.utils.VConfig
-import org.csc.vrfblk.{Daos, PSMVRFNet}
+import org.csc.vrfblk.{ Daos, PSMVRFNet }
 
 import scala.collection.JavaConversions._
+import org.csc.evmapi.gens.Tx.Transaction
+import org.csc.account.bean.HashPair
+import org.csc.account.bean.TxArrays
 
 @NActorProvider
 @Instantiate
@@ -38,19 +41,17 @@ import scala.collection.JavaConversions._
 class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
 
-
   @ActorRequire(name = "BlocksPendingQueue", scope = "global")
-  var blocksPendingQ: IPengingQueue[Object] = null;
+  var blocksPendingQ: IPengingQueue[TxArrays] = null;
 
-  def getBlocksPendingQ(): IPengingQueue[Object] = {
+  def getBlocksPendingQ(): IPengingQueue[TxArrays] = {
     return blocksPendingQ;
   }
 
-  def setBlocksPendingQ(ddc: IPengingQueue[Object]) = {
-    this.blocksPendingQ = ddc;
-    PSTransactionSyncService.dbBatchSaveList = ddc;
+  def setBlocksPendingQ(queue: IPengingQueue[TxArrays]) = {
+    this.blocksPendingQ = queue;
+    PSTransactionSyncService.dbBatchSaveList = queue;
   }
-
 
   //   = new PendingQueue[(Array[Byte], BigInteger)]("batchsavelist", 100);
 }
@@ -58,7 +59,8 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
   val greendbBatchSaveList = new LinkedBlockingDeque[(ArrayList[Transaction.Builder], BigInteger, CompleteHandler)]();
   //(Array[Byte], BigInteger)
-  var dbBatchSaveList: IPengingQueue[Object] = null;
+  var dbBatchSaveList: IPengingQueue[TxArrays] = null;
+
   val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
 
   val wallHashList = new LinkedBlockingQueue[ByteString]();
@@ -75,8 +77,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         val op = dbBatchSaveList.pollFirst();
 
         if (op != null) {
-          val p = op.asInstanceOf[(Array[Byte], BigInteger)];
-          val pbo = PSSyncTransaction.newBuilder().mergeFrom(p._1);
+          val pbo = PSSyncTransaction.newBuilder().mergeFrom(op.getData());
           val dbsaveList = new ArrayList[Transaction.Builder]();
           for (x <- pbo.getTxDatasList) {
             var oMultiTransaction = Transaction.newBuilder();
@@ -85,7 +86,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               dbsaveList.add(oMultiTransaction)
             }
           }
-          (dbsaveList, p._2, null)
+          (dbsaveList, op.getBits(), null)
         } else {
           null
         }
@@ -109,11 +110,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               p._3.onFinished(null);
             }
             p._1.clear();
-            p = null;
-            //should sleep when too many tx to confirm.
-            if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
-              p = poll();
-            }
+            p = poll();
           }
           if (p == null) {
             Thread.sleep(10);
@@ -238,7 +235,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             case SyncType.ST_WALLOUT =>
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
-                dbBatchSaveList.addElement((pbo.toByteArray(), bits))
+                val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
+                dbBatchSaveList.addElement(txarr)
+                //                dbBatchSaveList.addElement((pbo.toByteArray(), bits))
                 //TransactionSyncProcessor.offerMessage((SyncTransaction2TransactionBuilder(pbo.toByteArray()), bits, null))
               }
               // if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
@@ -276,7 +275,6 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
       }
     }
-
 
     def SyncTransaction2TransactionBuilder(array: Array[Byte]): util.ArrayList[Transaction.Builder] = {
       val pbo = PSSyncTransaction.newBuilder().mergeFrom(array);

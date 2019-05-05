@@ -59,7 +59,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
         case syncInfo: GossipRecentBlocks =>
 
         case syncInfo: SyncBlock =>
-          log.debug("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
+          log.info("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
           if (syncBlockInQueue.get > 0) {
             Thread.sleep(2000);
           } else {
@@ -112,13 +112,13 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     if (ret.getRetCode() == 0) {
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
-                      log.debug("realBlockCount=" + realmap.size);
+                      log.info("sync realBlockCount=" + realmap.size+",req=["+reqbody.getStartId+","+reqbody.getEndId+"]");
                       realmap.foreach { b =>
                         //同步执行 apply 并验证返回结果
                         // applyblock
                         val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
-
-                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount())
+                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount()+",blockheight="+block.getHeader.getNumber
+                           +","+BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerMessage(new SyncApplyBlock(block));
                       }
