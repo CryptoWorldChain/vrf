@@ -242,9 +242,13 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
               // if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
               if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
-                pbo.getTxHashList.map {
-                  f => wallHashList.offer(f);
-                  //f => TransactionHashBrodcastor.offerMessage(f)
+                if (wallHashList.size() + pbo.getTxHashCount < VConfig.TX_WALL_MAX_CACHE_SIZE) {
+                  pbo.getTxHashList.map {
+                    f => wallHashList.offer(f);
+                    //f => TransactionHashBrodcastor.offerMessage(f)
+                  }
+                } else {
+                  log.error("drop wallhash list for buffer overflow:mem=" + wallHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_WALL_MAX_CACHE_SIZE);
                 }
               }
             case _ =>
@@ -252,12 +256,16 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               if (fromNode != VCtrl.instance.network.noneNode) {
                 bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
               }
-              val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
-              pbo.getTxHashList.map { txHash =>
-                tmpList.add((Daos.enc.hexEnc(txHash.toByteArray()), bits))
-                //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
+              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
+                val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
+                pbo.getTxHashList.map { txHash =>
+                  tmpList.add((Daos.enc.hexEnc(txHash.toByteArray()), bits))
+                  //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
+                }
+                confirmHashList.addAll(tmpList)
+              } else {
+                log.error("drop confirm list for buffer overflow:mem=" + confirmHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_CONFIRM_MAX_CACHE_SIZE);
               }
-              confirmHashList.addAll(tmpList)
           }
 
         } else {
