@@ -34,13 +34,17 @@ object PSHealthCheckService extends LogHelper with PBUtils with LService[VNode] 
     if (VCtrl.isReady()) {
       val current = VCtrl.curVN()
       val miners = VCtrl.coMinerByUID.values.toList
-
+      PSTransactionSyncService
       ret.setRetCode(1)
         .setRetMessage("SUCCESS")
         .setCnNode(current)
         .setDirectNode(VCtrl.network.directNodes.map(b => b.bcuid).mkString("[", ",", "]"))
         .setDirectNode(VCtrl.network.pendingNodes.map(b => b.bcuid).mkString("[", ",", "]"))
         .addAllCoMiners(miners.asJava)
+        .setConfirmTx(PSTransactionSyncService.confirmHashList.size)
+        .setDbsaveTx(PSTransactionSyncService.dbBatchSaveList.size)
+        .setSyncblockTx(PSTransactionSyncService.greendbBatchSaveList.size)
+        .setWallTx(PSTransactionSyncService.wallHashList.size)
     } else {
       ret.setRetCode(-1).setRetMessage("VNode Not Ready")
     }

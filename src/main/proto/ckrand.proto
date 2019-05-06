@@ -263,4 +263,8 @@ message PRetHealthCheck {
     string pending_node = 13; //coMiner
     string direct_node = 14; //coMiner
     repeated VNode coMiners = 15; //coMiner
+	int32 confirm_tx = 17;
+	int32 dbsave_tx = 18;
+	int32 syncblock_tx = 19;
+	int32 wall_tx = 20;
 }
