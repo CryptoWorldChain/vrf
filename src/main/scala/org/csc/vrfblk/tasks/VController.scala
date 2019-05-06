@@ -202,18 +202,20 @@ object VCtrl extends LogHelper with BitMap {
       //      }
       val blks = Daos.chainHelper.getBlocksByNumber(block);
       if (blks != null) {
-        blks.asScala.filter(f => if (block == 0 || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+        blks.asScala.filter(f => if (block == 0 || 
+            block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
           //创世块安全块允许直接广播
           true
         } else {
-          // 本地block超出安全高度的是否能校验通过，只有通过的才广播
+          // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
           val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
           val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
           if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber == 1) {
             true
           } else {
-            false
+            true;//false,,直接通过吧，brew 20190507
+            
           }
         }).map(f => {
           // 本地block是否能校验通过，只有通过的才广播
