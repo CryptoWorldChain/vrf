@@ -34,7 +34,6 @@ object PSHealthCheckService extends LogHelper with PBUtils with LService[VNode] 
     if (VCtrl.isReady()) {
       val current = VCtrl.curVN()
       val miners = VCtrl.coMinerByUID.values.toList
-      PSTransactionSyncService
       ret.setRetCode(1)
         .setRetMessage("SUCCESS")
         .setCnNode(current)
