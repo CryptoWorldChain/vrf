@@ -147,9 +147,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Daos.enc.hexDec(h._1)), h._2);
             h = null;
             //should sleep when too many tx to confirm.
-            if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
-              h = confirmHashList.poll();
-            }
+            //if (Daos.confirmMapDB.size() < Daos.confirmMapDB.getMaxElementsInMemory) {
+            h = confirmHashList.poll();
+            //}
           }
         } catch {
           case t: Throwable =>

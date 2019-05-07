@@ -44,7 +44,7 @@ object TxSync extends LogHelper {
     if (!isLimitSyncSpeed(startTime)) {
       val res = Daos.txHelper.getWaitSendTxToSend(VConfig.MAX_TNX_EACH_BROADCAST)
       if (res.getTxHashCount > 0) {
-        log.debug("Try To Synctx:Count="+res.getTxHashCount);
+        log.info("Try To Synctx:Count="+res.getTxHashCount);
         val msgid = UUIDGenerator.generate();
         val syncTransaction = PSSyncTransaction.newBuilder();
         syncTransaction.setMessageid(msgid);
