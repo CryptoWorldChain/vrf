@@ -256,16 +256,16 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               if (fromNode != VCtrl.instance.network.noneNode) {
                 bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
               }
-              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
+              // if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
                 val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
                 pbo.getTxHashList.map { txHash =>
                   tmpList.add((Daos.enc.hexEnc(txHash.toByteArray()), bits))
                   //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
                 }
                 confirmHashList.addAll(tmpList)
-              } else {
-                log.error("drop confirm list for buffer overflow:mem=" + confirmHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_CONFIRM_MAX_CACHE_SIZE);
-              }
+              // } else {
+              //  log.error("drop confirm list for buffer overflow:mem=" + confirmHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_CONFIRM_MAX_CACHE_SIZE);
+              // }
           }
 
         } else {
