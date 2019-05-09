@@ -135,7 +135,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             }
           } else {
             // 其它节点
-            // 返回自己的信息
+            // 返回自己的信息网络中节点查询: (DN -> PN -> None)
             network.nodeByBcuid(pack.getFrom()) match {
               case network.noneNode => {
                 log.info("nonenode=" + pack.getFrom() + " msgid=" + pbo.getMessageId)
