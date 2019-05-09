@@ -85,7 +85,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     NodeStateSwitcher.offerMessage(new StateChange(sign, hash, beaconHash, nodeBit, blockHeight));
   }
 
-  var lastGossipTime = 0L;
   def proc() {
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
@@ -104,13 +103,12 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",TX=" + pbo.getTxcount
             + ",CBH=" + VCtrl.curVN().getCurBlock
             + ",QS=" + BlockProcessor.getQueue.size()
-            + ",C=" + (System.currentTimeMillis() - lastGossipTime)
+            + ",C=" + (System.currentTimeMillis() - BeaconGossip.lastGossipTime)
             + ",BEMS=" + VConfig.BLK_EPOCH_MS);
 
             // && BlockProcessor.getQueue.size() < 2
           if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
-              && (System.currentTimeMillis() - lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
-            lastGossipTime = System.currentTimeMillis();
+              && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
             BeaconGossip.gossipBlocks();
           }
@@ -146,7 +144,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",VB=" + pbo.getWitnessBits
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
-          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
+            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS ) {
+            log.info("cannot apply block, do gossip");
             BeaconGossip.gossipBlocks();
           }
       }

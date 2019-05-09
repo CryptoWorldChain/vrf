@@ -51,7 +51,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   var currentBR: BRDetect = BRDetect(null, 0, 0, null);
   var lastSyncBlockHeight: Int = 0;
   var lastSyncBlockCount: Int = 0;
-
+  var lastGossipTime: Long = 0L;
   var rollbackGossipNetBits = "";
 
   def isRunning(): Boolean = {
@@ -60,6 +60,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def gossipBlocks() {
     try {
+      lastGossipTime = System.currentTimeMillis();
       currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
       //log.debug("put gossip::" + VCtrl.curVN());
       BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
@@ -71,6 +72,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def runBatch(items: List[PSNodeInfoOrBuilder]): Unit = {
     MDCSetBCUID(VCtrl.network())
+
+    val isize = items.size();
     items.asScala.map(pn =>
       if (StringUtils.equals(pn.getMessageId, currentBR.messageId)) {
         if (pn.getGossipBlockInfo > 0) {
@@ -86,7 +89,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
     //log.debug("gossipBlocks:beaconhash.curvn=" + VCtrl.curVN().getBeaconHash + ",br=" + currentBR.beaconHash);
 
-    log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + items.size());
+    log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + isize);
 
     tryMerge();
     tryGossip();
@@ -95,14 +98,15 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
       ){//|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
-      log.info("do gossipBeaconInfo");
+      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
       gossipBeaconInfo();
     }
   }
 
   def gossipBeaconInfo(gossipBlock: Int = -1) {
-    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size)
     val messageId = UUIDGenerator.generate();
+    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId)
+
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
