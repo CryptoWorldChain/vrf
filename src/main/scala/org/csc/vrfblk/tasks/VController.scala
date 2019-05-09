@@ -87,13 +87,13 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
   def updateBlockHeight(block: BlockEntity): Unit = {
-    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getTermid, block.getMiner.getBit)
+    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getTermid, block.getMiner.getBit, block.getHeader.getTimestamp)
   }
 
-  def updateBlockHeight(blockHeight: Int, blockHash: String, beaconHash: String, bits: String): Unit = {
+  def updateBlockHeight(blockHeight: Int, blockHash: String, beaconHash: String, bits: String, blockTime: Long): Unit = {
     Daos.blkHelper.synchronized({
       cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
-      cur_vnode.setCurBlockMakeTime(System.currentTimeMillis())
+      cur_vnode.setCurBlockMakeTime(blockTime)
       cur_vnode.setCurBlock(blockHeight);
       cur_vnode.setCurBlockHash(blockHash)
       cur_vnode.setBeaconHash(beaconHash);

@@ -268,9 +268,10 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               // }
           }
 
-        } else {
-          log.debug("cannot find bcuid from network:" + pbo.getConfirmBcuid + "," + pbo.getFromBcuid + ",synctype=" + pbo.getSyncType);
-        }
+        } 
+        // else {
+        //  log.debug("cannot find bcuid from network:" + pbo.getConfirmBcuid + "," + pbo.getFromBcuid + ",synctype=" + pbo.getSyncType);
+        // }
 
         ret.setRetCode(1)
       } catch {

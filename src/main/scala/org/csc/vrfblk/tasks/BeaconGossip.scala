@@ -36,9 +36,9 @@ object BeaconTask extends SRunner {
   def runOnce() = {
     log.debug("time check try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
       + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
-    if (System.currentTimeMillis() - VCtrl.curVN().getCurBlockRecvTime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) {
-      log.debug("do try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
-        + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockRecvTime));
+    if (System.currentTimeMillis() - VCtrl.curVN().getCurBlockMakeTime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) {
+      log.info("do try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
+        + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
 
       BeaconGossip.tryGossip();
     }
@@ -78,13 +78,15 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             ",hash=" + pn.getGossipMinerInfo.getBeaconHash + ",SEED=" + pn.getGossipMinerInfo.getBlockExtrData);
 
         } else {
-          log.debug("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
+          log.info("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
             + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds + "nodeHeight=" + VCtrl.curVN().getCurBlock);
         }
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
 
     //log.debug("gossipBlocks:beaconhash.curvn=" + VCtrl.curVN().getBeaconHash + ",br=" + currentBR.beaconHash);
+
+    log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + items.size());
 
     tryMerge();
     tryGossip();
@@ -93,11 +95,13 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
       ){//|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
+      log.info("do gossipBeaconInfo");
       gossipBeaconInfo();
     }
   }
 
   def gossipBeaconInfo(gossipBlock: Int = -1) {
+    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size)
     val messageId = UUIDGenerator.generate();
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
@@ -111,8 +115,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     if (gossipBlock > 0) {
       body.setGossipBlockInfo(gossipBlock);
     }
-    //log.debug("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
-    //  + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
+    log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
+      + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
     VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
   }
 
@@ -231,9 +235,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             tryRollbackBlock(suggestStartIdx);
           }
         case n @ _ =>
-          // log.debug("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
-          //   + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
-          //   + ",messageid=" + currentBR.messageId);
+          log.info("need more results:" + checkList.size + ",incomingInfos=" + incomingInfos.size
+             + ",n=" + n + ",vcounts=" + currentBR.votebase + ",suggestStartIdx=" + suggestStartIdx
+             + ",messageid=" + currentBR.messageId);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
@@ -242,6 +246,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             tryRollbackBlock();
           }
       };
+    } else {
+      log.info("need more results size=" + size + " vb=" + currentBR.votebase)
     }
   }
 
