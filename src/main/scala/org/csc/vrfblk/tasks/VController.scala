@@ -221,6 +221,7 @@ object VCtrl extends LogHelper with BitMap {
           // 本地block是否能校验通过，只有通过的才广播
           if (needBody) {
             val txbodys = f.getBody.toBuilder();
+            //如果当前body里面有完整txList, 不再需要在重新构建tx, 否则会造成txBody重复
             if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
               val txlist = new ArrayList[Transaction]();
               f.getHeader.getTxHashsList.map(txHash=>{
