@@ -55,7 +55,6 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         ret.setVn(VCtrl.curVN())
         MDCSetMessageID(pbo.getMessageId);
         if (StringUtils.isBlank(pack.getFrom())) {
-          log.info("from is blank?");
         } else {
           log.info("getNodeInfo::" + pack.getFrom() 
             + ",blockheight=" + pbo.getVn.getCurBlock 
@@ -138,7 +137,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             // 返回自己的信息
             network.nodeByBcuid(pack.getFrom()) match {
               case network.noneNode => {
-                log.info("nonenode=" + pack.getFrom() + " msgid=" + pbo.getMessageId)
+                //log.info("nonenode=" + pack.getFrom() + " msgid=" + pbo.getMessageId)
               }
               case n: PNode =>
                 if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
@@ -179,7 +178,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                     }
                   }
                 }
-                log.info("pbo=" + pbo + " msgid=" + pbo.getMessageId);
+                // log.info("pbo=" + pbo + " msgid=" + pbo.getMessageId);
                 if (pbo.getIsQuery) {
                   psret.setIsQuery(false);
                   network.postMessage("INFVRF", Left(psret.build()), pbo.getMessageId, n._bcuid);

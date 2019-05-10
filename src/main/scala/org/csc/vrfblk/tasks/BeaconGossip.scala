@@ -77,19 +77,19 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     items.asScala.map(pn =>
       if (StringUtils.equals(pn.getMessageId, currentBR.messageId)) {
         if (pn.getGossipBlockInfo > 0) {
-          log.debug("rollback put a new br:from= " + pn.getVn.getBcuid + ",blockheight=" + pn.getGossipMinerInfo.getCurBlock +
-            ",hash=" + pn.getGossipMinerInfo.getBeaconHash + ",SEED=" + pn.getGossipMinerInfo.getBlockExtrData);
+          //log.debug("rollback put a new br:from= " + pn.getVn.getBcuid + ",blockheight=" + pn.getGossipMinerInfo.getCurBlock +
+          //  ",hash=" + pn.getGossipMinerInfo.getBeaconHash + ",SEED=" + pn.getGossipMinerInfo.getBlockExtrData);
 
         } else {
-          log.info("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
-            + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds + "nodeHeight=" + VCtrl.curVN().getCurBlock);
+          //log.info("put a new br:from=" + pn.getVn.getBcuid + ",blockheight=" + pn.getVn.getCurBlock + ",hash=" + pn.getVn.getCurBlockHash
+          //  + ",BH=" + pn.getVn.getBeaconHash + ",SEED=" + pn.getVn.getVrfRandseeds + "nodeHeight=" + VCtrl.curVN().getCurBlock);
         }
         incomingInfos.put(pn.getVn.getBcuid, pn);
       })
 
     //log.debug("gossipBlocks:beaconhash.curvn=" + VCtrl.curVN().getBeaconHash + ",br=" + currentBR.beaconHash);
 
-    log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + isize);
+    //log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + isize);
 
     tryMerge();
     tryGossip();
@@ -98,14 +98,14 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000
       ){//|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
-      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
+      //log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
       gossipBeaconInfo();
     }
   }
 
   def gossipBeaconInfo(gossipBlock: Int = -1) {
     val messageId = UUIDGenerator.generate();
-    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId)
+    //log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId)
 
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
@@ -119,8 +119,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     if (gossipBlock > 0) {
       body.setGossipBlockInfo(gossipBlock);
     }
-    log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
-      + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
+    //log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
+    //  + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
     VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
   }
 
@@ -137,7 +137,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val sync = PSSyncBlocks.newBuilder().setStartId(Math.min(dbHeight, suggestStartIdx))
       .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
 
-    log.info("start sync block::" + sync);
+    //log.info("start sync block::" + sync);
     BlockSync.offerMessage(new SyncBlock(frombcuid, sync))
   }
 
@@ -251,7 +251,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           }
       };
     } else {
-      log.info("need more results size=" + size + " vb=" + currentBR.votebase)
+      //log.info("need more results size=" + size + " vb=" + currentBR.votebase)
     }
   }
 
