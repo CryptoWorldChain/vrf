@@ -151,6 +151,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             }
           }
           case init: Initialize => {
+            log.info("vrf start state=" + VCtrl.curVN().getState);
             if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
               val block = Daos.chainHelper.GetConnectBestBlock;
               // val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);

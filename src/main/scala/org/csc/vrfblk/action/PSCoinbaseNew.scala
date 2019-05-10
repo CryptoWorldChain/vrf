@@ -46,7 +46,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
-      NodeStateSwitcher.offerMessage(new Initialize());
+      // NodeStateSwitcher.offerMessage(new Initialize());
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)

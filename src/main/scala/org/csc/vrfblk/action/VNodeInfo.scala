@@ -43,6 +43,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
 
     var ret = PRetNodeInfo.newBuilder();
     val network = networkByID("vrf")
+    // if (network == null) {
     if (network == null) {
       ret.setRetCode(-1).setRetMessage("unknow network:")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
