@@ -220,15 +220,16 @@ object VCtrl extends LogHelper with BitMap {
         }).map(f => {
           // 本地block是否能校验通过，只有通过的才广播
           if (needBody) {
-            // val txbodys = f.getBody.toBuilder();
-            // val txlist = new ArrayList[Transaction]();
-            // f.getBody.getTxsList.map(tx=>{
-            //   txlist.add(Daos.txHelper.GetTransaction(tx.getHash));
-            // })
-            // txbodys.addAllTxs(txlist);
+            val txbodys = f.getBody.toBuilder();
+            if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
+              val txlist = new ArrayList[Transaction]();
+              f.getHeader.getTxHashs.map(txHash=>{
+                txlist.add(Daos.txHelper.GetTransaction(txHash));
+              })
+              txbodys.addAllTxs(txlist);
+            }
              
-            // val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().build().toByteString()).setBlockHeight(block)
+            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
 
             //            log.info("f.getBody.getTxsCount=" + f.getBody.getTxsCount)
             recentBlocks.put(block, b);
