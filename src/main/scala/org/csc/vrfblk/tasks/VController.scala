@@ -223,7 +223,7 @@ object VCtrl extends LogHelper with BitMap {
             val txbodys = f.getBody.toBuilder();
             if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
               val txlist = new ArrayList[Transaction]();
-              f.getHeader.getTxHashs.map(txHash=>{
+              f.getHeader.getTxHashsList.map(txHash=>{
                 txlist.add(Daos.txHelper.GetTransaction(txHash));
               })
               txbodys.addAllTxs(txlist);
