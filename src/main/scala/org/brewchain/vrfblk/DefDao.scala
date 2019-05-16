@@ -33,11 +33,11 @@ abstract class PSMVRFNet[T <: Message] extends SessionModules[T] with PBUtils wi
 @Provides(specifications = Array(classOf[ActorService], classOf[IJPAClient]))
 class Daos extends PSMVRFNet[Message] with ActorService {
 
-  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSVRFDao])
+  @StoreDAO(target = "bc_db", daoClass = classOf[ODSVRFDao])
   @BeanProperty
   var vrfdb: ODBSupport = null
 
-  @StoreDAO(target = "bc_bdb", daoClass = classOf[ODSVRFVoteDao])
+  @StoreDAO(target = "bc_db", daoClass = classOf[ODSVRFVoteDao])
   @BeanProperty
   var vrfvotedb: ODBSupport = null
 

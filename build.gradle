@@ -1,6 +1,7 @@
 buildscript {
 	dependencies {
 		classpath "onight.osgi:zpp-gradle_1.8:3.3.0"
+		classpath "org.brewchain:org.brewchain.core:0.0.1"
 	 }
 }
 version = '0.0.1'
