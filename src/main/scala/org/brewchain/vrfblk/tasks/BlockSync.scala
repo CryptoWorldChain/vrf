@@ -30,8 +30,7 @@ import org.brewchain.bcrand.model.Bcrand.PSSyncBlocks
 import onight.tfw.async.CallBack
 import org.brewchain.bcrand.model.Bcrand.PRetSyncBlocks
 import scala.collection.JavaConverters._
-import org.brewchain.evmapi.gens.Block.BlockEntity
-import org.brewchain.evmapi.gens.Block.BlockEntityOrBuilder
+import org.brewchain.core.model.Block.BlockInfo
 import java.util.concurrent.atomic.AtomicLong
 
 trait SyncInfo {
@@ -116,8 +115,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       realmap.foreach { b =>
                         //同步执行 apply 并验证返回结果
                         // applyblock
-                        val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
-                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount()+",blockheight="+block.getHeader.getNumber
+                        val block = BlockInfo.newBuilder().mergeFrom(b.getBlockHeader);
+                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount()+",blockheight="+block.getHeader.getHeight
                            +","+BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerSyncBlock(new SyncApplyBlock(block));

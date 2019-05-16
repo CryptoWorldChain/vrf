@@ -6,21 +6,19 @@ import java.util.concurrent.locks.ReentrantLock
 
 import com.google.common.cache.{ Cache, CacheBuilder }
 import org.apache.commons.lang3.StringUtils
-import org.brewchain.bcapi.gens.Oentity.OValue
 import org.brewchain.bcrand.model.Bcrand.{ PBlockEntry, VNode, VNodeState }
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.{ Network, Node }
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos
 import org.brewchain.vrfblk.utils.{ RandFunction, VConfig }
-import org.brewchain.evmapi.gens.Block.BlockEntity
+import org.brewchain.core.model.Block.BlockInfo
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
-import org.brewchain.evmapi.gens.Block.BlockHeader
+import org.brewchain.core.model.Transaction.TransactionInfo
 import com.google.protobuf.ByteString
 import org.brewchain.core.crypto.BitMap
 import scala.collection.JavaConversions._
-import org.brewchain.evmapi.gens.Tx.Transaction
 import java.util.ArrayList
 
 //投票决定当前的节点
@@ -34,17 +32,17 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   val heightBlkSeen = new AtomicInteger(0);
 
   def loadNodeFromDB() = {
-    val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY).get
+    val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY.getBytes).get
     val root_node = network.root();
     if (ov == null) {
       cur_vnode.setBcuid(root_node.bcuid)
         .setCurBlock(1).setCoAddress(root_node.v_address)
         .setBitIdx(root_node.node_idx)
       Daos.vrfpropdb.put(
-        VRF_NODE_DB_KEY,
-        OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
+        VRF_NODE_DB_KEY.getBytes,
+       cur_vnode.build().toByteArray())
     } else {
-      cur_vnode.mergeFrom(ov.getExtdata).setBitIdx(root_node.node_idx)
+      cur_vnode.mergeFrom(ov).setBitIdx(root_node.node_idx)
       if (!StringUtils.equals(cur_vnode.getBcuid, root_node.bcuid)) {
         log.warn("load from dnode info not equals with pzp node:{" + cur_vnode.toString().replaceAll("\n", ",") + "},root=" + root_node)
         cur_vnode.setBcuid(root_node.bcuid);
@@ -53,21 +51,21 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         // log.info("load from db:OK:{" + cur_vnode.toString().replaceAll("\n", ", ") + "}")
       }
     }
-    if (cur_vnode.getCurBlock != Daos.chainHelper.getLastBlockNumber.intValue()) {
+    if (cur_vnode.getCurBlock != Daos.chainHelper.getLastConnectedBlockHeight.intValue()) {
       //log.info("vrf block Info load from DB:c=" +
       //  cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
 
-      if (Daos.chainHelper.getLastBlockNumber.intValue() == 0) {
-        cur_vnode.setCurBlock(Daos.chainHelper.getLastBlockNumber.intValue())
+      if (Daos.chainHelper.getLastConnectedBlockHeight.intValue() == 0) {
+        cur_vnode.setCurBlock(Daos.chainHelper.getLastConnectedBlockHeight.intValue())
         //读取创世块HASH
-        cur_vnode.setCurBlockHash(Daos.enc.hexEnc(Daos.chainHelper.getBlockByNumber(0).getHeader.getHash.toByteArray()));
+        cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(Daos.chainHelper.getBlockByHeight(0).getHeader.getHash.toByteArray()));
         cur_vnode.setBeaconHash("")
       } else {
-        val blk = Daos.chainHelper.GetConnectBestBlock();
-        cur_vnode.setCurBlock(blk.getHeader.getNumber.intValue())
+        val blk = Daos.chainHelper.getMaxConnectBlock
+        cur_vnode.setCurBlock(blk.getHeader.getHeight.intValue())
         //当前块BlockHASH
-        cur_vnode.setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()));
-        cur_vnode.setBeaconHash(blk.getMiner.getTermid)
+        cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()));
+        cur_vnode.setBeaconHash(blk.getMiner.getTerm)
       }
 
       heightBlkSeen.set(cur_vnode.getCurBlock);
@@ -82,12 +80,12 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
   def syncToDB() {
     Daos.vrfpropdb.put(
-      VRF_NODE_DB_KEY,
-      OValue.newBuilder().setExtdata(cur_vnode.build().toByteString()).build())
+      VRF_NODE_DB_KEY.getBytes,
+      cur_vnode.build().toByteArray())
   }
 
-  def updateBlockHeight(block: BlockEntity): Unit = {
-    updateBlockHeight(block.getHeader.getNumber.intValue, Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getMiner.getTermid, block.getMiner.getBit, block.getHeader.getTimestamp)
+  def updateBlockHeight(block: BlockInfo): Unit = {
+    updateBlockHeight(block.getHeader.getHeight.intValue, Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits, block.getHeader.getTimestamp)
   }
 
   def updateBlockHeight(blockHeight: Int, blockHash: String, beaconHash: String, bits: String, blockTime: Long): Unit = {
@@ -158,24 +156,24 @@ object VCtrl extends LogHelper with BitMap {
   }
 
   // 判断这个block是否是当前beacon中的第一个块
-  def getPriorityBlockInBeaconHash(blk: BlockEntity): BlockEntity = {
+  def getPriorityBlockInBeaconHash(blk: BlockInfo): BlockInfo = {
     // 如果已经有更高的高度了，直接返回最高块
     // 如果相同高度的区块只有1个，返回true
-    val bestblks = Daos.chainHelper.getConnectBlocksByNumber(blk.getHeader.getNumber);
-    if (bestblks.size == 1) {
-      log.info("ready to update blk=" + blk.getHeader.getNumber + " hash=" + Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTermid)
+    val bestblks = Daos.chainHelper.listConnectBlocksByHeight(blk.getHeader.getHeight);
+    if (bestblks.length == 1) {
+      log.info("ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk
     } else {
       // 判断是否是beaconhash中更高优先级的块
       // 循环所有相同高度的块，排序sleepMS
-      val priorityBlk = bestblks.map(p => {
-        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getPreHash);
-        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getBcuid);
+      val priorityBlk = bestblks.toList.map(p => {
+        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
+        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
 
         var sleepMS =  10l
-        if(blk.getHeader.getNumber>1&&StringUtils.isNotBlank(prevBlock.getMiner.getTermid))
+        if(blk.getHeader.getHeight>1&&StringUtils.isNotBlank(prevBlock.getMiner.getTerm))
         try {
-         sleepMS =  RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTermid, mapToBigInt(prevBlock.getMiner.getBit).bigInteger, blknode.node_idx)
+         sleepMS =  RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTerm, mapToBigInt(prevBlock.getMiner.getBits).bigInteger, blknode.node_idx)
         } catch {
           case t: Throwable =>
           
@@ -184,34 +182,27 @@ object VCtrl extends LogHelper with BitMap {
         (sleepMS, p)
       }).sortBy(_._1).get(0)._2
 
-      log.info("ready to update blk=" + priorityBlk.getHeader.getNumber + " hash=" + Daos.enc.hexEnc(priorityBlk.getHeader.getHash.toByteArray()))
+      log.info("ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
     }
   }
 
   def loadFromBlock(block: Int, needBody: Boolean): Iterable[PBlockEntry.Builder] = {
-    //    val ov = Daos.dposdb.get("D" + block).get
-    //    if (ov != null) {
-    //    recentBlocks.synchronized {
     if (block > curVN().getCurBlock) {
       null
     } else {
-      //      val recentblk = recentBlocks.getIfPresent(block);
-      //      if (recentblk != null) {
-      //        return recentblk;
-      //      }
-      val blks = Daos.chainHelper.getBlocksByNumber(block);
+      val blks = Daos.chainHelper.listBlockByHeight(block);
       if (blks != null) {
-        blks.asScala.filter(f => if (block == 0 || 
+        blks.filter(f => if (block == 0 || 
             block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
           //创世块安全块允许直接广播
           true
         } else {
           // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
-          val parentBlock = Daos.blkHelper.getBlock(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()));
-          val nodebits = if (f.getHeader.getNumber == 1) "" else parentBlock.getMiner.getBit;
-          val (hash, sign) = RandFunction.genRandHash(Daos.enc.hexEnc(f.getHeader.getPreHash.toByteArray()), parentBlock.getMiner.getTermid, nodebits);
-          if (hash.equals(f.getMiner.getTermid) || f.getHeader.getNumber == 1) {
+          val parentBlock = Daos.chainHelper.getBlockByHash(f.getHeader.getParentHash.toByteArray());
+          val nodebits = if (f.getHeader.getHeight == 1) "" else parentBlock.getMiner.getBits;
+          val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(f.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);
+          if (hash.equals(f.getMiner.getTerm) || f.getHeader.getHeight == 1) {
             true
           } else {
             true;//false,,直接通过吧，brew 20190507
@@ -223,16 +214,14 @@ object VCtrl extends LogHelper with BitMap {
             val txbodys = f.getBody.toBuilder();
             //如果当前body里面有完整txList, 不再需要在重新构建tx, 否则会造成txBody重复
             if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
-              val txlist = new ArrayList[Transaction]();
+              val txlist = new ArrayList[TransactionInfo]();
               f.getHeader.getTxHashsList.map(txHash=>{
-                txlist.add(Daos.txHelper.GetTransaction(txHash));
+                txlist.add(Daos.txHelper.getTransaction(txHash.toByteArray()));
               })
               txbodys.addAllTxs(txlist);
             }
              
             val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
-
-            //            log.info("f.getBody.getTxsCount=" + f.getBody.getTxsCount)
             recentBlocks.put(block, b);
             b
           } else {

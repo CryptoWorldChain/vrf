@@ -21,13 +21,11 @@ object RandFunction extends LogHelper with BitMap {
 
   def genRandHash(curblockHash: String, prevRandHash: String, nodebits: String): (String, String) = {
     val content = Array(curblockHash, prevRandHash, nodebits).mkString(",");
-    val hash = Daos.enc.sha256Encode(content.getBytes);
-    val sign = Daos.enc.ecSignHex(
-      VCtrl.network().root().pri_key,
-      hash);
-    //log.debug("curblockHash::" + curblockHash + " prevRandHash::"+prevRandHash + " nodebits::"+nodebits + " result::" + Daos.enc.hexEnc(hash));
-
-    (Daos.enc.hexEnc(hash), sign)
+    val hash = Daos.enc.sha256(content.getBytes);
+    val sign = Daos.enc.bytesToHexStr(Daos.enc.sign(
+      Daos.enc.hexStrToBytes(VCtrl.network().root().pri_key),
+      hash));
+    (Daos.enc.bytesToHexStr(hash), sign)
   }
   def bigIntAnd(x: BigInteger, y: BigInteger): BigInteger = {
     var t = BigInteger.ZERO;
@@ -57,7 +55,7 @@ object RandFunction extends LogHelper with BitMap {
       //cannot product block maker
       return (blockbits, votebits);
     } else {
-      val deeprand = Daos.enc.hexEnc(Daos.enc.sha256Encode(subleft.getBytes)) + Daos.enc.hexEnc(Daos.enc.sha256Encode(subright.getBytes))
+      val deeprand = Daos.enc.bytesToHexStr(Daos.enc.sha256(subleft.getBytes)) + Daos.enc.bytesToHexStr(Daos.enc.sha256(subright.getBytes))
       reasonableRandInt(deeprand, netBits, blockMakerCount, notaryCount);
     }
   }

@@ -13,7 +13,7 @@ import org.apache.commons.codec.binary.Hex
 import org.brewchain.core.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction.SyncType
-import org.brewchain.evmapi.gens.Tx.Transaction
+import org.brewchain.core.model.Transaction.TransactionInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos
@@ -22,14 +22,14 @@ import org.fc.zippo.dispatcher.SingletonWorkShop
 
 import scala.collection.JavaConverters._
 
-object TransactionSyncProcessor extends SingletonWorkShop[(ArrayList[Transaction.Builder], BigInteger, CompleteHandler)]
+object TransactionSyncProcessor extends SingletonWorkShop[(ArrayList[TransactionInfo], BigInteger, CompleteHandler)]
   with PMNodeHelper with BitMap with LogHelper {
   override def isRunning: Boolean = true
 
-  override def runBatch(list: util.List[(util.ArrayList[Transaction.Builder], BigInteger, CompleteHandler)]): Unit = {
+  override def runBatch(list: util.List[(util.ArrayList[TransactionInfo], BigInteger, CompleteHandler)]): Unit = {
 
     list.asScala.foreach {
-      case (transactionList: util.ArrayList[Transaction.Builder], netBits: BigInteger, completeHandler) => {
+      case (transactionList: util.ArrayList[TransactionInfo], netBits: BigInteger, completeHandler) => {
         Daos.txHelper.syncTransactionBatch(transactionList, true, netBits)
         if (completeHandler != null) {
           completeHandler.onFinished(null)
@@ -51,17 +51,13 @@ object TransactionConfirmHashProcessor extends SingletonWorkShop[(String, BigInt
 
   //List(transactionHash, bits)
   override def runBatch(list: util.List[(String, BigInteger)]): Unit = {
-    log.debug("====> start ConfirmTxProcessor size=" + list.size);
     list.asScala.foreach {
       case (txHash, bits) => {
-        Daos.txHelper.confirmRecvTx(ByteString.copyFrom(Hex.decodeHex(txHash)), bits)
+        Daos.txHelper.getTmConfirmQueue.increaseConfirm(Hex.decodeHex(txHash), bits)
       }
       case n@_ => log.warn("unknow info:" + n)
-
     }
   }
-
-
 }
 
 object TransactionHashBrodcastor extends SingletonWorkShop[ByteString] with PMNodeHelper with BitMap with LogHelper {

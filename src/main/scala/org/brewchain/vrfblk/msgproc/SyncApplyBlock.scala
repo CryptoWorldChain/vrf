@@ -7,11 +7,10 @@ import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import onight.tfw.async.CallBack
 import onight.tfw.otransio.api.beans.FramePacket
 import org.apache.commons.lang3.StringUtils
-import org.brewchain.account.gens.Blockimpl.AddBlockResponse
 import org.brewchain.core.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.{ PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction }
-import org.brewchain.evmapi.gens.Block.BlockEntity
-import org.brewchain.evmapi.gens.Tx.Transaction
+import org.brewchain.core.model.Block.BlockInfo
+import org.brewchain.core.model.Transaction
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.{ Network, Node }
 import org.brewchain.p22p.utils.LogHelper
@@ -24,7 +23,7 @@ import scala.util.Random
 import org.brewchain.bcrand.model.Bcrand.PBlockEntry
 import com.google.protobuf.ByteString
 
-case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
   def proc() {
     try {
       
@@ -50,20 +49,20 @@ case class SyncApplyBlock(block: BlockEntity.Builder) extends BlockMessage with 
 //      .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
 //      .setWitnessBits(hexToMapping(notarybits))
       
-      val vres = Daos.blkHelper.ApplyBlock(block, true);
-      var lastSuccessBlock = Daos.chainHelper.GetConnectBestBlock();
+      val vres = Daos.blkHelper.syncBlock(block, true);
+      var lastSuccessBlock = Daos.chainHelper.getLastConnectBlock
       var maxid: Int = 0
 
-      if (vres.getCurrentNumber >= block.getHeader.getNumber) {
-        if (vres.getCurrentNumber > maxid) {
-          maxid = block.getHeader.getNumber.intValue();
+      if (vres.getCurrentHeight >= block.getHeader.getHeight) {
+        if (vres.getCurrentHeight > maxid) {
+          maxid = block.getHeader.getHeight.intValue();
         }
-        log.info("sync block height ok=" + block.getHeader.getNumber + ",dbh=" + vres.getCurrentNumber + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()) + ",seed=" +
-          block.getMiner.getBit);
+        log.info("sync block height ok=" + block.getHeader.getHeight + ",dbh=" + vres.getCurrentHeight + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + ",seed=" +
+          block.getMiner.getBits);
       } else {
-        log.info("sync block height failed=" + block.getHeader.getNumber + ",dbh=" + vres.getCurrentNumber + ",curBlock=" + maxid + ",hash=" + Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())
-          + ",prev=" + Daos.enc.hexEnc(block.getHeader.getPreHash.toByteArray()) + ",seed=" +
-          block.getMiner.getBit);
+        log.info("sync block height failed=" + block.getHeader.getHeight + ",dbh=" + vres.getCurrentHeight + ",curBlock=" + maxid + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray())
+          + ",prev=" + Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()) + ",seed=" +
+          block.getMiner.getBits);
       }
       if (maxid > 0) {
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastSuccessBlock));

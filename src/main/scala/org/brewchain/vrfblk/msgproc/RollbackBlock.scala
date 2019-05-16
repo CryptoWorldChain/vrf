@@ -6,7 +6,6 @@ import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.tasks.BlockMessage
 import org.brewchain.vrfblk.tasks.VCtrl
-import org.brewchain.account.util.OEntityBuilder
 import org.brewchain.vrfblk.Daos
 import org.brewchain.p22p.core.Votes
 
@@ -24,8 +23,8 @@ case class RollbackBlock(startBlock: Int) extends BlockMessage with PMNodeHelper
 
     //to notify other.
     MDCSetBCUID(VCtrl.network())
-    val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
-    if (blks != null && blks.size() == 1) {
+    val blks = Daos.chainHelper.listBlockByHeight(startBlock);
+    if (blks != null && blks.length == 1) {
       val messageId = UUIDGenerator.generate();
       log.debug("start to gossip from starBlock:" + (startBlock));
       BeaconGossip.gossipBeaconInfo(startBlock)

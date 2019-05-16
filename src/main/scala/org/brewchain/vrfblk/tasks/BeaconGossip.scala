@@ -16,14 +16,13 @@ import org.brewchain.p22p.core.Votes.Converge
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.utils.VConfig
 import org.fc.zippo.dispatcher.SingletonWorkShop
-
+import org.brewchain.vrfblk.utils.SRunner
 import onight.tfw.outils.serialize.UUIDGenerator
 import org.brewchain.bcrand.model.Bcrand.PSNodeInfoOrBuilder
 import org.brewchain.bcrand.model.Bcrand.PSSyncBlocks
 import org.brewchain.p22p.core.Votes.NotConverge
 import org.brewchain.vrfblk.Daos
 import org.brewchain.bcrand.model.Bcrand.VNodeState
-import org.brewchain.bcapi.exec.SRunner
 import org.brewchain.tools.time.JodaTimeHelper
 import org.brewchain.vrfblk.msgproc.RollbackBlock
 
@@ -132,7 +131,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
     VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
     //从AccountDB中读取丢失高度，防止回滚时当前节点错误块过高或缺失导致起始位置错误
-    val dbHeight: Int = Math.toIntExact(Daos.chainHelper.getLastBlockNumber)
+    val dbHeight: Int = Math.toIntExact(Daos.chainHelper.getLastConnectedBlockHeight)
 
     val sync = PSSyncBlocks.newBuilder().setStartId(Math.min(dbHeight, suggestStartIdx))
       .setEndId(Math.min(maxHeight, suggestStartIdx + VConfig.MAX_SYNC_BLOCKS)).setNeedBody(true).setMessageId(messageId).build()
@@ -204,8 +203,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           } else {
             if (rollbackBlock) {
               rollbackGossipNetBits = randseed;
-              val dbblock = Daos.blkHelper.getBlock(blockHash);
-              if (dbblock != null && dbblock.getHeader.getNumber == height) {
+              val dbblock = Daos.chainHelper.getBlockByHash(Daos.enc.hexStrToBytes(blockHash));
+              if (dbblock != null && dbblock.getHeader.getHeight == height) {
                 // log.info("ConvergeToRollback.ok:height=" + height + ",blockHash=" + blockHash + ",hash=" + hash + ",randseed=" + randseed);
                 NodeStateSwitcher.offerMessage(new BeaconConverge(height, blockHash, hash, randseed));
               } else {
@@ -262,8 +261,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
     var startBlock = suggestGossipBlock - 1;
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
-      val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
-      if (blks != null && blks.size() == 1) {
+      val blks = Daos.chainHelper.listBlockByHeight(startBlock);
+      if (blks != null && blks.length == 1) {
         val messageId = UUIDGenerator.generate();
         log.debug("rollback --> start to gossip from starBlock:" + (startBlock));
         BeaconGossip.gossipBeaconInfo(startBlock)

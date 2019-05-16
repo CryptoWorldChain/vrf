@@ -7,17 +7,17 @@ import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import onight.tfw.async.CallBack
 import onight.tfw.otransio.api.beans.FramePacket
 import org.apache.commons.lang3.StringUtils
-import org.brewchain.account.gens.Blockimpl.AddBlockResponse
 import org.brewchain.core.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.{ PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction }
-import org.brewchain.evmapi.gens.Block.BlockEntity
-import org.brewchain.evmapi.gens.Tx.Transaction
+import org.brewchain.core.model.Block.BlockInfo
+import org.brewchain.core.model.Transaction.TransactionInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.{ Network, Node }
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos
 import org.brewchain.vrfblk.tasks._
 import org.brewchain.vrfblk.utils.{ BlkTxCalc, RandFunction, VConfig }
+import org.brewchain.core.bean.BlockSyncMessage
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -30,51 +30,51 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   val emptyBlock = new AtomicLong(0);
   //b: PBlockEntryOrBuilder
-  def saveBlock(block: BlockEntity.Builder, needBody: Boolean = false): (Int, Int, String) = {
+  def saveBlock(block: BlockInfo.Builder, needBody: Boolean = false): (Int, Int, String) = {
     // val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
 
-    if (!block.getMiner.getBcuid.equals(VCtrl.curVN().getBcuid)) {
+    if (!block.getMiner.getNid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
 
-      val vres = Daos.blkHelper.ApplyBlock(block, needBody);
-      if (vres.getTxHashsCount > 0) {
-        log.info("must sync transaction first,losttxcount=" + vres.getTxHashsCount + ",height=" + block.getHeader.getNumber)
+      val vres = Daos.blkHelper.syncBlock(block, needBody);
+      if (vres.getSyncTxHash.size() > 0) {
+        log.info("must sync transaction first,losttxcount=" + vres.getSyncTxHash.size() + ",height=" + block.getHeader.getHeight)
         // TODO: Sync Transaction  need Sleep for a while First
 
-        val sleepMs = Math.min(VConfig.SYNC_TX_SLEEP_MAX_MS, getRandomSleepMS(block.getMiner.getBcuid))
+        val sleepMs = Math.min(VConfig.SYNC_TX_SLEEP_MAX_MS, getRandomSleepMS(block.getMiner.getNid))
         log.debug(s"sync transaction sleep to reduce press TIME:${sleepMs}")
 
         //同步交易, 同步完成后, 继续保存applyBlock
         trySyncTransaction(block, needBody, vres, sleepMs)
-      } else if (vres.getCurrentNumber > 0) {
-        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentNumber.intValue() + ",blk.height=" + block.getHeader.getNumber + ",wantNumber=" + vres.getWantNumber.intValue())
-        if (vres.getCurrentNumber.intValue() == block.getHeader.getNumber) {
+      } else if (vres.getCurrentHeight > 0) {
+        log.debug("checkMiner --> updateBlockHeight::" + vres.getCurrentHeight.intValue() + ",blk.height=" + block.getHeader.getHeight + ",wantNumber=" + vres.getWantHeight.intValue())
+        if (vres.getCurrentHeight.intValue() == block.getHeader.getHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-        val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+        val lastBlock = Daos.chainHelper.getLastConnectedBlock
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
-          (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), lastBlock.getMiner.getBit)
+          (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), lastBlock.getMiner.getBits)
         } else {
-          VCtrl.instance.updateBlockHeight(vres.getWantNumber.intValue(), "", "", "", 0)
-          (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
+          VCtrl.instance.updateBlockHeight(vres.getWantHeight.intValue(), "", "", "", 0)
+          (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
         }
       } else {
-        (vres.getCurrentNumber.intValue(), vres.getWantNumber.intValue(), block.getMiner.getBit)
+        (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
       }
 
     } else {
-      val lastBlock = Daos.chainHelper.GetConnectBestBlock();
+      val lastBlock = Daos.chainHelper.getLastConnectedBlock();
       if (lastBlock != null) {
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
-        (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, lastBlock.getMiner.getBit)
+        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, lastBlock.getMiner.getBits)
       } else {
         VCtrl.instance.updateBlockHeight(block.build())
-        (block.getHeader.getNumber.intValue, block.getHeader.getNumber.intValue, "")
+        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, "")
       }
     }
   }
@@ -89,7 +89,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
     if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
-      val block = BlockEntity.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+      val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
       val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
@@ -136,7 +136,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           }
 
           // tryNotifyState(VCtrl.curVN().getCurBlockHash,VCtrl.curVN().getCurBlock,VCtrl.curVN().getBeaconHash, nodebit);
-          tryNotifyState(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()), block.getHeader.getNumber.intValue, block.getMiner.getTermid, nodebit);
+          tryNotifyState(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getHeader.getHeight.intValue, block.getMiner.getTerm, nodebit);
         case n @ _ =>
           log.info("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
@@ -156,10 +156,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
   }
 
-  def buildReqTx(lackList: Buffer[ByteString]): PSGetTransaction.Builder = {
+  def buildReqTx(lackList: Buffer[Array[Byte]]): PSGetTransaction.Builder = {
     val reqTx = PSGetTransaction.newBuilder()
     lackList.map(f => {
-      val txHash = Daos.enc.hexEnc(f.toByteArray());
+      val txHash = Daos.enc.bytesToHexStr(f);
       reqTx.addTxHash(txHash)
     })
     return reqTx;
@@ -174,13 +174,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   }
 
   //block: PBlockEntryOrBuilder
-  def trySyncTransaction(miner: BlockEntity.Builder, needBody: Boolean = false, res: AddBlockResponse, sleepMs: Long): (Int, Int, String) = {
+  def trySyncTransaction(miner: BlockInfo.Builder, needBody: Boolean = false, res: BlockSyncMessage, sleepMs: Long): (Int, Int, String) = {
     //def trySyncTransaction(block: PBlockEntryOrBuilder, needBody: Boolean = false, res: AddBlockResponse): Unit = {
     //    this.synchronized({
     // val miner = BlockEntity.parseFrom(block.getBlockHeader)
     val network = VCtrl.network()
 
-    var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getBcuid)
+    var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getNid)
     if (vNetwork.isEmpty) {
       log.info("not find miner in network")
       val miners = VCtrl.coMinerByUID
@@ -195,25 +195,22 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     log.debug("pick node=" + vNetwork)
 
     var sleepw = sleepMs;
-    var lackList = res.getTxHashsList.asScala.map(f =>
-      {
-        ByteString.copyFrom(Daos.enc.hexDec(f));
-      });
+    var lackList = res.getSyncTxHash.asScala
     while (sleepw > 100 && lackList.size > 0) {
       //check.
       lackList = lackList.filter(f =>
         {
-          val tx = Daos.txHelper.GetTransaction(f)
+          val tx = Daos.txHelper.getTransaction(f)
           tx == null
         });
       sleepw -= 100;
       Thread.sleep(100)
     }
     if (lackList.size <= 0) {
-      log.info("no need to get tx body:" + res.getTxHashsCount + ",sleep=" + sleepw + "/" + sleepMs);
+      log.info("no need to get tx body:" + res.getSyncTxHash.size() + ",sleep=" + sleepw + "/" + sleepMs);
       return saveBlock(miner, needBody)
     }
-    log.info("need to get tx body:" + lackList.size + "/" + res.getTxHashsCount + ",sleep=" + sleepw + "/" + sleepMs);
+    log.info("need to get tx body:" + lackList.size + "/" + res.getSyncTxHash.size() + ",sleep=" + sleepw + "/" + sleepMs);
     val reqTx = buildReqTx(lackList)
 
     var rspTx = PRetGetTransaction.newBuilder()
@@ -222,7 +219,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     var notSuccess = true
     var counter = 0
     val start = System.currentTimeMillis()
-    var trySaveRes: (Int, Int, String) = (res.getCurrentNumber.intValue(), res.getWantNumber.intValue(), "")
+    var trySaveRes: (Int, Int, String) = (res.getCurrentHeight.intValue(), res.getWantHeight.intValue(), "")
 
     log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
 
@@ -243,16 +240,16 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                 }
                 if (rspTx != null && rspTx.getTxContentCount > 0) {
                   val startSave = System.currentTimeMillis()
-                  val txList = rspTx.getTxContentList.asScala.map(Transaction.newBuilder().mergeFrom(_)).toList
+                  val txList = rspTx.getTxContentList.asScala.map(TransactionInfo.newBuilder().mergeFrom(_).build()).toList
                   Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
                   notSuccess = false
-                  log.debug(s"SRTVRF success height:${miner.getHeader.getNumber} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
+                  log.debug(s"SRTVRF success height:${miner.getHeader.getHeight} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
                   trySaveRes = saveBlock(miner, needBody)
                   cdl.countDown()
 
                   log.debug("sync tx complete =" + trySaveRes)
                 } else {
-                  log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getBcuid}, " +
+                  log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getNid}, " +
                     s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
                 }
               }

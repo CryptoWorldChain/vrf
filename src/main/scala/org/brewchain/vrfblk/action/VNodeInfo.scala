@@ -80,35 +80,35 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId);
               if (pbo.getGossipBlockInfo == 0) {
                 // 取vn的currentBlock
-                val blk = Daos.blkHelper.getBlock(pbo.getVn.getCurBlockHash);
+                val blk = Daos.chainHelper.getBlockByHash(Daos.enc.hexStrToBytes(pbo.getVn.getCurBlockHash));
                 if (blk == null) {
                   BeaconGossip.offerMessage(pbo);
                 } else {
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
-                  psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
-                    .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
-                    .setBlockExtrData(blk.getMiner.getBit)
-                    .setBeaconHash(blk.getMiner.getTermid)
+                  psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
+                    .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+                    .setBlockExtrData(blk.getMiner.getBits)
+                    .setBeaconHash(blk.getMiner.getTerm)
                     .setCurBlock(pbo.getGossipBlockInfo))
 
-                  psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTermid).setVrfRandseeds(blk.getMiner.getBit));
+                  psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTerm).setVrfRandseeds(blk.getMiner.getBits));
                   BeaconGossip.offerMessage(psret);
                 }
               } else {
-                val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
-                if (blks != null && blks.size() >= 1) {
-                  val blk = blks.get(0);
+                val blks = Daos.chainHelper.listBlockByHeight(pbo.getGossipBlockInfo);
+                if (blks != null && blks.length >= 1) {
+                  val blk = blks(0);
                   // pbo中的beaconhash应与block保持一致
                   // 在apply成功之后会计算新的beaconhash，所以currentBlock的beaconHash!=pbo.getBeaconHash 
                   // 第一块的beanconHash = 创世块的hash
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
-                  psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
-                    .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
-                    .setBlockExtrData(blk.getMiner.getBit)
-                    .setBeaconHash(blk.getMiner.getTermid)
+                  psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
+                    .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+                    .setBlockExtrData(blk.getMiner.getBits)
+                    .setBeaconHash(blk.getMiner.getTerm)
                     .setCurBlock(pbo.getGossipBlockInfo))
 
-                  psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTermid).setVrfRandseeds(blk.getMiner.getBit));
+                  psret.setVn(pbo.getVn.toBuilder().setBeaconHash(blk.getMiner.getTerm).setVrfRandseeds(blk.getMiner.getBits));
                 }
                 BeaconGossip.offerMessage(psret);
               }
@@ -156,23 +156,23 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                 val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
 
                 if (pbo.getGossipBlockInfo > 0) {
-                  val blks = Daos.chainHelper.getBlocksByNumber(pbo.getGossipBlockInfo);
+                  val blks = Daos.chainHelper.listBlockByHeight(pbo.getGossipBlockInfo);
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
-                  if (blks != null && blks.size() >= 1) {
-                    val blk = blks.get(0);
-                    psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getBcuid)
-                      .setCurBlockHash(Daos.enc.hexEnc(blk.getHeader.getHash.toByteArray()))
-                      .setBlockExtrData(blk.getMiner.getBit)
-                      .setBeaconHash(blk.getMiner.getTermid)
+                  if (blks != null && blks.length >= 1) {
+                    val blk = blks(0);
+                    psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
+                      .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+                      .setBlockExtrData(blk.getMiner.getBits)
+                      .setBeaconHash(blk.getMiner.getTerm)
                       .setCurBlock(pbo.getGossipBlockInfo))
-                    log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.size()
-                      + ",rheight=" + blk.getHeader.getNumber.intValue());
+                    log.debug("rollback --> getBlockBlock=" + pbo.getGossipBlockInfo + ",blksize=" + blks.length
+                      + ",rheight=" + blk.getHeader.getHeight.intValue());
                   }
                 } else {
                   var startBlock = pbo.getVn.getCurBlock;
                   while (startBlock > pbo.getVn.getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {
-                    val blks = Daos.chainHelper.getBlocksByNumber(startBlock);
-                    if (blks != null && blks.size() == 1) {
+                    val blks = Daos.chainHelper.listBlockByHeight(startBlock);
+                    if (blks != null && blks.length == 1) {
                       psret.setSugguestStartSyncBlockId(startBlock);
                       startBlock = -100;
                     } else {

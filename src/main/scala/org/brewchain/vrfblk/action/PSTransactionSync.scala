@@ -28,11 +28,11 @@ import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.tasks.VCtrl
 import org.brewchain.vrfblk.utils.VConfig
 import org.brewchain.vrfblk.{ Daos, PSMVRFNet }
+import org.brewchain.vrfblk.utils.TxArrays
+import org.brewchain.tools.queue.PendingQueue
 
 import scala.collection.JavaConversions._
-import org.brewchain.evmapi.gens.Tx.Transaction
-import org.brewchain.account.bean.HashPair
-import org.brewchain.account.bean.TxArrays
+import org.brewchain.core.model.Transaction.TransactionInfo
 
 @NActorProvider
 @Instantiate
@@ -41,13 +41,13 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
 
   @ActorRequire(name = "BlocksPendingQueue", scope = "global")
-  var blocksPendingQ: IPengingQueue[TxArrays] = null;
+  var blocksPendingQ: PendingQueue[TxArrays] = null;
 
-  def getBlocksPendingQ(): IPengingQueue[TxArrays] = {
+  def getBlocksPendingQ(): PendingQueue[TxArrays] = {
     return blocksPendingQ;
   }
 
-  def setBlocksPendingQ(queue: IPengingQueue[TxArrays]) = {
+  def setBlocksPendingQ(queue: PendingQueue[TxArrays]) = {
     this.blocksPendingQ = queue;
     PSTransactionSyncService.dbBatchSaveList = queue;
   }
@@ -56,9 +56,8 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
-  val greendbBatchSaveList = new LinkedBlockingDeque[(ArrayList[TransactionInfo.Builder], BigInteger, CompleteHandler)]();
   //(Array[Byte], BigInteger)
-  var dbBatchSaveList: IPengingQueue[TxArrays] = null;
+  var dbBatchSaveList: PendingQueue[TxArrays] = null;
 
   val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
 
@@ -68,27 +67,21 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   val prioritySave = new ReentrantReadWriteLock().writeLock();
 
   case class BatchRunner(id: Int) extends Runnable {
-    def poll(): (ArrayList[TransactionInfo.Builder], BigInteger, CompleteHandler) = {
-      val ret = greendbBatchSaveList.poll();
-      if (ret != null) {
-        ret;
-      } else {
-        val op = dbBatchSaveList.pollFirst();
-
-        if (op != null) {
-          val pbo = PSSyncTransaction.newBuilder().mergeFrom(op.getData());
-          val dbsaveList = new ArrayList[TransactionInfo.Builder]();
-          for (x <- pbo.getTxDatasList) {
-            var oMultiTransaction = TransactionInfo.newBuilder();
-            oMultiTransaction.mergeFrom(x);
-            if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
-              dbsaveList.add(oMultiTransaction)
-            }
+    def poll(): (ArrayList[TransactionInfo], BigInteger, CompleteHandler) = {
+      val op = dbBatchSaveList.pollFirst();
+      if (op != null) {
+        val pbo = PSSyncTransaction.newBuilder().mergeFrom(op.getData);
+        val dbsaveList = new ArrayList[TransactionInfo]();
+        for (x <- pbo.getTxDatasList) {
+          var oMultiTransaction = TransactionInfo.newBuilder();
+          oMultiTransaction.mergeFrom(x);
+          if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
+            dbsaveList.add(oMultiTransaction.build())
           }
-          (dbsaveList, op.getBits(), null)
-        } else {
-          null
         }
+        (dbsaveList, op.getBits(), null)
+      } else {
+        null
       }
     }
 
@@ -234,15 +227,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               if (pbo.getTxDatasCount > 0) {
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 dbBatchSaveList.addElement(txarr)
-                //                dbBatchSaveList.addElement((pbo.toByteArray(), bits))
-                //TransactionSyncProcessor.offerMessage((SyncTransaction2TransactionBuilder(pbo.toByteArray()), bits, null))
               }
-              // if (VConfig.CREATE_BLOCK_TX_CONFIRM_PERCENT > 0) {
               if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
                 if (wallHashList.size() + pbo.getTxHashCount < VConfig.TX_WALL_MAX_CACHE_SIZE) {
                   pbo.getTxHashList.map {
                     f => wallHashList.offer(f);
-                    //f => TransactionHashBrodcastor.offerMessage(f)
                   }
                 } else {
                   log.error("drop wallhash list for buffer overflow:mem=" + wallHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_WALL_MAX_CACHE_SIZE);
@@ -253,19 +242,14 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               if (fromNode != VCtrl.instance.network.noneNode) {
                 bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
               }
-              // if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
-                val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
-                pbo.getTxHashList.map { txHash =>
-                  tmpList.add((Daos.enc.hexEnc(txHash.toByteArray()), bits))
-                  //TransactionConfirmHashProcessor.offerMessage((Hex.encodeHexString(txHash.toByteArray()), bits))
-                }
-                confirmHashList.addAll(tmpList)
-              // } else {
-              //  log.error("drop confirm list for buffer overflow:mem=" + confirmHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_CONFIRM_MAX_CACHE_SIZE);
-              // }
+              val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
+              pbo.getTxHashList.map { txHash =>
+                tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
+              }
+              confirmHashList.addAll(tmpList)
           }
 
-        } 
+        }
         // else {
         //  log.debug("cannot find bcuid from network:" + pbo.getConfirmBcuid + "," + pbo.getFromBcuid + ",synctype=" + pbo.getSyncType);
         // }
@@ -282,13 +266,13 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       }
     }
 
-    def SyncTransaction2TransactionBuilder(array: Array[Byte]): util.ArrayList[Transaction.Builder] = {
+    def SyncTransaction2TransactionBuilder(array: Array[Byte]): util.ArrayList[TransactionInfo.Builder] = {
       val pbo = PSSyncTransaction.newBuilder().mergeFrom(array);
-      val dbsaveList = new ArrayList[Transaction.Builder]();
+      val dbsaveList = new ArrayList[TransactionInfo.Builder]();
       for (x <- pbo.getTxDatasList) {
-        val oMultiTransaction = Transaction.newBuilder();
+        val oMultiTransaction = TransactionInfo.newBuilder();
         oMultiTransaction.mergeFrom(x);
-        if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getBcuid)) {
+        if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
           dbsaveList.add(oMultiTransaction)
         }
       }

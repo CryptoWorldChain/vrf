@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.JavaConversions._
 
-import org.brewchain.bcapi.exec.SRunner
+import org.brewchain.vrfblk.utils.SRunner
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.Network
 import org.brewchain.p22p.utils.LogHelper
@@ -42,7 +42,7 @@ object TxSync extends LogHelper {
   def trySyncTx(network: Network): Unit = {
     val startTime = System.currentTimeMillis();
     if (!isLimitSyncSpeed(startTime)) {
-      val res = Daos.txHelper.getWaitSendTxToSend(VConfig.MAX_TNX_EACH_BROADCAST)
+      val res = Daos.txHelper.getWaitSendTx(VConfig.MAX_TNX_EACH_BROADCAST)
       if (res.getTxHashCount > 0) {
         val msgid = UUIDGenerator.generate();
         val syncTransaction = PSSyncTransaction.newBuilder();

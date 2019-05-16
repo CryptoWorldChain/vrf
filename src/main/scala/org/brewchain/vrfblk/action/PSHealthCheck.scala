@@ -42,7 +42,6 @@ object PSHealthCheckService extends LogHelper with PBUtils with LService[VNode] 
         .addAllCoMiners(miners.asJava)
         .setConfirmTx(PSTransactionSyncService.confirmHashList.size)
         .setDbsaveTx(PSTransactionSyncService.dbBatchSaveList.size)
-        .setSyncblockTx(PSTransactionSyncService.greendbBatchSaveList.size)
         .setWallTx(PSTransactionSyncService.wallHashList.size)
     } else {
       ret.setRetCode(-1).setRetMessage("VNode Not Ready")

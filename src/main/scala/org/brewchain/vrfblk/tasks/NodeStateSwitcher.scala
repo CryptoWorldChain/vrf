@@ -77,13 +77,13 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
         val myWitness = VCtrl.coMinerByUID.filter {
-          case (bcuid: String, node: Ckrand.VNode) => {
+          case (bcuid: String, node: Bcrand.VNode) => {
             val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
             log.debug(s"node:${bcuid} state:${state}")
             VNodeState.VN_DUTY_NOTARY.equals(state)
           }
         }.map {
-          case (bcuid: String, node: Ckrand.VNode) => node
+          case (bcuid: String, node: Bcrand.VNode) => node
         }.toList
 
         val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
@@ -153,14 +153,12 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           case init: Initialize => {
             log.info("vrf start state=" + VCtrl.curVN().getState);
             if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
-              val block = Daos.chainHelper.GetConnectBestBlock;
-              // val block = Daos.blkHelper.getBlock(VCtrl.curVN().getCurBlockHash);
+              val block = Daos.chainHelper.getMaxConnectBlock;
               if (block != null) {
-                // log.debug(s"block=${block},miner=${block.getMiner},Bit=${block.getMiner.getBit}")
                 val nodeBit = VCtrl.curVN().getCurBlock == 0
                 val (hash, sign) = RandFunction.genRandHash(
                   VCtrl.curVN().getCurBlockHash,
-                  VCtrl.curVN().getPrevBlockHash, block.getMiner.getBit);
+                  VCtrl.curVN().getPrevBlockHash, block.getMiner.getBits);
                 VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
               } 
               BeaconGossip.offerMessage(PSNodeInfo.newBuilder().setVn(VCtrl.curVN()).setIsQuery(true));
