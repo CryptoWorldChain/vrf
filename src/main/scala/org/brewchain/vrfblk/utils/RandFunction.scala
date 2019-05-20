@@ -2,9 +2,6 @@ package org.brewchain.vrfblk.utils
 
 import java.util.concurrent.TimeUnit
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
-
 import onight.oapi.scala.traits.OLog
 import org.brewchain.p22p.Daos
 import org.apache.commons.lang3.StringUtils
@@ -48,9 +45,10 @@ object RandFunction extends LogHelper with BitMap {
     val rightbits = new BigInteger(subright + subright.reverse, 16);
 
     //    log.debug("reasonableRandInt,blockbits=" + leftbits.toString(2) + ",votebits=" + rightbits.toString(2) + ",netBits=" + netBits.toString(2));
-
     val votebits = bigIntAnd(netBits, rightbits); //andNot(blockbits)
     //    log.debug("reasonableRandInt::bb.count=" + blockbits.bitCount() + ",vb.count=" + votebits.bitCount() + ",net.length=" + netBits.bitLength());
+    
+    log.debug("bitc=" + blockbits.bitCount() + ",blockMakerCount=" + blockMakerCount + ",notaryCount=" + notaryCount)
     if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
       //cannot product block maker
       return (blockbits, votebits);
@@ -63,16 +61,20 @@ object RandFunction extends LogHelper with BitMap {
   def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
     val blockMakerCount: Int = Math.max(1, netBits.bitCount() / 2);
     val notaryCount: Int = Math.max(1, netBits.bitCount() / 3);
-    val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-    log.debug("chooseGroups,blockbits=" + blockbits.toString(2) + ",votebits=" +  votebits.toString(2) + ",curIdx=" + curIdx
-        +",BH="+VCtrl.curVN().getBeaconHash+",B="+VCtrl.curVN().getCurBlock
-       +",TC="+netBits.bitCount()+",MC="+blockbits.bitCount()+",NC="+ votebits.bitCount());
-    if (blockbits.testBit(curIdx)) {
-      (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
-    } else if (votebits.testBit(curIdx)) {
-      (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
+    if (netBits.bitCount() <= 3) {
+      (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, netBits)
     } else {
-      (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
+      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
+      log.debug("chooseGroups,blockbits=" + blockbits.toString(2) + ",votebits=" +  votebits.toString(2) + ",curIdx=" + curIdx
+          +",BH="+VCtrl.curVN().getBeaconHash+",B="+VCtrl.curVN().getCurBlock
+         +",TC="+netBits.bitCount()+",MC="+blockbits.bitCount()+",NC="+ votebits.bitCount());
+      if (blockbits.testBit(curIdx)) {
+        (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+      } else if (votebits.testBit(curIdx)) {
+        (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
+      } else {
+        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
+      }
     }
   }
   def getRandMakeBlockSleep(beaconHash: String, blockbits: BigInteger, curIdx: Int): Long = {

@@ -21,6 +21,7 @@ import org.brewchain.vrfblk.tasks.BeaconTask
 import org.brewchain.bcrand.model.Bcrand.PSNodeGraceShutDown
 import org.brewchain.vrfblk.tasks.TxSync
 import org.brewchain.vrfblk.tasks.TransactionSync
+import org.brewchain.tools.url.URLHelper
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -46,6 +47,7 @@ class VRFStartup extends PSMVRFNet[Message] {
 
 class VRFBGLoader() extends Runnable with LogHelper {
   def run() = {
+    URLHelper.init();
     while (!Daos.isDbReady() //        || MessageSender.sockSender.isInstanceOf[NonePackSender]
     ) {
       log.debug("Daos Or sockSender Not Ready..:pzp=" + Daos.pzp + ",dbready=" + Daos.isDbReady())

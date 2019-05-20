@@ -29,7 +29,7 @@ import org.brewchain.vrfblk.tasks.VCtrl
 import org.brewchain.vrfblk.utils.VConfig
 import org.brewchain.vrfblk.{ Daos, PSMVRFNet }
 import org.brewchain.vrfblk.utils.TxArrays
-import org.brewchain.tools.queue.PendingQueue
+import org.brewchain.vrfblk.utils.PendingQueue
 
 import scala.collection.JavaConversions._
 import org.brewchain.core.model.Transaction.TransactionInfo
@@ -41,23 +41,20 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
 
   @ActorRequire(name = "BlocksPendingQueue", scope = "global")
-  var blocksPendingQ: PendingQueue[TxArrays] = null;
+  var blocksPendingQ: PendingQueue = null;
 
-  def getBlocksPendingQ(): PendingQueue[TxArrays] = {
+  def getBlocksPendingQ(): PendingQueue = {
     return blocksPendingQ;
   }
 
-  def setBlocksPendingQ(queue: PendingQueue[TxArrays]) = {
-    this.blocksPendingQ = queue;
+  def setBlocksPendingQ(queue: PendingQueue) = {
     PSTransactionSyncService.dbBatchSaveList = queue;
   }
-
-  //   = new PendingQueue[(Array[Byte], BigInteger)]("batchsavelist", 100);
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
   //(Array[Byte], BigInteger)
-  var dbBatchSaveList: PendingQueue[TxArrays] = null;
+  var dbBatchSaveList: PendingQueue = null;
 
   val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
 

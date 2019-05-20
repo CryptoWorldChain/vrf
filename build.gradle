@@ -15,6 +15,7 @@ dependencies {
 	compile ("org.brewchain:org.brewchain.p22p:0.0.1")
 	compile ("org.brewchain:org.brewchain.model:0.0.1")
 	compile ("org.brewchain:org.brewchain.core:0.0.1")
+	includeInJar("org.ehcache:ehcache:3.5.2")
 }
 protobuf {
     generatedFilesBaseDir = "$projectDir/src"
@@ -36,6 +37,6 @@ sourceSets {
 
 jar {
 	manifest{
-		attributes( 'Import-Ignore':'org.spongycastle,com.google.common.cache')
+		attributes( 'Import-Ignore':'org.spongycastle,org.ehcache,com.google')
 	}
 }

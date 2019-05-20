@@ -61,7 +61,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     if (Daos.chainHelper.getLastConnectedBlockHeight >= needHeight && needHeight > 0) {
       Daos.chainHelper.rollBackTo(needHeight - 1);
     }
-    val newblk = Daos.blkHelper.createBlock(txs, BytesHelper.EMPTY_BYTE_ARRAY, beaconHash);
+    val newblk = Daos.blkHelper.createBlock(txs, BytesHelper.EMPTY_BYTE_ARRAY, beaconHash, voteInfos);
     val endblk = System.currentTimeMillis();
     (newblk, txs)
   }
