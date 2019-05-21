@@ -30,7 +30,7 @@ public class PendingQueue {
 		PersistentCacheManager persistentCacheManager = CacheManagerBuilder.newCacheManagerBuilder()
 				.with(CacheManagerBuilder.persistence("./db/ehcache"))
 				.withCache(cacheName,
-						CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, ByteString.class,
+						CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, TxArrays.class,
 								ResourcePoolsBuilder.newResourcePoolsBuilder().heap(10, EntryUnit.ENTRIES) // 堆
 										.offheap(10, MemoryUnit.MB) // 堆外
 										.disk(1, MemoryUnit.GB) // 磁盘
@@ -66,6 +66,9 @@ public class PendingQueue {
 	public synchronized List<TxArrays> poll(int size) {
 		List<TxArrays> ret = new ArrayList<>();
 		for (int i = 0; i < size; i++) {
+			if (sizeCounter.get() == 0) {
+				break;
+			}
 			long key = sizeCounter.getAndDecrement();
 			TxArrays element = storage.get(key);
 			storage.remove(key);

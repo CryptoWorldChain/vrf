@@ -30,6 +30,7 @@ import org.brewchain.vrfblk.utils.VConfig
 import org.brewchain.vrfblk.{ Daos, PSMVRFNet }
 import org.brewchain.vrfblk.utils.TxArrays
 import org.brewchain.vrfblk.utils.PendingQueue
+import lombok.extern.slf4j.Slf4j;
 
 import scala.collection.JavaConversions._
 import org.brewchain.core.model.Transaction.TransactionInfo
@@ -37,6 +38,7 @@ import org.brewchain.core.model.Transaction.TransactionInfo
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
+@Slf4j
 class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
 
@@ -48,13 +50,14 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   }
 
   def setBlocksPendingQ(queue: PendingQueue) = {
-    PSTransactionSyncService.dbBatchSaveList = queue;
+    //PSTransactionSyncService.dbBatchSaveList = ;
   }
+  
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
   //(Array[Byte], BigInteger)
-  var dbBatchSaveList: PendingQueue = null;
+  var dbBatchSaveList: PendingQueue = new PendingQueue("tx_confirm", 10000);
 
   val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
 
@@ -239,6 +242,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               if (fromNode != VCtrl.instance.network.noneNode) {
                 bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
               }
+              log.debug("" + pbo.getTxHashCount);
               val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
               pbo.getTxHashList.map { txHash =>
                 tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
@@ -254,7 +258,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         ret.setRetCode(1)
       } catch {
         case t: Throwable => {
-          log.error("error:", t);
+          log.error("error:" + t);
           ret.clear()
           ret.setRetCode(-3).setRetMessage(t.getMessage)
         }
