@@ -79,7 +79,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
           val reqbody =
             if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
-              syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock).build();
+              syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).build();
             } else 
             if(lastSyncBlockHeight>0)
             {

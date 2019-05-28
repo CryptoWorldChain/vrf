@@ -50,7 +50,6 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
     var put = false;
     processHash.synchronized({
       if (processHash.containsKey(t.pbo.getBeaconHash)) {
-        log.debug("omit applyblock:" + t.pbo.getMessageId + ",beaconhash=" + t.pbo.getBeaconHash);
       } else {
         processHash.put(t.pbo.getMessageId, t.pbo.getBeaconHash)
         processHash.put(t.pbo.getBeaconHash, t.pbo.getBeaconHash)
@@ -66,7 +65,6 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
     var put = false;
     processHash.synchronized({
       if (processHash.containsKey(t.pbo.getMessageId)) {
-        log.debug("omit applyblock:" + t.pbo.getMessageId + ",beaconhash=" + t.pbo.getBeaconHash);
       } else {
         processHash.put(t.pbo.getMessageId, t.pbo.getBeaconHash)
         put = true;
@@ -81,7 +79,6 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
     processHash.synchronized({
       val key = Daos.enc.bytesToHexStr(t.block.getHeader.getHash.toByteArray());
       if (processHash.containsKey(key)) {
-        log.debug("omit applySyncblock:" +t.block.getHeader.getHash);
       } else {
         processHash.put(key,key)
         put = true;
@@ -100,12 +97,10 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       m match {
         case blkInfo: MPCreateBlock =>
           var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
-          log.debug("block maker sleep = " + sleepMS + ",bitidx=" + VCtrl.curVN().getBitIdx)
           var isFirstMaker = false;
           if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-          log.info("exec create block background running:" + blkInfo.beaconHash + "," + hexToMapping(blkInfo.netBits) + ",sleep :" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
@@ -113,16 +108,14 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
                 if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
-                  log.error("wake up for block queue too large :" + isFirstMaker + ",sleepMS=" + sleepMS + ",waitBlock.size=" + Daos.txHelper.getTmConfirmQueue.size);
                   sleepMS = 0;
 
                 }
               } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-                log.debug("wait up to create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
                 BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
               } else {
-                log.debug("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
+                log.warn("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
               }
             }
           })
@@ -140,12 +133,11 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           processHash.remove(blk.pbo.getMessageId)
           blk.proc();
         case blk: MPRealCreateBlock =>
-          log.info("MPRealCreateBlock need=" + blk.needHeight + " curbh=" + VCtrl.curVN().getCurBlock)
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();
           } else {
-            log.debug("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash);
+            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash);
           }
         case n @ _ =>
           log.warn("unknow info:" + n);

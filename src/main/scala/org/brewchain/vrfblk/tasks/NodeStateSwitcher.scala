@@ -40,21 +40,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
 
   def notifyStateChange(hash: String, preHash: String, netbits1: BigInteger, height: Int) {
     var netBits = netbits1;
-    // val hash = VCtrl.curVN().getBeaconHash;
     val sign = VCtrl.curVN().getBeaconSign;
-    // log.info(s"stateChange,BEACON=${hash},SIGN=${sign}")
-    //    var netBits = BigInteger.ZERO;
-    //    try {
-    //      if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.length() > 0) {
-    //        netBits = mapToBigInt(VCtrl.curVN().getVrfRandseeds).bigInteger;
-    //        log.debug(" netBits::" + netBits);
-    //      }
-    //      netBits = RandFunction.bigIntAnd(netBits, VCtrl.network().bitenc.bits.bigInteger);
-    //      log.debug(" netBits::" + netBits);
-    //    } catch {
-    //      case t: Throwable =>
-    //        log.debug("set netbits error:" + t.getMessage, t);
-    //    }
     if (netBits.bitCount() <= 0) {
       if (VCtrl.curVN().getVrfRandseeds != null && VCtrl.curVN().getVrfRandseeds.size > 0) {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
@@ -65,24 +51,19 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
       }
-      log.debug("" + VCtrl.coMinerByUID);
       VCtrl.coMinerByUID.map(f => {
         if (f._2.getCurBlock >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)) {
           netBits = netBits.setBit(f._2.getBitIdx);
         }
       })
     }
-    log.info("try choose group hash=" + hash + " bitIdx=" + VCtrl.curVN().getBitIdx + " netBits=" + netBits.bitCount())
-
     val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits)
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
         val myWitness = VCtrl.coMinerByUID.filter {
           case (bcuid: String, node: Bcrand.VNode) => {
             val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
-            log.debug(s"node:${bcuid} state:${state}")
             VNodeState.VN_DUTY_NOTARY.equals(state)
           }
         }.map {
@@ -109,10 +90,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             }
             if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
               //decide to make block
-              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS);
               BeaconGossip.gossipBlocks();
-            } else {
-              log.debug(s"reconsider oldBEACON:${notaryCheckHash}newBEACON:${VCtrl.curVN().getBeaconHash},sleep still:" + timeOutMS);
             }
           }
         })
@@ -130,30 +108,16 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       items.asScala.map(m => {
         m match {
           case BeaconConverge(height, blockHash, hash, seed) => {
-
-            log.info("set new beacon seed:height=" + height + ",blockHash=" + blockHash + ",seed=" + seed + ",hash=" + hash);
-            //          if (height >= VCtrl.curVN().getCurBlock) {
-            // VCtrl.curVN().setBeaconHash(hash).setVrfRandseeds(seed).setCurBlockHash(blockHash)
-            //   .setCurBlock(height);
-
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
             NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
-
-            // notifyStateChange(VCtrl.curVN().getBeaconHash, mapToBigInt(seed).bigInteger);
-            //          } else {
-            //            log.debug("do nothing network converge height[" + height + "] less than local[" + VCtrl.curVN().getCurBlock + "]");
-            //          }
           }
-          case StateChange(newsign, newhash, prevhash, netbits, height) => {            
-            log.debug("get new statechange, height=" + height + " currentbeacon=" + VCtrl.curVN().getBeaconHash + "prevhash=" + prevhash)
-            
+          case StateChange(newsign, newhash, prevhash, netbits, height) => {                        
             if (height==0 || (height > 0 && VCtrl.curVN().getBeaconHash.equals(prevhash))) {
               VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
               notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);
             }
           }
           case init: Initialize => {
-            log.info("vrf start state=" + VCtrl.curVN().getState);
             if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
               val block = Daos.chainHelper.getMaxConnectBlock;
               if (block != null) {

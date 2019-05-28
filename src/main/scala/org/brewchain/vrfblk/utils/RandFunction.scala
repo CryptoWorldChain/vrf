@@ -44,11 +44,8 @@ object RandFunction extends LogHelper with BitMap {
     val blockbits = bigIntAnd(netBits, leftbits)
     val rightbits = new BigInteger(subright + subright.reverse, 16);
 
-    //    log.debug("reasonableRandInt,blockbits=" + leftbits.toString(2) + ",votebits=" + rightbits.toString(2) + ",netBits=" + netBits.toString(2));
     val votebits = bigIntAnd(netBits, rightbits); //andNot(blockbits)
-    //    log.debug("reasonableRandInt::bb.count=" + blockbits.bitCount() + ",vb.count=" + votebits.bitCount() + ",net.length=" + netBits.bitLength());
     
-    log.debug("bitc=" + blockbits.bitCount() + ",blockMakerCount=" + blockMakerCount + ",notaryCount=" + notaryCount)
     if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
       //cannot product block maker
       return (blockbits, votebits);
@@ -65,9 +62,6 @@ object RandFunction extends LogHelper with BitMap {
       (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, netBits)
     } else {
       val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-      log.debug("chooseGroups,blockbits=" + blockbits.toString(2) + ",votebits=" +  votebits.toString(2) + ",curIdx=" + curIdx
-          +",BH="+VCtrl.curVN().getBeaconHash+",B="+VCtrl.curVN().getCurBlock
-         +",TC="+netBits.bitCount()+",MC="+blockbits.bitCount()+",NC="+ votebits.bitCount());
       if (blockbits.testBit(curIdx)) {
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
       } else if (votebits.testBit(curIdx)) {
@@ -94,7 +88,6 @@ object RandFunction extends LogHelper with BitMap {
     }
     val ranInt = new BigInteger(beaconHash, 16).abs(); //.multiply(BigInteger.valueOf(curIdx));
     val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue();
-    log.debug("calc rand sleep,indexInBits=" + indexInBits + ",stepRange=" + stepRange + ",bitcount=" + blockbits.bitCount());
     return ((indexInBits + stepRange) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC*1000 + VConfig.BLK_EPOCH_MS
   }
 }

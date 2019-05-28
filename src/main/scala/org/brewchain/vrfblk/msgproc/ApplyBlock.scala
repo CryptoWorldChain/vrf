@@ -37,7 +37,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       val startupApply = System.currentTimeMillis();
 
       val vres = Daos.blkHelper.syncBlock(block, needBody);
-      if (vres.getSyncTxHash.size() > 0) {
+      if (vres.getSyncTxHash != null && vres.getSyncTxHash.size() > 0) {
         log.info("must sync transaction first,losttxcount=" + vres.getSyncTxHash.size() + ",height=" + block.getHeader.getHeight)
         // TODO: Sync Transaction  need Sleep for a while First
 
