@@ -16,13 +16,15 @@ import org.brewchain.p22p.utils.PacketIMHelper._
 
 import onight.tfw.otransio.api.PacketHelper
 import org.brewchain.p22p.exception.FBSException
-
+import org.brewchain.vrfblk.Daos
+import com.google.protobuf.ByteString
 import scala.collection.JavaConversions._
 import org.brewchain.vrfblk.PSMVRFNet
 import org.brewchain.bcrand.model.Bcrand.PSSyncBlocks
 import org.brewchain.bcrand.model.Bcrand.PRetSyncBlocks
 import org.brewchain.vrfblk.tasks.VCtrl
 import org.brewchain.bcrand.model.Bcrand.PCommand
+import org.brewchain.vrfblk.utils.VConfig
 
 @NActorProvider
 @Instantiate
@@ -40,8 +42,15 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
     if (!VCtrl.isReady()) {
       ret.setRetCode(-1).setRetMessage("VRF Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    } else {
+    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(pbo.getSignature))), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+          // TODO 判断是否有足够余额，只发给有足够余额的节点    
+          log.error("unauthorization to get block" + pbo.getSignature);
+          ret.setRetCode(-1).setRetMessage("Unauthorization")
+          handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+        } else {
       try {
+        
+        
         MDCSetBCUID(VCtrl.network())
         MDCSetMessageID(pbo.getMessageId)
         ret.setMessageId(pbo.getMessageId);

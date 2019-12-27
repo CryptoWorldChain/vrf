@@ -73,8 +73,18 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
               val self = pbo.getVn
 
-              if (StringUtils.equals(pack.getFrom(), network.root.bcuid) && self.getDoMine) {
-                VCtrl.coMinerByUID.put(self.getBcuid, self);
+              if (StringUtils.equals(pack.getFrom(), network.root.bcuid) 
+                  && self.getDoMine ) {
+                
+                  log.info("put into cominer bcuid=" + self.getBcuid + " address=" + self.getCoAddress);
+                //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
+                //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+                  VCtrl.coMinerByUID.put(self.getBcuid, self);
+                //} else {
+                //  VCtrl.coMinerByUID.remove(self.getBcuid);
+                //}
+              } else {
+                VCtrl.coMinerByUID.remove(self.getBcuid);
               }
               // log.debug("current cominer::" + VCtrl.coMinerByUID);
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId);
@@ -84,6 +94,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                 if (blk == null) {
                   BeaconGossip.offerMessage(pbo);
                 } else {
+                  log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                   psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
                     .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
@@ -101,6 +112,8 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   // pbo中的beaconhash应与block保持一致
                   // 在apply成功之后会计算新的beaconhash，所以currentBlock的beaconHash!=pbo.getBeaconHash 
                   // 第一块的beanconHash = 创世块的hash
+                  log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + pbo.getGossipBlockInfo + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                   psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
                     .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
@@ -148,7 +161,16 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
 
                   val friendNode = pbo.getVn
                   if (friendNode.getDoMine) {
-                    VCtrl.coMinerByUID.put(friendNode.getBcuid, friendNode);
+                    log.info("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                    //val friendCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(friendNode.getCoAddress)));
+                    //if (Daos.accountHandler.getTokenBalance(friendCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+                      VCtrl.coMinerByUID.put(friendNode.getBcuid, friendNode);
+                    //} else {
+                    //  VCtrl.coMinerByUID.remove(friendNode.getBcuid);
+                    //}
+                    //VCtrl.coMinerByUID.put(friendNode.getBcuid, friendNode);
+                  } else {
+                    VCtrl.coMinerByUID.remove(friendNode.getBcuid);
                   }
                   // log.debug("current cominer::" + VCtrl.coMinerByUID);
                 }
@@ -160,6 +182,8 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                   if (blks != null && blks.length >= 1) {
                     val blk = blks(0);
+                                      log.error("set beacon hash =" + blk.getMiner.getTerm)
+
                     psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
                       .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
                       .setBlockExtrData(blk.getMiner.getBits)

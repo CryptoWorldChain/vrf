@@ -57,6 +57,7 @@ object TxSync extends LogHelper {
           syncTransaction.addTxDatas(x)
         }
 
+        // TODO 判断是否有足够余额，只发给有足够余额的节点
         network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)
         lastSyncCount.set(res.getTxHashCount)

@@ -30,6 +30,8 @@ import org.brewchain.vrfblk.tasks.BeaconGossip
 import org.apache.commons.lang3.StringUtils
 import org.brewchain.bcrand.model.Bcrand.VNodeState
 import org.brewchain.vrfblk.utils.VConfig
+import org.brewchain.vrfblk.Daos
+import com.google.protobuf.ByteString
 
 @NActorProvider
 @Instantiate
@@ -43,26 +45,30 @@ class PSCoinbaseNew extends PSMVRFNet[PSCoinbase] {
 object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
+    val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
       // NodeStateSwitcher.offerMessage(new Initialize());
+    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(block.getMiner.getAddress), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+      // TODO 判断是否有足够余额，只发给有足够余额的节点
+      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
+      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash);
+      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
-      val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+      
       val parentBlock = Daos.chainHelper.getBlockByHash(block.getHeader.getParentHash.toByteArray());
       if (parentBlock == null) {
         if (VCtrl.curVN().getState != VNodeState.VN_INIT
           && VCtrl.curVN().getState != VNodeState.VN_SYNC_BLOCK
           && VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight ) {
           BlockProcessor.offerBlock(new ApplyBlock(pbo)); //need to sync or gossip
-        }else{
+        } else {
           
         }
-
       } else {
         val nodebits = parentBlock.getMiner.getBits;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);

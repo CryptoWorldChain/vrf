@@ -7,6 +7,7 @@ import org.brewchain.core.AccountHelper
 import org.brewchain.core.BlockChainHelper
 import org.brewchain.core.BlockHelper
 import org.brewchain.core.TransactionHelper
+import org.brewchain.core.handler.AccountHandler
 import org.brewchain.core.cryptoapi.ICryptoHandler;
 import org.brewchain.core.dbapi.ODBSupport;
 import org.brewchain.p22p.core.PZPCtrl
@@ -67,6 +68,9 @@ class Daos extends PSMVRFNet[Message] with ActorService {
 
   @ActorRequire(name = "bc_block_helper", scope = "global")
   var blkHelper: BlockHelper = null;
+  
+  @ActorRequire(name = "core_account_handler", scope = "global")
+  var accountHandler: AccountHandler = null;
 
   @ActorRequire(name = "bc_transaction_helper", scope = "global")
   var txHelper: TransactionHelper = null;
@@ -104,6 +108,14 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   def getTxHelper: TransactionHelper = {
     txHelper
   }
+  
+  def setAccountHandler(_accountHandler: AccountHandler) = {
+    accountHandler = _accountHandler;
+    Daos.accountHandler = _accountHandler;
+  }
+  def getAccountHandler: AccountHandler = {
+    accountHandler
+  }
 
   def setEnc(_enc: ICryptoHandler) = {
     enc = _enc;
@@ -137,12 +149,13 @@ object Daos extends OLog {
   var txHelper: TransactionHelper = null;
   var enc: ICryptoHandler = null;
   var ddc: IActorDispatcher = null;
+  var accountHandler: AccountHandler = null;
 
   def isDbReady(): Boolean = {
     vrfpropdb != null && vrfpropdb.getDaosupport.isInstanceOf[ODBSupport] &&
       vrfvotedb != null && vrfvotedb.getDaosupport.isInstanceOf[ODBSupport] &&
       ddc != null &&
-       pzp != null
+       pzp != null && accountHandler != null && txHelper != null && blkHelper != null && chainHelper != null
   }
 }
 

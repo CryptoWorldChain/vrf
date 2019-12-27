@@ -50,14 +50,16 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       } else {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
-      }
+        
+      }      
       VCtrl.coMinerByUID.map(f => {
         if (f._2.getCurBlock >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)) {
           netBits = netBits.setBit(f._2.getBitIdx);
         }
       })
     }
-    val (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
+    var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
+    log.error("state=" + state);
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)
@@ -108,14 +110,20 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       items.asScala.map(m => {
         m match {
           case BeaconConverge(height, blockHash, hash, seed) => {
+            // parentBlock.Hash, beaconHash, netBits
+            log.error("blockHash=" + blockHash + " beaconHash=" + hash + " seed=" + seed);
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
             NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
           }
           case StateChange(newsign, newhash, prevhash, netbits, height) => {                        
-            if (height==0 || (height > 0 && VCtrl.curVN().getBeaconHash.equals(prevhash))) {
+            //if (height==0 || (height > 0 && VCtrl.curVN().getBeaconHash.equals(prevhash))) {
+              log.error("state change chash=" + VCtrl.curVN().getBeaconHash + " hash=" + prevhash + " newhash=" + newhash);
               VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
+              // VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(prevhash).setVrfRandseeds(netbits);
               notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);
-            }
+            //} else {
+            //  log.error("beacon hash not equal. chash=" + VCtrl.curVN().getBeaconHash + " hash=" + prevhash);
+            //}
           }
           case init: Initialize => {
             if (VCtrl.curVN().getState == VNodeState.VN_INIT) {
@@ -125,6 +133,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
                   val (hash, sign) = RandFunction.genRandHash(
                     VCtrl.curVN().getCurBlockHash,
                     VCtrl.curVN().getPrevBlockHash, block.getMiner.getBits);
+
+                    log.error("init beacon hash=" + hash);
                   VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
                 } else {
 

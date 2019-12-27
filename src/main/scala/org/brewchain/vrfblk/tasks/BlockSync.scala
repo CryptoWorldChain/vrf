@@ -77,16 +77,17 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
             lastSyncBlockHeight =  0;
           }
 
+          // TODO 临时只传递address，需要验证身份
           val reqbody =
-            if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
-              syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).build();
-            } else 
+  //          if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+  //            syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build();
+  //          } else 
             if(lastSyncBlockHeight>0)
             {
-              syncInfo.reqBody.toBuilder().setStartId(lastSyncBlockHeight).build();
+              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).setStartId(lastSyncBlockHeight).build();
             }
             else{
-              syncInfo.reqBody
+              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build()
             }
           val messageid = UUIDGenerator.generate();
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
@@ -117,7 +118,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         // applyblock
                         val block = BlockInfo.newBuilder().mergeFrom(b.getBlockHeader);
                         log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount()+",blockheight="+block.getHeader.getHeight
-                           +","+BlockProcessor.getQueue.size())
+                           +",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + ","+BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerSyncBlock(new SyncApplyBlock(block));
                       }

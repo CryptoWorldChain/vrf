@@ -20,6 +20,7 @@ import com.google.protobuf.ByteString
 import org.brewchain.core.crypto.BitMap
 import scala.collection.JavaConversions._
 import java.util.ArrayList
+import org.brewchain.p22p.action.PMNodeHelper
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -55,9 +56,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       //log.info("vrf block Info load from DB:c=" +
       //  cur_vnode.getCurBlock + " ==> a=" + Daos.chainHelper.getLastBlockNumber);
 
-      if (Daos.chainHelper.getLastConnectedBlockHeight.intValue() == 0) {
+      if (Daos.chainHelper.getLastConnectedBlockHeight.intValue() == -0) {
         cur_vnode.setCurBlock(Daos.chainHelper.getLastConnectedBlockHeight.intValue())
         //读取创世块HASH
+        log.error("read genesis block");
         cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(Daos.chainHelper.getBlockByHeight(0).getHeader.getHash.toByteArray()));
         cur_vnode.setBeaconHash("")
       } else {
@@ -65,6 +67,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setCurBlock(blk.getHeader.getHeight.intValue())
         //当前块BlockHASH
         cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()));
+        log.error("set beacon hash=" + blk.getMiner.getTerm);
         cur_vnode.setBeaconHash(blk.getMiner.getTerm)
       }
 
@@ -75,7 +78,6 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       //成为BackUp节点，不参与挖矿
       cur_vnode.setDoMine(true)
     }
-
   }
 
   def syncToDB() {
@@ -97,6 +99,8 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       cur_vnode.setBeaconHash(beaconHash);
       cur_vnode.setVrfRandseeds(bits);
 
+      log.error("beaconHash=" + beaconHash)
+
       syncToDB()
     })
   }
@@ -109,17 +113,18 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
 }
 
-object VCtrl extends LogHelper with BitMap {
+object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   var instance: VRFController = VRFController(null);
 
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
+  val allNodes: Map[String, VNode] = Map.empty[String, VNode];
 
   def curVN(): VNode.Builder = instance.cur_vnode
 
   //防止ApplyBlock时节点Make出相同高度的block,或打出beaconHash错误的block
   val blockLock: ReentrantLock = new ReentrantLock();
-
+  
   def getFastNode(): String = {
     var fastNode = curVN().build();
     coMinerByUID.map { f =>
@@ -153,6 +158,34 @@ object VCtrl extends LogHelper with BitMap {
 
   def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
+  }
+  
+  def refreshNodeBalance() {    
+    allNodes.clear()
+ 
+    val network = networkByID("vrf")
+    network.directNodes.foreach (f => {
+      val n = f;
+      val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
+        val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
+        val oVNode = VNode.newBuilder
+        log.error("refresh dnode " + n.v_address + " balance " + balance.toString());
+        oVNode.setAuthBalance(balance.toString());
+        oVNode.setBcuid(n.bcuid);
+        oVNode.setCoAddress(n.v_address);
+        allNodes.put(n.v_address, oVNode.build());
+    })
+    network.pendingNodes.foreach ( f => {
+      val n = f;
+      val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
+        val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
+        val oVNode = VNode.newBuilder
+        log.error("refresh pnode " + n.v_address + " balance " + balance.toString());
+        oVNode.setAuthBalance(balance.toString());
+        oVNode.setBcuid(n.bcuid);
+        oVNode.setCoAddress(n.v_address);
+        allNodes.put(n.v_address, oVNode.build());
+    })
   }
 
   // 判断这个block是否是当前beacon中的第一个块
@@ -199,6 +232,7 @@ object VCtrl extends LogHelper with BitMap {
           true
         } else {
           // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
+          log.error("height=" + f.getHeader.getHeight  + " hash=" + Daos.enc.bytesToHexStr(f.getHeader.getHash.toByteArray()));
           val parentBlock = Daos.chainHelper.getBlockByHash(f.getHeader.getParentHash.toByteArray());
           val nodebits = if (f.getHeader.getHeight == 1) "" else parentBlock.getMiner.getBits;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(f.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);

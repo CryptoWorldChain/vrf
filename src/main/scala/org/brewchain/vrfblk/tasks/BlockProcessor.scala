@@ -112,8 +112,9 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
 
                 }
               } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
+              
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-                BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
+              BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
               } else {
                 log.warn("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
               }

@@ -145,7 +145,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     if (size > 0 && size >= currentBR.votebase * 2 / 3) {
       //
       val checkList = new ListBuffer[VNode]();
-      var maxHeight = 0; //VCtrl.instance.heightBlkSeen.get;
+      // var maxHeight = 0; //VCtrl.instance.heightBlkSeen.get;
+      var maxHeight = Math.max(0, Daos.chainHelper.getLastConnectedBlockHeight() - 1).intValue;
       var frombcuid = "";
       var rollbackBlock = false;
       var suggestStartIdx = Math.max(1, VCtrl.curVN().getCurBlock - 1);
@@ -169,14 +170,14 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
           //log.debug("set vrfrandseed::" + p.getGossipMinerInfo.getBlockExtrData);
 
+          log.error("set beaconhash " + p.getGossipMinerInfo.getBeaconHash)
           checkList.+=(VNode.newBuilder().setCurBlock(p.getGossipMinerInfo.getCurBlock)
             .setCurBlockHash(p.getGossipMinerInfo.getCurBlockHash)
             .setBeaconHash(p.getGossipMinerInfo.getBeaconHash)
             .setVrfRandseeds(p.getGossipMinerInfo.getBlockExtrData) // netbits
             .build());
         } else {
-          //log.debug(" beacon gossip:: getCurBlock=" + p.getVn.getCurBlock + " getCurBlockHash==" + p.getVn.getCurBlockHash + " getBeaconHash=" + p.getVn.getBeaconHash + " getVrfRandseeds=" + p.getVn.getVrfRandseeds);
-
+          log.debug(" beacon gossip:: getCurBlock=" + p.getVn.getCurBlock + " getCurBlockHash==" + p.getVn.getCurBlockHash + " getBeaconHash=" + p.getVn.getBeaconHash + " getVrfRandseeds=" + p.getVn.getVrfRandseeds);
           checkList.+=(p.getVn);
         }
       })
@@ -192,7 +193,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }, currentBR.votebase) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
-            + VCtrl.instance.cur_vnode.getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock
+            + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock
             +",msgid="+currentBR.messageId + " maxHeight=" + maxHeight);
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock && !rollbackBlock) {
@@ -230,7 +231,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
           log.info("suggestStartIdx=" 
           + suggestStartIdx + " maxHeight=" + maxHeight + " curblk=" + VCtrl.curVN().getCurBlock + " lastSyncBlockCount=" + lastSyncBlockCount+",lastSyncBlockHeight="+lastSyncBlockHeight)
-          if (maxHeight > VCtrl.curVN().getCurBlock && lastSyncBlockCount < 3) {
+          if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
             // log.debug("try to syncBlock:maxHeight" + maxHeight + ",curblk=" + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight);
             lastSyncBlockHeight = suggestStartIdx;

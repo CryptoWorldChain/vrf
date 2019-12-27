@@ -3,7 +3,6 @@ package org.brewchain.vrfblk.utils
 import java.util.concurrent.TimeUnit
 
 import onight.oapi.scala.traits.OLog
-import org.brewchain.p22p.Daos
 import org.apache.commons.lang3.StringUtils
 import org.brewchain.vrfblk.tasks.VCtrl
 import java.math.BigInteger
@@ -13,6 +12,7 @@ import scala.collection.mutable.ListBuffer
 import org.brewchain.p22p.utils.LogHelper
 import com.google.common.math.BigIntegerMath
 import java.util.BitSet
+import org.brewchain.vrfblk.Daos
 
 object RandFunction extends LogHelper with BitMap {
 
@@ -45,7 +45,9 @@ object RandFunction extends LogHelper with BitMap {
     val rightbits = new BigInteger(subright + subright.reverse, 16);
 
     val votebits = bigIntAnd(netBits, rightbits); //andNot(blockbits)
-    
+//    log.error("leftbits=" + leftbits + " rightbits=" + rightbits + " beaconHexSeed=" + beaconHexSeed);
+//    log.error("blockbits=" + blockbits.bitCount() + " votebits=" + votebits.bitCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount + " beaconHexSeed=" + beaconHexSeed);
+
     if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
       //cannot product block maker
       return (blockbits, votebits);
@@ -56,12 +58,23 @@ object RandFunction extends LogHelper with BitMap {
   }
 
   def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
-    val blockMakerCount: Int = Math.max(1, netBits.bitCount() / 2);
-    val notaryCount: Int = Math.max(1, netBits.bitCount() / 3);
-    if (netBits.bitCount() <= 3) {
+    val netBitsCount = netBits.bitCount();
+    val blockMakerCount: Int = Math.max(1, netBitsCount / 2);
+   // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
+    val notaryCount: Int = Math.max(1, netBitsCount / 3);
+    if (netBits.bitCount() < 2) {
+//      log.error("netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
       (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, netBits)
     } else {
+        log.error("start originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount)
+//      log.error("originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
       val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
+        log.error("end blockbits=" + blockbits + " votebits=" + votebits)
+      // TODO 如果金额不足，不能成为BLOCKMAKER
+      if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(Daos.chainHelper.getChainConfig.coinbase_account_address_bytestring), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+        log.error("balance not enough");
+        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
+      }
       if (blockbits.testBit(curIdx)) {
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
       } else if (votebits.testBit(curIdx)) {
