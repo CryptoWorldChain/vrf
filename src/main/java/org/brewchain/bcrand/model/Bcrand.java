@@ -791,6 +791,16 @@ public final class Bcrand {
      * <code>bool do_mine = 15;</code>
      */
     boolean getDoMine();
+
+    /**
+     * <code>string authBalance = 16;</code>
+     */
+    java.lang.String getAuthBalance();
+    /**
+     * <code>string authBalance = 16;</code>
+     */
+    com.google.protobuf.ByteString
+        getAuthBalanceBytes();
   }
   /**
    * Protobuf type {@code org.brewchain.bcrand.model.VNode}
@@ -820,6 +830,7 @@ public final class Bcrand {
       beaconHash_ = "";
       beaconSign_ = "";
       doMine_ = false;
+      authBalance_ = "";
     }
 
     @java.lang.Override
@@ -929,6 +940,12 @@ public final class Bcrand {
             case 120: {
 
               doMine_ = input.readBool();
+              break;
+            }
+            case 130: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              authBalance_ = s;
               break;
             }
             default: {
@@ -1411,6 +1428,40 @@ public final class Bcrand {
       return doMine_;
     }
 
+    public static final int AUTHBALANCE_FIELD_NUMBER = 16;
+    private volatile java.lang.Object authBalance_;
+    /**
+     * <code>string authBalance = 16;</code>
+     */
+    public java.lang.String getAuthBalance() {
+      java.lang.Object ref = authBalance_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        authBalance_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string authBalance = 16;</code>
+     */
+    public com.google.protobuf.ByteString
+        getAuthBalanceBytes() {
+      java.lang.Object ref = authBalance_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        authBalance_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1469,6 +1520,9 @@ public final class Bcrand {
       }
       if (doMine_ != false) {
         output.writeBool(15, doMine_);
+      }
+      if (!getAuthBalanceBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 16, authBalance_);
       }
       unknownFields.writeTo(output);
     }
@@ -1530,6 +1584,9 @@ public final class Bcrand {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(15, doMine_);
       }
+      if (!getAuthBalanceBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(16, authBalance_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -1575,6 +1632,8 @@ public final class Bcrand {
           .equals(other.getBeaconSign());
       result = result && (getDoMine()
           == other.getDoMine());
+      result = result && getAuthBalance()
+          .equals(other.getAuthBalance());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -1619,6 +1678,8 @@ public final class Bcrand {
       hash = (37 * hash) + DO_MINE_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
           getDoMine());
+      hash = (37 * hash) + AUTHBALANCE_FIELD_NUMBER;
+      hash = (53 * hash) + getAuthBalance().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1782,6 +1843,8 @@ public final class Bcrand {
 
         doMine_ = false;
 
+        authBalance_ = "";
+
         return this;
       }
 
@@ -1823,6 +1886,7 @@ public final class Bcrand {
         result.beaconHash_ = beaconHash_;
         result.beaconSign_ = beaconSign_;
         result.doMine_ = doMine_;
+        result.authBalance_ = authBalance_;
         onBuilt();
         return result;
       }
@@ -1924,6 +1988,10 @@ public final class Bcrand {
         }
         if (other.getDoMine() != false) {
           setDoMine(other.getDoMine());
+        }
+        if (!other.getAuthBalance().isEmpty()) {
+          authBalance_ = other.authBalance_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -2954,6 +3022,75 @@ public final class Bcrand {
       public Builder clearDoMine() {
         
         doMine_ = false;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object authBalance_ = "";
+      /**
+       * <code>string authBalance = 16;</code>
+       */
+      public java.lang.String getAuthBalance() {
+        java.lang.Object ref = authBalance_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          authBalance_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string authBalance = 16;</code>
+       */
+      public com.google.protobuf.ByteString
+          getAuthBalanceBytes() {
+        java.lang.Object ref = authBalance_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          authBalance_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string authBalance = 16;</code>
+       */
+      public Builder setAuthBalance(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        authBalance_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string authBalance = 16;</code>
+       */
+      public Builder clearAuthBalance() {
+        
+        authBalance_ = getDefaultInstance().getAuthBalance();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string authBalance = 16;</code>
+       */
+      public Builder setAuthBalanceBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        authBalance_ = value;
         onChanged();
         return this;
       }
@@ -15705,35 +15842,10 @@ public final class Bcrand {
 
     /**
      * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    boolean hasVn();
-    /**
-     * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    org.brewchain.bcrand.model.Bcrand.VNode getVn();
-    /**
-     * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder getVnOrBuilder();
-
-    /**
-     * <pre>
      *一般是取0
      * </pre>
      *
-     * <code>int32 start_id = 2;</code>
+     * <code>int32 start_id = 1;</code>
      */
     int getStartId();
 
@@ -15742,9 +15854,14 @@ public final class Bcrand {
      *分页截至
      * </pre>
      *
-     * <code>int32 end_id = 3;</code>
+     * <code>int32 end_id = 2;</code>
      */
     int getEndId();
+
+    /**
+     * <code>bool needBody = 3;</code>
+     */
+    boolean getNeedBody();
 
     /**
      * <pre>
@@ -15772,63 +15889,14 @@ public final class Bcrand {
     int getBlockIdx(int index);
 
     /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
+     * <code>string signature = 5;</code>
      */
-    java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> 
-        getBlockInfosList();
+    java.lang.String getSignature();
     /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getBlockInfos(int index);
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    int getBlockInfosCount();
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    java.util.List<? extends org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder> 
-        getBlockInfosOrBuilderList();
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder getBlockInfosOrBuilder(
-        int index);
-
-    /**
-     * <pre>
-     * </pre>
-     *
-     * <code>int32 sync_block_count = 6;</code>
-     */
-    int getSyncBlockCount();
-
-    /**
-     * <pre>
-     *是否同步Body体
-     * </pre>
-     *
-     * <code>bool needBody = 7;</code>
-     */
-    boolean getNeedBody();
-
-    /**
-     * <pre>
-     *节点Id
-     * </pre>
-     *
-     * <code>string bcuid = 10;</code>
-     */
-    java.lang.String getBcuid();
-    /**
-     * <pre>
-     *节点Id
-     * </pre>
-     *
-     * <code>string bcuid = 10;</code>
+     * <code>string signature = 5;</code>
      */
     com.google.protobuf.ByteString
-        getBcuidBytes();
+        getSignatureBytes();
 
     /**
      * <code>string message_id = 30;</code>
@@ -15855,11 +15923,9 @@ public final class Bcrand {
     private PSSyncBlocks() {
       startId_ = 0;
       endId_ = 0;
-      blockIdx_ = java.util.Collections.emptyList();
-      blockInfos_ = java.util.Collections.emptyList();
-      syncBlockCount_ = 0;
       needBody_ = false;
-      bcuid_ = "";
+      blockIdx_ = java.util.Collections.emptyList();
+      signature_ = "";
       messageId_ = "";
     }
 
@@ -15887,27 +15953,19 @@ public final class Bcrand {
             case 0:
               done = true;
               break;
-            case 10: {
-              org.brewchain.bcrand.model.Bcrand.VNode.Builder subBuilder = null;
-              if (vn_ != null) {
-                subBuilder = vn_.toBuilder();
-              }
-              vn_ = input.readMessage(org.brewchain.bcrand.model.Bcrand.VNode.parser(), extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(vn_);
-                vn_ = subBuilder.buildPartial();
-              }
-
-              break;
-            }
-            case 16: {
+            case 8: {
 
               startId_ = input.readInt32();
               break;
             }
-            case 24: {
+            case 16: {
 
               endId_ = input.readInt32();
+              break;
+            }
+            case 24: {
+
+              needBody_ = input.readBool();
               break;
             }
             case 32: {
@@ -15932,28 +15990,9 @@ public final class Bcrand {
               break;
             }
             case 42: {
-              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-                blockInfos_ = new java.util.ArrayList<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo>();
-                mutable_bitField0_ |= 0x00000010;
-              }
-              blockInfos_.add(
-                  input.readMessage(org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.parser(), extensionRegistry));
-              break;
-            }
-            case 48: {
-
-              syncBlockCount_ = input.readInt32();
-              break;
-            }
-            case 56: {
-
-              needBody_ = input.readBool();
-              break;
-            }
-            case 82: {
               java.lang.String s = input.readStringRequireUtf8();
 
-              bcuid_ = s;
+              signature_ = s;
               break;
             }
             case 242: {
@@ -15980,9 +16019,6 @@ public final class Bcrand {
         if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           blockIdx_ = java.util.Collections.unmodifiableList(blockIdx_);
         }
-        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
-          blockInfos_ = java.util.Collections.unmodifiableList(blockInfos_);
-        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -16000,825 +16036,40 @@ public final class Bcrand {
               org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.class, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.Builder.class);
     }
 
-    /**
-     * Protobuf enum {@code org.brewchain.bcrand.model.PSSyncBlocks.QueryMode}
-     */
-    public enum QueryMode
-        implements com.google.protobuf.ProtocolMessageEnum {
-      /**
-       * <pre>
-       *根据startid和endid查询
-       * </pre>
-       *
-       * <code>QM_RANGE = 0;</code>
-       */
-      QM_RANGE(0),
-      /**
-       * <pre>
-       *根据block的id列表查询
-       * </pre>
-       *
-       * <code>QM_BLOCK_IDX = 1;</code>
-       */
-      QM_BLOCK_IDX(1),
-      /**
-       * <pre>
-       *根据区块高度
-       * </pre>
-       *
-       * <code>QM_BLOCK_HEIGHT = 2;</code>
-       */
-      QM_BLOCK_HEIGHT(2),
-      /**
-       * <pre>
-       *根据hash列表找到一个合适的为止
-       * </pre>
-       *
-       * <code>QM_BLOCK_HASH = 3;</code>
-       */
-      QM_BLOCK_HASH(3),
-      UNRECOGNIZED(-1),
-      ;
-
-      /**
-       * <pre>
-       *根据startid和endid查询
-       * </pre>
-       *
-       * <code>QM_RANGE = 0;</code>
-       */
-      public static final int QM_RANGE_VALUE = 0;
-      /**
-       * <pre>
-       *根据block的id列表查询
-       * </pre>
-       *
-       * <code>QM_BLOCK_IDX = 1;</code>
-       */
-      public static final int QM_BLOCK_IDX_VALUE = 1;
-      /**
-       * <pre>
-       *根据区块高度
-       * </pre>
-       *
-       * <code>QM_BLOCK_HEIGHT = 2;</code>
-       */
-      public static final int QM_BLOCK_HEIGHT_VALUE = 2;
-      /**
-       * <pre>
-       *根据hash列表找到一个合适的为止
-       * </pre>
-       *
-       * <code>QM_BLOCK_HASH = 3;</code>
-       */
-      public static final int QM_BLOCK_HASH_VALUE = 3;
-
-
-      public final int getNumber() {
-        if (this == UNRECOGNIZED) {
-          throw new java.lang.IllegalArgumentException(
-              "Can't get the number of an unknown enum value.");
-        }
-        return value;
-      }
-
-      /**
-       * @deprecated Use {@link #forNumber(int)} instead.
-       */
-      @java.lang.Deprecated
-      public static QueryMode valueOf(int value) {
-        return forNumber(value);
-      }
-
-      public static QueryMode forNumber(int value) {
-        switch (value) {
-          case 0: return QM_RANGE;
-          case 1: return QM_BLOCK_IDX;
-          case 2: return QM_BLOCK_HEIGHT;
-          case 3: return QM_BLOCK_HASH;
-          default: return null;
-        }
-      }
-
-      public static com.google.protobuf.Internal.EnumLiteMap<QueryMode>
-          internalGetValueMap() {
-        return internalValueMap;
-      }
-      private static final com.google.protobuf.Internal.EnumLiteMap<
-          QueryMode> internalValueMap =
-            new com.google.protobuf.Internal.EnumLiteMap<QueryMode>() {
-              public QueryMode findValueByNumber(int number) {
-                return QueryMode.forNumber(number);
-              }
-            };
-
-      public final com.google.protobuf.Descriptors.EnumValueDescriptor
-          getValueDescriptor() {
-        return getDescriptor().getValues().get(ordinal());
-      }
-      public final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptorForType() {
-        return getDescriptor();
-      }
-      public static final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptor() {
-        return org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.getDescriptor().getEnumTypes().get(0);
-      }
-
-      private static final QueryMode[] VALUES = values();
-
-      public static QueryMode valueOf(
-          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-        if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
-            "EnumValueDescriptor is not for this type.");
-        }
-        if (desc.getIndex() == -1) {
-          return UNRECOGNIZED;
-        }
-        return VALUES[desc.getIndex()];
-      }
-
-      private final int value;
-
-      private QueryMode(int value) {
-        this.value = value;
-      }
-
-      // @@protoc_insertion_point(enum_scope:org.brewchain.bcrand.model.PSSyncBlocks.QueryMode)
-    }
-
-    public interface BlockHashInfoOrBuilder extends
-        // @@protoc_insertion_point(interface_extends:org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo)
-        com.google.protobuf.MessageOrBuilder {
-
-      /**
-       * <code>int32 block_height = 1;</code>
-       */
-      int getBlockHeight();
-
-      /**
-       * <code>string block_hash = 2;</code>
-       */
-      java.lang.String getBlockHash();
-      /**
-       * <code>string block_hash = 2;</code>
-       */
-      com.google.protobuf.ByteString
-          getBlockHashBytes();
-    }
-    /**
-     * Protobuf type {@code org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo}
-     */
-    public  static final class BlockHashInfo extends
-        com.google.protobuf.GeneratedMessageV3 implements
-        // @@protoc_insertion_point(message_implements:org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo)
-        BlockHashInfoOrBuilder {
-    private static final long serialVersionUID = 0L;
-      // Use BlockHashInfo.newBuilder() to construct.
-      private BlockHashInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-        super(builder);
-      }
-      private BlockHashInfo() {
-        blockHeight_ = 0;
-        blockHash_ = "";
-      }
-
-      @java.lang.Override
-      public final com.google.protobuf.UnknownFieldSet
-      getUnknownFields() {
-        return this.unknownFields;
-      }
-      private BlockHashInfo(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        this();
-        if (extensionRegistry == null) {
-          throw new java.lang.NullPointerException();
-        }
-        int mutable_bitField0_ = 0;
-        com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-            com.google.protobuf.UnknownFieldSet.newBuilder();
-        try {
-          boolean done = false;
-          while (!done) {
-            int tag = input.readTag();
-            switch (tag) {
-              case 0:
-                done = true;
-                break;
-              case 8: {
-
-                blockHeight_ = input.readInt32();
-                break;
-              }
-              case 18: {
-                java.lang.String s = input.readStringRequireUtf8();
-
-                blockHash_ = s;
-                break;
-              }
-              default: {
-                if (!parseUnknownFieldProto3(
-                    input, unknownFields, extensionRegistry, tag)) {
-                  done = true;
-                }
-                break;
-              }
-            }
-          }
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          throw e.setUnfinishedMessage(this);
-        } catch (java.io.IOException e) {
-          throw new com.google.protobuf.InvalidProtocolBufferException(
-              e).setUnfinishedMessage(this);
-        } finally {
-          this.unknownFields = unknownFields.build();
-          makeExtensionsImmutable();
-        }
-      }
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor;
-      }
-
-      @java.lang.Override
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.class, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder.class);
-      }
-
-      public static final int BLOCK_HEIGHT_FIELD_NUMBER = 1;
-      private int blockHeight_;
-      /**
-       * <code>int32 block_height = 1;</code>
-       */
-      public int getBlockHeight() {
-        return blockHeight_;
-      }
-
-      public static final int BLOCK_HASH_FIELD_NUMBER = 2;
-      private volatile java.lang.Object blockHash_;
-      /**
-       * <code>string block_hash = 2;</code>
-       */
-      public java.lang.String getBlockHash() {
-        java.lang.Object ref = blockHash_;
-        if (ref instanceof java.lang.String) {
-          return (java.lang.String) ref;
-        } else {
-          com.google.protobuf.ByteString bs = 
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          blockHash_ = s;
-          return s;
-        }
-      }
-      /**
-       * <code>string block_hash = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getBlockHashBytes() {
-        java.lang.Object ref = blockHash_;
-        if (ref instanceof java.lang.String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          blockHash_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-
-      private byte memoizedIsInitialized = -1;
-      @java.lang.Override
-      public final boolean isInitialized() {
-        byte isInitialized = memoizedIsInitialized;
-        if (isInitialized == 1) return true;
-        if (isInitialized == 0) return false;
-
-        memoizedIsInitialized = 1;
-        return true;
-      }
-
-      @java.lang.Override
-      public void writeTo(com.google.protobuf.CodedOutputStream output)
-                          throws java.io.IOException {
-        if (blockHeight_ != 0) {
-          output.writeInt32(1, blockHeight_);
-        }
-        if (!getBlockHashBytes().isEmpty()) {
-          com.google.protobuf.GeneratedMessageV3.writeString(output, 2, blockHash_);
-        }
-        unknownFields.writeTo(output);
-      }
-
-      @java.lang.Override
-      public int getSerializedSize() {
-        int size = memoizedSize;
-        if (size != -1) return size;
-
-        size = 0;
-        if (blockHeight_ != 0) {
-          size += com.google.protobuf.CodedOutputStream
-            .computeInt32Size(1, blockHeight_);
-        }
-        if (!getBlockHashBytes().isEmpty()) {
-          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, blockHash_);
-        }
-        size += unknownFields.getSerializedSize();
-        memoizedSize = size;
-        return size;
-      }
-
-      @java.lang.Override
-      public boolean equals(final java.lang.Object obj) {
-        if (obj == this) {
-         return true;
-        }
-        if (!(obj instanceof org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo)) {
-          return super.equals(obj);
-        }
-        org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo other = (org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo) obj;
-
-        boolean result = true;
-        result = result && (getBlockHeight()
-            == other.getBlockHeight());
-        result = result && getBlockHash()
-            .equals(other.getBlockHash());
-        result = result && unknownFields.equals(other.unknownFields);
-        return result;
-      }
-
-      @java.lang.Override
-      public int hashCode() {
-        if (memoizedHashCode != 0) {
-          return memoizedHashCode;
-        }
-        int hash = 41;
-        hash = (19 * hash) + getDescriptor().hashCode();
-        hash = (37 * hash) + BLOCK_HEIGHT_FIELD_NUMBER;
-        hash = (53 * hash) + getBlockHeight();
-        hash = (37 * hash) + BLOCK_HASH_FIELD_NUMBER;
-        hash = (53 * hash) + getBlockHash().hashCode();
-        hash = (29 * hash) + unknownFields.hashCode();
-        memoizedHashCode = hash;
-        return hash;
-      }
-
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          java.nio.ByteBuffer data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          java.nio.ByteBuffer data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          com.google.protobuf.ByteString data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          com.google.protobuf.ByteString data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(byte[] data)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          byte[] data,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return PARSER.parseFrom(data, extensionRegistry);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseDelimitedFrom(java.io.InputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseDelimitedFrom(
-          java.io.InputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          com.google.protobuf.CodedInputStream input)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input);
-      }
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parseFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        return com.google.protobuf.GeneratedMessageV3
-            .parseWithIOException(PARSER, input, extensionRegistry);
-      }
-
-      @java.lang.Override
-      public Builder newBuilderForType() { return newBuilder(); }
-      public static Builder newBuilder() {
-        return DEFAULT_INSTANCE.toBuilder();
-      }
-      public static Builder newBuilder(org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo prototype) {
-        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-      }
-      @java.lang.Override
-      public Builder toBuilder() {
-        return this == DEFAULT_INSTANCE
-            ? new Builder() : new Builder().mergeFrom(this);
-      }
-
-      @java.lang.Override
-      protected Builder newBuilderForType(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        Builder builder = new Builder(parent);
-        return builder;
-      }
-      /**
-       * Protobuf type {@code org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo}
-       */
-      public static final class Builder extends
-          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-          // @@protoc_insertion_point(builder_implements:org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo)
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder {
-        public static final com.google.protobuf.Descriptors.Descriptor
-            getDescriptor() {
-          return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor;
-        }
-
-        @java.lang.Override
-        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-            internalGetFieldAccessorTable() {
-          return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_fieldAccessorTable
-              .ensureFieldAccessorsInitialized(
-                  org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.class, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder.class);
-        }
-
-        // Construct using org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.newBuilder()
-        private Builder() {
-          maybeForceBuilderInitialization();
-        }
-
-        private Builder(
-            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-          super(parent);
-          maybeForceBuilderInitialization();
-        }
-        private void maybeForceBuilderInitialization() {
-          if (com.google.protobuf.GeneratedMessageV3
-                  .alwaysUseFieldBuilders) {
-          }
-        }
-        @java.lang.Override
-        public Builder clear() {
-          super.clear();
-          blockHeight_ = 0;
-
-          blockHash_ = "";
-
-          return this;
-        }
-
-        @java.lang.Override
-        public com.google.protobuf.Descriptors.Descriptor
-            getDescriptorForType() {
-          return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor;
-        }
-
-        @java.lang.Override
-        public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getDefaultInstanceForType() {
-          return org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.getDefaultInstance();
-        }
-
-        @java.lang.Override
-        public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo build() {
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo result = buildPartial();
-          if (!result.isInitialized()) {
-            throw newUninitializedMessageException(result);
-          }
-          return result;
-        }
-
-        @java.lang.Override
-        public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo buildPartial() {
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo result = new org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo(this);
-          result.blockHeight_ = blockHeight_;
-          result.blockHash_ = blockHash_;
-          onBuilt();
-          return result;
-        }
-
-        @java.lang.Override
-        public Builder clone() {
-          return (Builder) super.clone();
-        }
-        @java.lang.Override
-        public Builder setField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-          return (Builder) super.setField(field, value);
-        }
-        @java.lang.Override
-        public Builder clearField(
-            com.google.protobuf.Descriptors.FieldDescriptor field) {
-          return (Builder) super.clearField(field);
-        }
-        @java.lang.Override
-        public Builder clearOneof(
-            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-          return (Builder) super.clearOneof(oneof);
-        }
-        @java.lang.Override
-        public Builder setRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            int index, java.lang.Object value) {
-          return (Builder) super.setRepeatedField(field, index, value);
-        }
-        @java.lang.Override
-        public Builder addRepeatedField(
-            com.google.protobuf.Descriptors.FieldDescriptor field,
-            java.lang.Object value) {
-          return (Builder) super.addRepeatedField(field, value);
-        }
-        @java.lang.Override
-        public Builder mergeFrom(com.google.protobuf.Message other) {
-          if (other instanceof org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo) {
-            return mergeFrom((org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo)other);
-          } else {
-            super.mergeFrom(other);
-            return this;
-          }
-        }
-
-        public Builder mergeFrom(org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo other) {
-          if (other == org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.getDefaultInstance()) return this;
-          if (other.getBlockHeight() != 0) {
-            setBlockHeight(other.getBlockHeight());
-          }
-          if (!other.getBlockHash().isEmpty()) {
-            blockHash_ = other.blockHash_;
-            onChanged();
-          }
-          this.mergeUnknownFields(other.unknownFields);
-          onChanged();
-          return this;
-        }
-
-        @java.lang.Override
-        public final boolean isInitialized() {
-          return true;
-        }
-
-        @java.lang.Override
-        public Builder mergeFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo parsedMessage = null;
-          try {
-            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            parsedMessage = (org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo) e.getUnfinishedMessage();
-            throw e.unwrapIOException();
-          } finally {
-            if (parsedMessage != null) {
-              mergeFrom(parsedMessage);
-            }
-          }
-          return this;
-        }
-
-        private int blockHeight_ ;
-        /**
-         * <code>int32 block_height = 1;</code>
-         */
-        public int getBlockHeight() {
-          return blockHeight_;
-        }
-        /**
-         * <code>int32 block_height = 1;</code>
-         */
-        public Builder setBlockHeight(int value) {
-          
-          blockHeight_ = value;
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>int32 block_height = 1;</code>
-         */
-        public Builder clearBlockHeight() {
-          
-          blockHeight_ = 0;
-          onChanged();
-          return this;
-        }
-
-        private java.lang.Object blockHash_ = "";
-        /**
-         * <code>string block_hash = 2;</code>
-         */
-        public java.lang.String getBlockHash() {
-          java.lang.Object ref = blockHash_;
-          if (!(ref instanceof java.lang.String)) {
-            com.google.protobuf.ByteString bs =
-                (com.google.protobuf.ByteString) ref;
-            java.lang.String s = bs.toStringUtf8();
-            blockHash_ = s;
-            return s;
-          } else {
-            return (java.lang.String) ref;
-          }
-        }
-        /**
-         * <code>string block_hash = 2;</code>
-         */
-        public com.google.protobuf.ByteString
-            getBlockHashBytes() {
-          java.lang.Object ref = blockHash_;
-          if (ref instanceof String) {
-            com.google.protobuf.ByteString b = 
-                com.google.protobuf.ByteString.copyFromUtf8(
-                    (java.lang.String) ref);
-            blockHash_ = b;
-            return b;
-          } else {
-            return (com.google.protobuf.ByteString) ref;
-          }
-        }
-        /**
-         * <code>string block_hash = 2;</code>
-         */
-        public Builder setBlockHash(
-            java.lang.String value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  
-          blockHash_ = value;
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>string block_hash = 2;</code>
-         */
-        public Builder clearBlockHash() {
-          
-          blockHash_ = getDefaultInstance().getBlockHash();
-          onChanged();
-          return this;
-        }
-        /**
-         * <code>string block_hash = 2;</code>
-         */
-        public Builder setBlockHashBytes(
-            com.google.protobuf.ByteString value) {
-          if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-          
-          blockHash_ = value;
-          onChanged();
-          return this;
-        }
-        @java.lang.Override
-        public final Builder setUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-          return super.setUnknownFieldsProto3(unknownFields);
-        }
-
-        @java.lang.Override
-        public final Builder mergeUnknownFields(
-            final com.google.protobuf.UnknownFieldSet unknownFields) {
-          return super.mergeUnknownFields(unknownFields);
-        }
-
-
-        // @@protoc_insertion_point(builder_scope:org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo)
-      }
-
-      // @@protoc_insertion_point(class_scope:org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo)
-      private static final org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo DEFAULT_INSTANCE;
-      static {
-        DEFAULT_INSTANCE = new org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo();
-      }
-
-      public static org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getDefaultInstance() {
-        return DEFAULT_INSTANCE;
-      }
-
-      private static final com.google.protobuf.Parser<BlockHashInfo>
-          PARSER = new com.google.protobuf.AbstractParser<BlockHashInfo>() {
-        @java.lang.Override
-        public BlockHashInfo parsePartialFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return new BlockHashInfo(input, extensionRegistry);
-        }
-      };
-
-      public static com.google.protobuf.Parser<BlockHashInfo> parser() {
-        return PARSER;
-      }
-
-      @java.lang.Override
-      public com.google.protobuf.Parser<BlockHashInfo> getParserForType() {
-        return PARSER;
-      }
-
-      @java.lang.Override
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getDefaultInstanceForType() {
-        return DEFAULT_INSTANCE;
-      }
-
-    }
-
     private int bitField0_;
-    public static final int VN_FIELD_NUMBER = 1;
-    private org.brewchain.bcrand.model.Bcrand.VNode vn_;
-    /**
-     * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    public boolean hasVn() {
-      return vn_ != null;
-    }
-    /**
-     * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    public org.brewchain.bcrand.model.Bcrand.VNode getVn() {
-      return vn_ == null ? org.brewchain.bcrand.model.Bcrand.VNode.getDefaultInstance() : vn_;
-    }
-    /**
-     * <pre>
-     *获取信息
-     * </pre>
-     *
-     * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-     */
-    public org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder getVnOrBuilder() {
-      return getVn();
-    }
-
-    public static final int START_ID_FIELD_NUMBER = 2;
+    public static final int START_ID_FIELD_NUMBER = 1;
     private int startId_;
     /**
      * <pre>
      *一般是取0
      * </pre>
      *
-     * <code>int32 start_id = 2;</code>
+     * <code>int32 start_id = 1;</code>
      */
     public int getStartId() {
       return startId_;
     }
 
-    public static final int END_ID_FIELD_NUMBER = 3;
+    public static final int END_ID_FIELD_NUMBER = 2;
     private int endId_;
     /**
      * <pre>
      *分页截至
      * </pre>
      *
-     * <code>int32 end_id = 3;</code>
+     * <code>int32 end_id = 2;</code>
      */
     public int getEndId() {
       return endId_;
+    }
+
+    public static final int NEEDBODY_FIELD_NUMBER = 3;
+    private boolean needBody_;
+    /**
+     * <code>bool needBody = 3;</code>
+     */
+    public boolean getNeedBody() {
+      return needBody_;
     }
 
     public static final int BLOCK_IDX_FIELD_NUMBER = 4;
@@ -16856,102 +16107,34 @@ public final class Bcrand {
     }
     private int blockIdxMemoizedSerializedSize = -1;
 
-    public static final int BLOCK_INFOS_FIELD_NUMBER = 5;
-    private java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> blockInfos_;
+    public static final int SIGNATURE_FIELD_NUMBER = 5;
+    private volatile java.lang.Object signature_;
     /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
+     * <code>string signature = 5;</code>
      */
-    public java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> getBlockInfosList() {
-      return blockInfos_;
-    }
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    public java.util.List<? extends org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder> 
-        getBlockInfosOrBuilderList() {
-      return blockInfos_;
-    }
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    public int getBlockInfosCount() {
-      return blockInfos_.size();
-    }
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getBlockInfos(int index) {
-      return blockInfos_.get(index);
-    }
-    /**
-     * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-     */
-    public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder getBlockInfosOrBuilder(
-        int index) {
-      return blockInfos_.get(index);
-    }
-
-    public static final int SYNC_BLOCK_COUNT_FIELD_NUMBER = 6;
-    private int syncBlockCount_;
-    /**
-     * <pre>
-     * </pre>
-     *
-     * <code>int32 sync_block_count = 6;</code>
-     */
-    public int getSyncBlockCount() {
-      return syncBlockCount_;
-    }
-
-    public static final int NEEDBODY_FIELD_NUMBER = 7;
-    private boolean needBody_;
-    /**
-     * <pre>
-     *是否同步Body体
-     * </pre>
-     *
-     * <code>bool needBody = 7;</code>
-     */
-    public boolean getNeedBody() {
-      return needBody_;
-    }
-
-    public static final int BCUID_FIELD_NUMBER = 10;
-    private volatile java.lang.Object bcuid_;
-    /**
-     * <pre>
-     *节点Id
-     * </pre>
-     *
-     * <code>string bcuid = 10;</code>
-     */
-    public java.lang.String getBcuid() {
-      java.lang.Object ref = bcuid_;
+    public java.lang.String getSignature() {
+      java.lang.Object ref = signature_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
         com.google.protobuf.ByteString bs = 
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        bcuid_ = s;
+        signature_ = s;
         return s;
       }
     }
     /**
-     * <pre>
-     *节点Id
-     * </pre>
-     *
-     * <code>string bcuid = 10;</code>
+     * <code>string signature = 5;</code>
      */
     public com.google.protobuf.ByteString
-        getBcuidBytes() {
-      java.lang.Object ref = bcuid_;
+        getSignatureBytes() {
+      java.lang.Object ref = signature_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        bcuid_ = b;
+        signature_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -17007,14 +16190,14 @@ public final class Bcrand {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (vn_ != null) {
-        output.writeMessage(1, getVn());
-      }
       if (startId_ != 0) {
-        output.writeInt32(2, startId_);
+        output.writeInt32(1, startId_);
       }
       if (endId_ != 0) {
-        output.writeInt32(3, endId_);
+        output.writeInt32(2, endId_);
+      }
+      if (needBody_ != false) {
+        output.writeBool(3, needBody_);
       }
       if (getBlockIdxList().size() > 0) {
         output.writeUInt32NoTag(34);
@@ -17023,17 +16206,8 @@ public final class Bcrand {
       for (int i = 0; i < blockIdx_.size(); i++) {
         output.writeInt32NoTag(blockIdx_.get(i));
       }
-      for (int i = 0; i < blockInfos_.size(); i++) {
-        output.writeMessage(5, blockInfos_.get(i));
-      }
-      if (syncBlockCount_ != 0) {
-        output.writeInt32(6, syncBlockCount_);
-      }
-      if (needBody_ != false) {
-        output.writeBool(7, needBody_);
-      }
-      if (!getBcuidBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 10, bcuid_);
+      if (!getSignatureBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, signature_);
       }
       if (!getMessageIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 30, messageId_);
@@ -17047,17 +16221,17 @@ public final class Bcrand {
       if (size != -1) return size;
 
       size = 0;
-      if (vn_ != null) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, getVn());
-      }
       if (startId_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, startId_);
+          .computeInt32Size(1, startId_);
       }
       if (endId_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, endId_);
+          .computeInt32Size(2, endId_);
+      }
+      if (needBody_ != false) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, needBody_);
       }
       {
         int dataSize = 0;
@@ -17073,20 +16247,8 @@ public final class Bcrand {
         }
         blockIdxMemoizedSerializedSize = dataSize;
       }
-      for (int i = 0; i < blockInfos_.size(); i++) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, blockInfos_.get(i));
-      }
-      if (syncBlockCount_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(6, syncBlockCount_);
-      }
-      if (needBody_ != false) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(7, needBody_);
-      }
-      if (!getBcuidBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(10, bcuid_);
+      if (!getSignatureBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, signature_);
       }
       if (!getMessageIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(30, messageId_);
@@ -17107,25 +16269,16 @@ public final class Bcrand {
       org.brewchain.bcrand.model.Bcrand.PSSyncBlocks other = (org.brewchain.bcrand.model.Bcrand.PSSyncBlocks) obj;
 
       boolean result = true;
-      result = result && (hasVn() == other.hasVn());
-      if (hasVn()) {
-        result = result && getVn()
-            .equals(other.getVn());
-      }
       result = result && (getStartId()
           == other.getStartId());
       result = result && (getEndId()
           == other.getEndId());
-      result = result && getBlockIdxList()
-          .equals(other.getBlockIdxList());
-      result = result && getBlockInfosList()
-          .equals(other.getBlockInfosList());
-      result = result && (getSyncBlockCount()
-          == other.getSyncBlockCount());
       result = result && (getNeedBody()
           == other.getNeedBody());
-      result = result && getBcuid()
-          .equals(other.getBcuid());
+      result = result && getBlockIdxList()
+          .equals(other.getBlockIdxList());
+      result = result && getSignature()
+          .equals(other.getSignature());
       result = result && getMessageId()
           .equals(other.getMessageId());
       result = result && unknownFields.equals(other.unknownFields);
@@ -17139,29 +16292,19 @@ public final class Bcrand {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptor().hashCode();
-      if (hasVn()) {
-        hash = (37 * hash) + VN_FIELD_NUMBER;
-        hash = (53 * hash) + getVn().hashCode();
-      }
       hash = (37 * hash) + START_ID_FIELD_NUMBER;
       hash = (53 * hash) + getStartId();
       hash = (37 * hash) + END_ID_FIELD_NUMBER;
       hash = (53 * hash) + getEndId();
+      hash = (37 * hash) + NEEDBODY_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+          getNeedBody());
       if (getBlockIdxCount() > 0) {
         hash = (37 * hash) + BLOCK_IDX_FIELD_NUMBER;
         hash = (53 * hash) + getBlockIdxList().hashCode();
       }
-      if (getBlockInfosCount() > 0) {
-        hash = (37 * hash) + BLOCK_INFOS_FIELD_NUMBER;
-        hash = (53 * hash) + getBlockInfosList().hashCode();
-      }
-      hash = (37 * hash) + SYNC_BLOCK_COUNT_FIELD_NUMBER;
-      hash = (53 * hash) + getSyncBlockCount();
-      hash = (37 * hash) + NEEDBODY_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
-          getNeedBody());
-      hash = (37 * hash) + BCUID_FIELD_NUMBER;
-      hash = (53 * hash) + getBcuid().hashCode();
+      hash = (37 * hash) + SIGNATURE_FIELD_NUMBER;
+      hash = (53 * hash) + getSignature().hashCode();
       hash = (37 * hash) + MESSAGE_ID_FIELD_NUMBER;
       hash = (53 * hash) + getMessageId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -17292,35 +16435,20 @@ public final class Bcrand {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
                 .alwaysUseFieldBuilders) {
-          getBlockInfosFieldBuilder();
         }
       }
       @java.lang.Override
       public Builder clear() {
         super.clear();
-        if (vnBuilder_ == null) {
-          vn_ = null;
-        } else {
-          vn_ = null;
-          vnBuilder_ = null;
-        }
         startId_ = 0;
 
         endId_ = 0;
 
-        blockIdx_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000008);
-        if (blockInfosBuilder_ == null) {
-          blockInfos_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
-        } else {
-          blockInfosBuilder_.clear();
-        }
-        syncBlockCount_ = 0;
-
         needBody_ = false;
 
-        bcuid_ = "";
+        blockIdx_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        signature_ = "";
 
         messageId_ = "";
 
@@ -17352,30 +16480,15 @@ public final class Bcrand {
         org.brewchain.bcrand.model.Bcrand.PSSyncBlocks result = new org.brewchain.bcrand.model.Bcrand.PSSyncBlocks(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
-        if (vnBuilder_ == null) {
-          result.vn_ = vn_;
-        } else {
-          result.vn_ = vnBuilder_.build();
-        }
         result.startId_ = startId_;
         result.endId_ = endId_;
+        result.needBody_ = needBody_;
         if (((bitField0_ & 0x00000008) == 0x00000008)) {
           blockIdx_ = java.util.Collections.unmodifiableList(blockIdx_);
           bitField0_ = (bitField0_ & ~0x00000008);
         }
         result.blockIdx_ = blockIdx_;
-        if (blockInfosBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
-            blockInfos_ = java.util.Collections.unmodifiableList(blockInfos_);
-            bitField0_ = (bitField0_ & ~0x00000010);
-          }
-          result.blockInfos_ = blockInfos_;
-        } else {
-          result.blockInfos_ = blockInfosBuilder_.build();
-        }
-        result.syncBlockCount_ = syncBlockCount_;
-        result.needBody_ = needBody_;
-        result.bcuid_ = bcuid_;
+        result.signature_ = signature_;
         result.messageId_ = messageId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -17426,14 +16539,14 @@ public final class Bcrand {
 
       public Builder mergeFrom(org.brewchain.bcrand.model.Bcrand.PSSyncBlocks other) {
         if (other == org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.getDefaultInstance()) return this;
-        if (other.hasVn()) {
-          mergeVn(other.getVn());
-        }
         if (other.getStartId() != 0) {
           setStartId(other.getStartId());
         }
         if (other.getEndId() != 0) {
           setEndId(other.getEndId());
+        }
+        if (other.getNeedBody() != false) {
+          setNeedBody(other.getNeedBody());
         }
         if (!other.blockIdx_.isEmpty()) {
           if (blockIdx_.isEmpty()) {
@@ -17445,40 +16558,8 @@ public final class Bcrand {
           }
           onChanged();
         }
-        if (blockInfosBuilder_ == null) {
-          if (!other.blockInfos_.isEmpty()) {
-            if (blockInfos_.isEmpty()) {
-              blockInfos_ = other.blockInfos_;
-              bitField0_ = (bitField0_ & ~0x00000010);
-            } else {
-              ensureBlockInfosIsMutable();
-              blockInfos_.addAll(other.blockInfos_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.blockInfos_.isEmpty()) {
-            if (blockInfosBuilder_.isEmpty()) {
-              blockInfosBuilder_.dispose();
-              blockInfosBuilder_ = null;
-              blockInfos_ = other.blockInfos_;
-              bitField0_ = (bitField0_ & ~0x00000010);
-              blockInfosBuilder_ = 
-                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
-                   getBlockInfosFieldBuilder() : null;
-            } else {
-              blockInfosBuilder_.addAllMessages(other.blockInfos_);
-            }
-          }
-        }
-        if (other.getSyncBlockCount() != 0) {
-          setSyncBlockCount(other.getSyncBlockCount());
-        }
-        if (other.getNeedBody() != false) {
-          setNeedBody(other.getNeedBody());
-        }
-        if (!other.getBcuid().isEmpty()) {
-          bcuid_ = other.bcuid_;
+        if (!other.getSignature().isEmpty()) {
+          signature_ = other.signature_;
           onChanged();
         }
         if (!other.getMessageId().isEmpty()) {
@@ -17515,166 +16596,13 @@ public final class Bcrand {
       }
       private int bitField0_;
 
-      private org.brewchain.bcrand.model.Bcrand.VNode vn_ = null;
-      private com.google.protobuf.SingleFieldBuilderV3<
-          org.brewchain.bcrand.model.Bcrand.VNode, org.brewchain.bcrand.model.Bcrand.VNode.Builder, org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder> vnBuilder_;
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public boolean hasVn() {
-        return vnBuilder_ != null || vn_ != null;
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.VNode getVn() {
-        if (vnBuilder_ == null) {
-          return vn_ == null ? org.brewchain.bcrand.model.Bcrand.VNode.getDefaultInstance() : vn_;
-        } else {
-          return vnBuilder_.getMessage();
-        }
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public Builder setVn(org.brewchain.bcrand.model.Bcrand.VNode value) {
-        if (vnBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          vn_ = value;
-          onChanged();
-        } else {
-          vnBuilder_.setMessage(value);
-        }
-
-        return this;
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public Builder setVn(
-          org.brewchain.bcrand.model.Bcrand.VNode.Builder builderForValue) {
-        if (vnBuilder_ == null) {
-          vn_ = builderForValue.build();
-          onChanged();
-        } else {
-          vnBuilder_.setMessage(builderForValue.build());
-        }
-
-        return this;
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public Builder mergeVn(org.brewchain.bcrand.model.Bcrand.VNode value) {
-        if (vnBuilder_ == null) {
-          if (vn_ != null) {
-            vn_ =
-              org.brewchain.bcrand.model.Bcrand.VNode.newBuilder(vn_).mergeFrom(value).buildPartial();
-          } else {
-            vn_ = value;
-          }
-          onChanged();
-        } else {
-          vnBuilder_.mergeFrom(value);
-        }
-
-        return this;
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public Builder clearVn() {
-        if (vnBuilder_ == null) {
-          vn_ = null;
-          onChanged();
-        } else {
-          vn_ = null;
-          vnBuilder_ = null;
-        }
-
-        return this;
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.VNode.Builder getVnBuilder() {
-        
-        onChanged();
-        return getVnFieldBuilder().getBuilder();
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder getVnOrBuilder() {
-        if (vnBuilder_ != null) {
-          return vnBuilder_.getMessageOrBuilder();
-        } else {
-          return vn_ == null ?
-              org.brewchain.bcrand.model.Bcrand.VNode.getDefaultInstance() : vn_;
-        }
-      }
-      /**
-       * <pre>
-       *获取信息
-       * </pre>
-       *
-       * <code>.org.brewchain.bcrand.model.VNode vn = 1;</code>
-       */
-      private com.google.protobuf.SingleFieldBuilderV3<
-          org.brewchain.bcrand.model.Bcrand.VNode, org.brewchain.bcrand.model.Bcrand.VNode.Builder, org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder> 
-          getVnFieldBuilder() {
-        if (vnBuilder_ == null) {
-          vnBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
-              org.brewchain.bcrand.model.Bcrand.VNode, org.brewchain.bcrand.model.Bcrand.VNode.Builder, org.brewchain.bcrand.model.Bcrand.VNodeOrBuilder>(
-                  getVn(),
-                  getParentForChildren(),
-                  isClean());
-          vn_ = null;
-        }
-        return vnBuilder_;
-      }
-
       private int startId_ ;
       /**
        * <pre>
        *一般是取0
        * </pre>
        *
-       * <code>int32 start_id = 2;</code>
+       * <code>int32 start_id = 1;</code>
        */
       public int getStartId() {
         return startId_;
@@ -17684,7 +16612,7 @@ public final class Bcrand {
        *一般是取0
        * </pre>
        *
-       * <code>int32 start_id = 2;</code>
+       * <code>int32 start_id = 1;</code>
        */
       public Builder setStartId(int value) {
         
@@ -17697,7 +16625,7 @@ public final class Bcrand {
        *一般是取0
        * </pre>
        *
-       * <code>int32 start_id = 2;</code>
+       * <code>int32 start_id = 1;</code>
        */
       public Builder clearStartId() {
         
@@ -17712,7 +16640,7 @@ public final class Bcrand {
        *分页截至
        * </pre>
        *
-       * <code>int32 end_id = 3;</code>
+       * <code>int32 end_id = 2;</code>
        */
       public int getEndId() {
         return endId_;
@@ -17722,7 +16650,7 @@ public final class Bcrand {
        *分页截至
        * </pre>
        *
-       * <code>int32 end_id = 3;</code>
+       * <code>int32 end_id = 2;</code>
        */
       public Builder setEndId(int value) {
         
@@ -17735,11 +16663,37 @@ public final class Bcrand {
        *分页截至
        * </pre>
        *
-       * <code>int32 end_id = 3;</code>
+       * <code>int32 end_id = 2;</code>
        */
       public Builder clearEndId() {
         
         endId_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private boolean needBody_ ;
+      /**
+       * <code>bool needBody = 3;</code>
+       */
+      public boolean getNeedBody() {
+        return needBody_;
+      }
+      /**
+       * <code>bool needBody = 3;</code>
+       */
+      public Builder setNeedBody(boolean value) {
+        
+        needBody_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>bool needBody = 3;</code>
+       */
+      public Builder clearNeedBody() {
+        
+        needBody_ = false;
         onChanged();
         return this;
       }
@@ -17838,404 +16792,71 @@ public final class Bcrand {
         return this;
       }
 
-      private java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> blockInfos_ =
-        java.util.Collections.emptyList();
-      private void ensureBlockInfosIsMutable() {
-        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
-          blockInfos_ = new java.util.ArrayList<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo>(blockInfos_);
-          bitField0_ |= 0x00000010;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder> blockInfosBuilder_;
-
+      private java.lang.Object signature_ = "";
       /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
+       * <code>string signature = 5;</code>
        */
-      public java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> getBlockInfosList() {
-        if (blockInfosBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(blockInfos_);
-        } else {
-          return blockInfosBuilder_.getMessageList();
-        }
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public int getBlockInfosCount() {
-        if (blockInfosBuilder_ == null) {
-          return blockInfos_.size();
-        } else {
-          return blockInfosBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo getBlockInfos(int index) {
-        if (blockInfosBuilder_ == null) {
-          return blockInfos_.get(index);
-        } else {
-          return blockInfosBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder setBlockInfos(
-          int index, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo value) {
-        if (blockInfosBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureBlockInfosIsMutable();
-          blockInfos_.set(index, value);
-          onChanged();
-        } else {
-          blockInfosBuilder_.setMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder setBlockInfos(
-          int index, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder builderForValue) {
-        if (blockInfosBuilder_ == null) {
-          ensureBlockInfosIsMutable();
-          blockInfos_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          blockInfosBuilder_.setMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder addBlockInfos(org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo value) {
-        if (blockInfosBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureBlockInfosIsMutable();
-          blockInfos_.add(value);
-          onChanged();
-        } else {
-          blockInfosBuilder_.addMessage(value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder addBlockInfos(
-          int index, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo value) {
-        if (blockInfosBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureBlockInfosIsMutable();
-          blockInfos_.add(index, value);
-          onChanged();
-        } else {
-          blockInfosBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder addBlockInfos(
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder builderForValue) {
-        if (blockInfosBuilder_ == null) {
-          ensureBlockInfosIsMutable();
-          blockInfos_.add(builderForValue.build());
-          onChanged();
-        } else {
-          blockInfosBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder addBlockInfos(
-          int index, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder builderForValue) {
-        if (blockInfosBuilder_ == null) {
-          ensureBlockInfosIsMutable();
-          blockInfos_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          blockInfosBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder addAllBlockInfos(
-          java.lang.Iterable<? extends org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo> values) {
-        if (blockInfosBuilder_ == null) {
-          ensureBlockInfosIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, blockInfos_);
-          onChanged();
-        } else {
-          blockInfosBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder clearBlockInfos() {
-        if (blockInfosBuilder_ == null) {
-          blockInfos_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000010);
-          onChanged();
-        } else {
-          blockInfosBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public Builder removeBlockInfos(int index) {
-        if (blockInfosBuilder_ == null) {
-          ensureBlockInfosIsMutable();
-          blockInfos_.remove(index);
-          onChanged();
-        } else {
-          blockInfosBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder getBlockInfosBuilder(
-          int index) {
-        return getBlockInfosFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder getBlockInfosOrBuilder(
-          int index) {
-        if (blockInfosBuilder_ == null) {
-          return blockInfos_.get(index);  } else {
-          return blockInfosBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public java.util.List<? extends org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder> 
-           getBlockInfosOrBuilderList() {
-        if (blockInfosBuilder_ != null) {
-          return blockInfosBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(blockInfos_);
-        }
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder addBlockInfosBuilder() {
-        return getBlockInfosFieldBuilder().addBuilder(
-            org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder addBlockInfosBuilder(
-          int index) {
-        return getBlockInfosFieldBuilder().addBuilder(
-            index, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .org.brewchain.bcrand.model.PSSyncBlocks.BlockHashInfo block_infos = 5;</code>
-       */
-      public java.util.List<org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder> 
-           getBlockInfosBuilderList() {
-        return getBlockInfosFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilderV3<
-          org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder> 
-          getBlockInfosFieldBuilder() {
-        if (blockInfosBuilder_ == null) {
-          blockInfosBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
-              org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfo.Builder, org.brewchain.bcrand.model.Bcrand.PSSyncBlocks.BlockHashInfoOrBuilder>(
-                  blockInfos_,
-                  ((bitField0_ & 0x00000010) == 0x00000010),
-                  getParentForChildren(),
-                  isClean());
-          blockInfos_ = null;
-        }
-        return blockInfosBuilder_;
-      }
-
-      private int syncBlockCount_ ;
-      /**
-       * <pre>
-       * </pre>
-       *
-       * <code>int32 sync_block_count = 6;</code>
-       */
-      public int getSyncBlockCount() {
-        return syncBlockCount_;
-      }
-      /**
-       * <pre>
-       * </pre>
-       *
-       * <code>int32 sync_block_count = 6;</code>
-       */
-      public Builder setSyncBlockCount(int value) {
-        
-        syncBlockCount_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       * </pre>
-       *
-       * <code>int32 sync_block_count = 6;</code>
-       */
-      public Builder clearSyncBlockCount() {
-        
-        syncBlockCount_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private boolean needBody_ ;
-      /**
-       * <pre>
-       *是否同步Body体
-       * </pre>
-       *
-       * <code>bool needBody = 7;</code>
-       */
-      public boolean getNeedBody() {
-        return needBody_;
-      }
-      /**
-       * <pre>
-       *是否同步Body体
-       * </pre>
-       *
-       * <code>bool needBody = 7;</code>
-       */
-      public Builder setNeedBody(boolean value) {
-        
-        needBody_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <pre>
-       *是否同步Body体
-       * </pre>
-       *
-       * <code>bool needBody = 7;</code>
-       */
-      public Builder clearNeedBody() {
-        
-        needBody_ = false;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object bcuid_ = "";
-      /**
-       * <pre>
-       *节点Id
-       * </pre>
-       *
-       * <code>string bcuid = 10;</code>
-       */
-      public java.lang.String getBcuid() {
-        java.lang.Object ref = bcuid_;
+      public java.lang.String getSignature() {
+        java.lang.Object ref = signature_;
         if (!(ref instanceof java.lang.String)) {
           com.google.protobuf.ByteString bs =
               (com.google.protobuf.ByteString) ref;
           java.lang.String s = bs.toStringUtf8();
-          bcuid_ = s;
+          signature_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <pre>
-       *节点Id
-       * </pre>
-       *
-       * <code>string bcuid = 10;</code>
+       * <code>string signature = 5;</code>
        */
       public com.google.protobuf.ByteString
-          getBcuidBytes() {
-        java.lang.Object ref = bcuid_;
+          getSignatureBytes() {
+        java.lang.Object ref = signature_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          bcuid_ = b;
+          signature_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <pre>
-       *节点Id
-       * </pre>
-       *
-       * <code>string bcuid = 10;</code>
+       * <code>string signature = 5;</code>
        */
-      public Builder setBcuid(
+      public Builder setSignature(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   
-        bcuid_ = value;
+        signature_ = value;
         onChanged();
         return this;
       }
       /**
-       * <pre>
-       *节点Id
-       * </pre>
-       *
-       * <code>string bcuid = 10;</code>
+       * <code>string signature = 5;</code>
        */
-      public Builder clearBcuid() {
+      public Builder clearSignature() {
         
-        bcuid_ = getDefaultInstance().getBcuid();
+        signature_ = getDefaultInstance().getSignature();
         onChanged();
         return this;
       }
       /**
-       * <pre>
-       *节点Id
-       * </pre>
-       *
-       * <code>string bcuid = 10;</code>
+       * <code>string signature = 5;</code>
        */
-      public Builder setBcuidBytes(
+      public Builder setSignatureBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
         
-        bcuid_ = value;
+        signature_ = value;
         onChanged();
         return this;
       }
@@ -27757,11 +26378,6 @@ public final class Bcrand {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_org_brewchain_bcrand_model_PSSyncBlocks_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -27811,7 +26427,7 @@ public final class Bcrand {
   static {
     java.lang.String[] descriptorData = {
       "\n\014bcrand.proto\022\032org.brewchain.bcrand.mod" +
-      "el\"\351\002\n\005VNode\022\r\n\005bcuid\030\001 \001(\t\022\022\n\nco_addres" +
+      "el\"\376\002\n\005VNode\022\r\n\005bcuid\030\001 \001(\t\022\022\n\nco_addres" +
       "s\030\002 \001(\t\0225\n\005state\030\003 \001(\0162&.org.brewchain.b" +
       "crand.model.VNodeState\022\021\n\tcur_block\030\004 \001(" +
       "\005\022\033\n\023cur_block_recv_time\030\005 \001(\003\022\033\n\023cur_bl" +
@@ -27820,98 +26436,92 @@ public final class Bcrand {
       "\t \001(\005\022\025\n\rvrf_randseeds\030\n \001(\t\022\021\n\tvrf_code" +
       "s\030\013 \001(\t\022\022\n\nvrf_groups\030\014 \001(\t\022\023\n\013beacon_ha" +
       "sh\030\r \001(\t\022\023\n\013beacon_sign\030\016 \001(\t\022\017\n\007do_mine" +
-      "\030\017 \001(\010\"u\n\013GossipMiner\022\r\n\005bcuid\030\001 \001(\t\022\021\n\t" +
-      "cur_block\030\002 \001(\005\022\026\n\016cur_block_hash\030\003 \001(\t\022" +
-      "\023\n\013beacon_hash\030\004 \001(\t\022\027\n\017block_extr_data\030" +
-      "\005 \001(\t\"\201\001\n\020BlockWitnessInfo\022\023\n\013blockheigh" +
-      "t\030\001 \001(\003\022\023\n\013beacon_hash\030\002 \001(\t\022\017\n\007netbitx\030" +
-      "\003 \001(\t\0222\n\007witness\030\n \003(\0132!.org.brewchain.b" +
-      "crand.model.VNode\"\260\002\n\nPSNodeInfo\022\021\n\treq_" +
-      "token\030\001 \001(\t\022-\n\002vn\030\003 \001(\0132!.org.brewchain." +
-      "bcrand.model.VNode\0225\n\004murs\030\004 \003(\0132\'.org.b" +
-      "rewchain.bcrand.model.GossipMiner\022\020\n\010is_" +
-      "query\030\005 \001(\010\022$\n\034sugguest_start_sync_block" +
-      "_id\030\006 \001(\005\022\031\n\021gossip_block_info\030\007 \001(\005\022B\n\021" +
-      "gossip_miner_info\030\010 \001(\0132\'.org.brewchain." +
-      "bcrand.model.GossipMiner\022\022\n\nmessage_id\030\036" +
-      " \001(\t\"%\n\023PSNodeGraceShutDown\022\016\n\006reason\030\001 " +
-      "\001(\t\"\220\002\n\014PRetNodeInfo\022\020\n\010ret_code\030\001 \001(\005\022\023" +
-      "\n\013ret_message\030\002 \001(\t\022-\n\002vn\030\003 \001(\0132!.org.br" +
-      "ewchain.bcrand.model.VNode\022\025\n\rqueue_bsba" +
-      "tch\030\004 \001(\003\022\025\n\rqueue_confirm\030\005 \001(\003\022\022\n\nqueu" +
-      "e_wall\030\006 \001(\003\022\017\n\007extinfo\030\007 \001(\t\0225\n\004murs\030\010 " +
-      "\003(\0132\'.org.brewchain.bcrand.model.GossipM" +
-      "iner\022\022\n\nmessage_id\030\036 \001(\t\022\014\n\004sign\030d \001(\t\"\321" +
-      "\003\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 \001(\t\022\023\n\013be" +
-      "acon_sign\030\002 \001(\t\022\030\n\020prev_beacon_hash\030\003 \001(" +
-      "\t\022\023\n\013block_seeds\030\004 \001(\014\022\030\n\020prev_block_see" +
-      "ds\030\005 \001(\014\022\021\n\tvrf_codes\030\006 \001(\014\022\022\n\nco_addres" +
-      "s\030\007 \001(\t\022\017\n\007rewards\030\010 \001(\003\022\024\n\014block_height" +
-      "\030\t \001(\005\022\024\n\014cws_guaranty\030\n \001(\003\022\020\n\010slice_id" +
-      "\030\013 \001(\005\022\022\n\ngroup_bits\030\014 \001(\t\022\023\n\013beacon_bit" +
-      "s\030\r \001(\t\022\024\n\014witness_bits\030\016 \001(\t\022\r\n\005bcuid\030\017" +
-      " \001(\t\022\027\n\017block_mine_time\030\020 \001(\003\022\017\n\007txcount" +
-      "\030\021 \001(\005\022<\n\013block_entry\030\022 \001(\0132\'.org.brewch" +
-      "ain.bcrand.model.PBlockEntry\022\020\n\010txbodies" +
-      "\030\023 \003(\014\022\022\n\nmessage_id\030\036 \001(\t\"\301\001\n\010PSNotary\022" +
-      "\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(" +
-      "\003\022\023\n\013beacon_sign\030\003 \001(\t\022H\n\016blk_voteresult" +
-      "\030\004 \001(\01620.org.brewchain.bcrand.model.PSNo" +
-      "tary.PVoteResult\",\n\013PVoteResult\022\016\n\nVR_CO" +
-      "NFIRM\020\000\022\r\n\tVR_REJECT\020\001\"I\n\010PQNotary\022\024\n\014bl" +
-      "ock_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\t\022\023\n\013" +
-      "beacon_sign\030\003 \001(\t\"\231\001\n\013PBlockEntry\022\024\n\014blo" +
-      "ck_height\030\001 \001(\005\022\026\n\016coinbase_bcuid\030\002 \001(\t\022" +
-      "\020\n\010slice_id\030\003 \001(\005\022\021\n\tblockhash\030\004 \001(\t\022\024\n\014" +
-      "block_header\030\n \001(\014\022\023\n\013block_miner\030\013 \001(\014\022" +
-      "\014\n\004sign\0302 \001(\t\"\236\003\n\014PSSyncBlocks\022-\n\002vn\030\001 \001" +
-      "(\0132!.org.brewchain.bcrand.model.VNode\022\020\n" +
-      "\010start_id\030\002 \001(\005\022\016\n\006end_id\030\003 \001(\005\022\021\n\tblock" +
-      "_idx\030\004 \003(\005\022K\n\013block_infos\030\005 \003(\01326.org.br" +
-      "ewchain.bcrand.model.PSSyncBlocks.BlockH" +
-      "ashInfo\022\030\n\020sync_block_count\030\006 \001(\005\022\020\n\010nee" +
-      "dBody\030\007 \001(\010\022\r\n\005bcuid\030\n \001(\t\022\022\n\nmessage_id" +
-      "\030\036 \001(\t\0329\n\rBlockHashInfo\022\024\n\014block_height\030" +
-      "\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\t\"S\n\tQueryMode\022\014" +
-      "\n\010QM_RANGE\020\000\022\020\n\014QM_BLOCK_IDX\020\001\022\023\n\017QM_BLO" +
-      "CK_HEIGHT\020\002\022\021\n\rQM_BLOCK_HASH\020\003\"\232\001\n\016PRetS" +
-      "yncBlocks\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_messa" +
-      "ge\030\002 \001(\t\022>\n\rblock_headers\030\003 \003(\0132\'.org.br" +
-      "ewchain.bcrand.model.PBlockEntry\022\022\n\nmess" +
-      "age_id\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTr" +
-      "ansaction\022\016\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003" +
-      "(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\0162" +
-      "6.org.brewchain.bcrand.model.PSSyncTrans" +
-      "action.SyncType\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rc" +
-      "onfirm_bcuid\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WAL" +
-      "LOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n\nST_INBLOC" +
-      "K\020\002\"<\n\023PRetSyncTransaction\022\020\n\010ret_code\030\001" +
-      " \001(\005\022\023\n\013ret_message\030\002 \001(\t\"\"\n\020PSGetTransa" +
-      "ction\022\016\n\006txHash\030\001 \003(\t\"N\n\022PRetGetTransact" +
-      "ion\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001" +
-      "(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007r" +
-      "eqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_cod" +
-      "e\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\023\n\013blockhei" +
-      "ght\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rlastblockti" +
-      "me\030\005 \001(\003\022\032\n\022maxblockheightseen\030\006 \001(\003\022\026\n\016" +
-      "maxtermidseedn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022" +
-      "\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timep" +
-      "asslastblk\030\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013" +
-      "beacon_hash\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n" +
-      "\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007" +
-      "cn_node\030\003 \001(\0132!.org.brewchain.bcrand.mod" +
-      "el.VNode\022\024\n\014pending_node\030\r \001(\t\022\023\n\013direct" +
-      "_node\030\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132!.org.brew" +
-      "chain.bcrand.model.VNode\022\022\n\nconfirm_tx\030\021" +
-      " \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030" +
-      "\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF" +
-      "\020\000*v\n\010PCommand\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020" +
-      "\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n" +
-      "\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI" +
-      "\020 *\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYN" +
-      "C_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOC" +
-      "KMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY" +
-      "_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
+      "\030\017 \001(\010\022\023\n\013authBalance\030\020 \001(\t\"u\n\013GossipMin" +
+      "er\022\r\n\005bcuid\030\001 \001(\t\022\021\n\tcur_block\030\002 \001(\005\022\026\n\016" +
+      "cur_block_hash\030\003 \001(\t\022\023\n\013beacon_hash\030\004 \001(" +
+      "\t\022\027\n\017block_extr_data\030\005 \001(\t\"\201\001\n\020BlockWitn" +
+      "essInfo\022\023\n\013blockheight\030\001 \001(\003\022\023\n\013beacon_h" +
+      "ash\030\002 \001(\t\022\017\n\007netbitx\030\003 \001(\t\0222\n\007witness\030\n " +
+      "\003(\0132!.org.brewchain.bcrand.model.VNode\"\260" +
+      "\002\n\nPSNodeInfo\022\021\n\treq_token\030\001 \001(\t\022-\n\002vn\030\003" +
+      " \001(\0132!.org.brewchain.bcrand.model.VNode\022" +
+      "5\n\004murs\030\004 \003(\0132\'.org.brewchain.bcrand.mod" +
+      "el.GossipMiner\022\020\n\010is_query\030\005 \001(\010\022$\n\034sugg" +
+      "uest_start_sync_block_id\030\006 \001(\005\022\031\n\021gossip" +
+      "_block_info\030\007 \001(\005\022B\n\021gossip_miner_info\030\010" +
+      " \001(\0132\'.org.brewchain.bcrand.model.Gossip" +
+      "Miner\022\022\n\nmessage_id\030\036 \001(\t\"%\n\023PSNodeGrace" +
+      "ShutDown\022\016\n\006reason\030\001 \001(\t\"\220\002\n\014PRetNodeInf" +
+      "o\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t" +
+      "\022-\n\002vn\030\003 \001(\0132!.org.brewchain.bcrand.mode" +
+      "l.VNode\022\025\n\rqueue_bsbatch\030\004 \001(\003\022\025\n\rqueue_" +
+      "confirm\030\005 \001(\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007ext" +
+      "info\030\007 \001(\t\0225\n\004murs\030\010 \003(\0132\'.org.brewchain" +
+      ".bcrand.model.GossipMiner\022\022\n\nmessage_id\030" +
+      "\036 \001(\t\022\014\n\004sign\030d \001(\t\"\321\003\n\nPSCoinbase\022\023\n\013be" +
+      "acon_hash\030\001 \001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022\030\n\020" +
+      "prev_beacon_hash\030\003 \001(\t\022\023\n\013block_seeds\030\004 " +
+      "\001(\014\022\030\n\020prev_block_seeds\030\005 \001(\014\022\021\n\tvrf_cod" +
+      "es\030\006 \001(\014\022\022\n\nco_address\030\007 \001(\t\022\017\n\007rewards\030" +
+      "\010 \001(\003\022\024\n\014block_height\030\t \001(\005\022\024\n\014cws_guara" +
+      "nty\030\n \001(\003\022\020\n\010slice_id\030\013 \001(\005\022\022\n\ngroup_bit" +
+      "s\030\014 \001(\t\022\023\n\013beacon_bits\030\r \001(\t\022\024\n\014witness_" +
+      "bits\030\016 \001(\t\022\r\n\005bcuid\030\017 \001(\t\022\027\n\017block_mine_" +
+      "time\030\020 \001(\003\022\017\n\007txcount\030\021 \001(\005\022<\n\013block_ent" +
+      "ry\030\022 \001(\0132\'.org.brewchain.bcrand.model.PB" +
+      "lockEntry\022\020\n\010txbodies\030\023 \003(\014\022\022\n\nmessage_i" +
+      "d\030\036 \001(\t\"\301\001\n\010PSNotary\022\024\n\014block_height\030\001 \001" +
+      "(\005\022\022\n\nblock_hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 " +
+      "\001(\t\022H\n\016blk_voteresult\030\004 \001(\01620.org.brewch" +
+      "ain.bcrand.model.PSNotary.PVoteResult\",\n" +
+      "\013PVoteResult\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJEC" +
+      "T\020\001\"I\n\010PQNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n" +
+      "\nblock_hash\030\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231" +
+      "\001\n\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016" +
+      "coinbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021" +
+      "\n\tblockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022" +
+      "\023\n\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"|\n\014PS" +
+      "SyncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002" +
+      " \001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(" +
+      "\005\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmessage_id\030\036 \001(\t" +
+      "\"\232\001\n\016PRetSyncBlocks\022\020\n\010ret_code\030\001 \001(\005\022\023\n" +
+      "\013ret_message\030\002 \001(\t\022>\n\rblock_headers\030\003 \003(" +
+      "\0132\'.org.brewchain.bcrand.model.PBlockEnt" +
+      "ry\022\022\n\nmessage_id\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t\"\375\001" +
+      "\n\021PSSyncTransaction\022\016\n\006txHash\030\001 \003(\014\022\017\n\007t" +
+      "xDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010syncT" +
+      "ype\030\004 \001(\01626.org.brewchain.bcrand.model.P" +
+      "SSyncTransaction.SyncType\022\022\n\nfrom_bcuid\030" +
+      "\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n\010SyncType" +
+      "\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n" +
+      "\nST_INBLOCK\020\002\"<\n\023PRetSyncTransaction\022\020\n\010" +
+      "ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\"\"\n\020P" +
+      "SGetTransaction\022\016\n\006txHash\030\001 \003(\t\"N\n\022PRetG" +
+      "etTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_m" +
+      "essage\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nPSRhr" +
+      "Check\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022" +
+      "\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\023" +
+      "\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rl" +
+      "astblocktime\030\005 \001(\003\022\032\n\022maxblockheightseen" +
+      "\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022\021\n\tblockh" +
+      "ash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030\013 \001(" +
+      "\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nbanforvote" +
+      "\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n\017PRetHeal" +
+      "thCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message" +
+      "\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.brewchain." +
+      "bcrand.model.VNode\022\024\n\014pending_node\030\r \001(\t" +
+      "\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132" +
+      "!.org.brewchain.bcrand.model.VNode\022\022\n\nco" +
+      "nfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syn" +
+      "cblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007PMod" +
+      "ule\022\007\n\003VRF\020\000*v\n\010PCommand\022\007\n\003JIN\020\000\022\007\n\003INF" +
+      "\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007" +
+      "\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RH" +
+      "R\020\037\022\007\n\003VNI\020 *\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000" +
+      "\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN" +
+      "_DUTY_BLOCKMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022" +
+      "\022\n\016VN_DUTY_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006p" +
+      "roto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -27930,7 +26540,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_VNode_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_VNode_descriptor,
-        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", });
+        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", "AuthBalance", });
     internal_static_org_brewchain_bcrand_model_GossipMiner_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_org_brewchain_bcrand_model_GossipMiner_fieldAccessorTable = new
@@ -27990,13 +26600,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_PSSyncBlocks_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_PSSyncBlocks_descriptor,
-        new java.lang.String[] { "Vn", "StartId", "EndId", "BlockIdx", "BlockInfos", "SyncBlockCount", "NeedBody", "Bcuid", "MessageId", });
-    internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor =
-      internal_static_org_brewchain_bcrand_model_PSSyncBlocks_descriptor.getNestedTypes().get(0);
-    internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_org_brewchain_bcrand_model_PSSyncBlocks_BlockHashInfo_descriptor,
-        new java.lang.String[] { "BlockHeight", "BlockHash", });
+        new java.lang.String[] { "StartId", "EndId", "NeedBody", "BlockIdx", "Signature", "MessageId", });
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_descriptor =
       getDescriptor().getMessageTypes().get(11);
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_fieldAccessorTable = new

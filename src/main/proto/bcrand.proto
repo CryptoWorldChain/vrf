@@ -58,6 +58,7 @@ message VNode{
 	string		beacon_hash = 13;//
 	string		beacon_sign = 14;//
 	bool        do_mine = 15;
+	string 		authBalance = 16;
 }
 
 message GossipMiner{
@@ -172,27 +173,30 @@ message PBlockEntry{
 
 
 message PSSyncBlocks{
-	VNode 	vn = 1;			//获取信息
-	int32 	start_id = 2;	//一般是取0
-	int32	end_id = 3;	    //分页截至
+	int32 	start_id = 1;	//一般是取0
+	int32	end_id = 2;	    //分页截至
+	bool needBody = 3;	
 	repeated int32 block_idx = 4;//byids
-	message BlockHashInfo{
-		int32	block_height = 1;
-		string  block_hash = 2;
-	}
-	repeated BlockHashInfo  block_infos = 5;
-	int32	sync_block_count = 6;//
-	bool needBody = 7;		//是否同步Body体
-
-	string 	bcuid = 10;		//节点Id
+	string signature = 5;
 	string message_id = 30;
+	
+//	VNode 	vn = 1;			//获取信息
+//	message BlockHashInfo{
+//		int32	block_height = 1;
+//		string  block_hash = 2;
+//	}
+//	repeated BlockHashInfo  block_infos = 5;
+//	int32	sync_block_count = 6;//
 
-	enum QueryMode{
-		QM_RANGE = 0;//根据startid和endid查询
-		QM_BLOCK_IDX = 1;//根据block的id列表查询
-		QM_BLOCK_HEIGHT = 2;//根据区块高度
-		QM_BLOCK_HASH = 3;//根据hash列表找到一个合适的为止
-	}
+//	string 	bcuid = 10;		//节点Id
+
+
+//	enum QueryMode {
+//		QM_RANGE = 0;//根据startid和endid查询
+//		QM_BLOCK_IDX = 1;//根据block的id列表查询
+//		QM_BLOCK_HEIGHT = 2;//根据区块高度
+//		QM_BLOCK_HASH = 3;//根据hash列表找到一个合适的为止
+//	}
 }
 
 message PRetSyncBlocks{
