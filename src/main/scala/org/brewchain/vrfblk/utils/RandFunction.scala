@@ -47,14 +47,16 @@ object RandFunction extends LogHelper with BitMap {
     val votebits = bigIntAnd(netBits, rightbits); //andNot(blockbits)
 //    log.error("leftbits=" + leftbits + " rightbits=" + rightbits + " beaconHexSeed=" + beaconHexSeed);
 //    log.error("blockbits=" + blockbits.bitCount() + " votebits=" + votebits.bitCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount + " beaconHexSeed=" + beaconHexSeed);
-
-    if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
+    // FIXME choose maker
+    return (blockbits, votebits);
+    
+    //if (blockbits.bitCount() >= blockMakerCount && votebits.bitCount >= notaryCount) {
       //cannot product block maker
-      return (blockbits, votebits);
-    } else {
-      val deeprand = Daos.enc.bytesToHexStr(Daos.enc.sha256(subleft.getBytes)) + Daos.enc.bytesToHexStr(Daos.enc.sha256(subright.getBytes))
-      reasonableRandInt(deeprand, netBits, blockMakerCount, notaryCount);
-    }
+    //  return (blockbits, votebits);
+    //} else {
+    //  val deeprand = Daos.enc.bytesToHexStr(Daos.enc.sha256(subleft.getBytes)) + Daos.enc.bytesToHexStr(Daos.enc.sha256(subright.getBytes))
+    //  reasonableRandInt(deeprand, netBits, blockMakerCount, notaryCount);
+    //}
   }
 
   def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
@@ -62,45 +64,63 @@ object RandFunction extends LogHelper with BitMap {
     val blockMakerCount: Int = Math.max(1, netBitsCount / 2);
    // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
     val notaryCount: Int = Math.max(1, netBitsCount / 3);
-    if (netBits.bitCount() < 2) {
-//      log.error("netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-      (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, netBits)
+    
+    // FIXME choose maker
+    val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
+    if (VCtrl.curVN().getCurBlock % 3 == 0 && VCtrl.curVN().getCoAddress == "3c1ea4aa4974d92e0eabd5d024772af3762720a0") {
+      (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+    } else if (VCtrl.curVN().getCurBlock % 3 == 1 && VCtrl.curVN().getCoAddress == "533a5a084cd587c86c20a0ddfb28f9ad018f341a") {
+      (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+    } else if (VCtrl.curVN().getCurBlock % 3 == 2 && VCtrl.curVN().getCoAddress == "c60042d114c2a1ba13e154f446badf8e152a923f") {
+      (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
     } else {
-        log.error("start originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount)
-//      log.error("originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-        log.error("end blockbits=" + blockbits + " votebits=" + votebits)
-      // TODO 如果金额不足，不能成为BLOCKMAKER
-      if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(Daos.chainHelper.getChainConfig.coinbase_account_address_bytestring), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
-        log.error("balance not enough");
-        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
-      }
-      if (blockbits.testBit(curIdx)) {
-        (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
-      } else if (votebits.testBit(curIdx)) {
-        (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
-      } else {
-        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
-      }
+      (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
     }
+    
+//    if (netBits.bitCount() < 3) {
+////      log.error("netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
+//      (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, netBits)
+//    } else {
+//        log.error("start originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount)
+////      log.error("originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
+//      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
+//        log.error("end blockbits=" + blockbits + " votebits=" + votebits)
+//      // TODO 如果金额不足，不能成为BLOCKMAKER
+//      if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(Daos.chainHelper.getChainConfig.coinbase_account_address_bytestring), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+//        log.error("balance not enough");
+//        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
+//      }
+//      if (blockbits.testBit(curIdx)) {
+//        (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+//      } else if (votebits.testBit(curIdx)) {
+//        (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
+//      } else {
+//        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
+//      }
+//    }
   }
   def getRandMakeBlockSleep(beaconHash: String, blockbits: BigInteger, curIdx: Int): Long = {
     var testBits = blockbits;
     var indexInBits = 0;
     var testcc = 0;
-    while (testcc < 1024000 && testBits.bitCount() > 0) {
-      if (blockbits.testBit(testcc)) {
-        testBits = testBits.clearBit(testcc);
-        if (curIdx == testcc) {
-          testBits = BigInteger.ZERO;
-        } else {
-          indexInBits = indexInBits + 1;
-        }
-      }
-      testcc = testcc + 1;
-    }
-    val ranInt = new BigInteger(beaconHash, 16).abs(); //.multiply(BigInteger.valueOf(curIdx));
-    val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue();
-    return ((indexInBits + stepRange) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC*1000 + VConfig.BLK_EPOCH_MS
+
+    // FIXME choose maker
+    return 3000;
+    
+    //while (testcc < 1024000 && testBits.bitCount() > 0) {
+    //  if (blockbits.testBit(testcc)) {
+    //    testBits = testBits.clearBit(testcc);
+    //    if (curIdx == testcc) {
+    //      testBits = BigInteger.ZERO;
+    //    } else {
+    //      indexInBits = indexInBits + 1;
+    //    }
+    //  }
+    //  testcc = testcc + 1;
+    //}
+
+    //val ranInt = new BigInteger(beaconHash, 16).abs(); //.multiply(BigInteger.valueOf(curIdx));
+    //val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue();
+    //return ((indexInBits + stepRange) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC*1000 + VConfig.BLK_EPOCH_MS
   }
 }

@@ -62,10 +62,6 @@ class VRFBGLoader() extends Runnable with LogHelper {
       if (vrfnet != null) {
         MDCSetBCUID(vrfnet)
       }
-      log.debug("vrf ctrl not ready. vrfnet=" + vrfnet 
-        + ",ddc=" + Daos.ddc 
-        + ",bit=" + vrfnet.node_bits().bitCount
-        + ",innetwork=" + vrfnet.inNetwork())
       Thread.sleep(1000);
     }
     //    RSM.instance = RaftStateManager(raftnet);
@@ -98,7 +94,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
 
     Runtime.getRuntime.addShutdownHook(new Thread() {
       override def run() = {
-          VCtrl.network().wallMessage("SOSVRF", Left(body), messageId, '9');
+        VCtrl.network().wallMessage("SOSVRF", Left(body), messageId, '9');
       }
     })
 

@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 import scala.collection.JavaConversions._
-
+import java.math.BigInteger
 import org.brewchain.vrfblk.utils.SRunner
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.Network
@@ -58,7 +58,19 @@ object TxSync extends LogHelper {
         }
 
         // TODO 判断是否有足够余额，只发给有足够余额的节点
-        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+        VCtrl.allNodes.foreach(f => {
+          val n = f._2;
+          if(new BigInteger(n.getAuthBalance()).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+//            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
+//            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+              VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, n.getBcuid, '9')
+            //}
+          } else {
+            log.error("cannot broadcast block ");
+          }
+        })
+       
+//        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)
         lastSyncCount.set(res.getTxHashCount)
       } else {

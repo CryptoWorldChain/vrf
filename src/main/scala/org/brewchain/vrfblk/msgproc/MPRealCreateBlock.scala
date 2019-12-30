@@ -70,15 +70,14 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     val start = System.currentTimeMillis();
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
-
     //需要广播的节点数量
-    val wallAccount: Int = VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+    val wallAccount: Int = VCtrl.allNodes.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
 
     //var newNetBits = BigInteger.ZERO
     // log.debug("tryNotifyState netBits=" + nodeBit.bitCount() + " size=" + VCtrl.coMinerByUID.size)
     //if (newNetBits.bitCount() < VCtrl.coMinerByUID.size) {
     var newNetBits = BigInteger.ZERO
-    VCtrl.coMinerByUID.foreach(f => {
+    VCtrl.allNodes.foreach(f => {
       if (f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
         newNetBits = newNetBits.setBit(f._2.getBitIdx);
@@ -88,6 +87,8 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
+
+      log.error("MPRealCreateBlock:start confirm=" + wallAccount);
 
     val (newblk, txs) = newBlockFromAccount(
       VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
