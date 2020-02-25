@@ -88,7 +88,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
 
-      log.error("MPRealCreateBlock:start confirm=" + wallAccount);
+    log.error("MPRealCreateBlock:start confirm=" + wallAccount);
 
     val (newblk, txs) = newBlockFromAccount(
       VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
@@ -99,7 +99,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     } else {
       // TODO 更新pnode，dnode的节点balance
       VCtrl.refreshNodeBalance();
-      
+
       val newblockheight = newblk.getHeader.getHeight.intValue()
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
@@ -127,7 +127,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         .setWitnessBits(hexToMapping(notarybits))
 
       //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
-      
+
       log.error("set beacon hash=" + newblk.getMiner.getTerm);
       cn.setCurBlock(newblockheight)
         .setBeaconHash(newblk.getMiner.getTerm)
@@ -149,47 +149,40 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
       //      newhash, prevhash, mapToBigInt(netbits).bigInteger
 
-//      VCtrl.coMinerByUID.foreach(f => {
-//        val cn = f._2;
-//        val (state, blockbits, notarybits) = RandFunction.chooseGroups(newhash, newNetBits, cn.getBitIdx)
-//        if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
-//          VCtrl.allNodes.map { n =>
-//            if(new BigInteger(n.getAuthBalance).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-//              var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
-//              if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
-//                log.info("found next first maker:" + cn.getBcuid);
-//                VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, cn.getBcuid, '9')
-//              }
-//            }
-//          }
-//        }
-//      })
-      
-        newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
+      //      VCtrl.coMinerByUID.foreach(f => {
+      //        val cn = f._2;
+      //        val (state, blockbits, notarybits) = RandFunction.chooseGroups(newhash, newNetBits, cn.getBitIdx)
+      //        if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
+      //          VCtrl.allNodes.map { n =>
+      //            if(new BigInteger(n.getAuthBalance).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+      //              var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
+      //              if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+      //                log.info("found next first maker:" + cn.getBcuid);
+      //                VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, cn.getBcuid, '9')
+      //              }
+      //            }
+      //          }
+      //        }
+      //      })
+
+      newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
         .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
         .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
         .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
-        
-        // TODO 判断是否有足够余额，只发给有足够余额的节点
-        VCtrl.allNodes.foreach(f => {
-          val n = f._2;
-          if(new BigInteger(n.getAuthBalance()).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-//            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
-//            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
-              log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
-              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
-            //}
-          } else {
-            log.error("cannot broadcast block ");
-          }
-        })
-//      VCtrl.allNodes.map { n =>
-//        if(new BigInteger(n.getAuthBalance).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-//          // VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
-//          VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
-//        }
-//      }
-      
+
+      // TODO 判断是否有足够余额，只发给有足够余额的节点
+      VCtrl.allNodes.foreach(f => {
+        val n = f._2;
+        log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
+        VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
+      })
+      //      VCtrl.allNodes.map { n =>
+      //        if(new BigInteger(n.getAuthBalance).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+      //          // VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
+      //          VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
+      //        }
+      //      }
+
       TxCache.cacheTxs(txs);
     }
 
