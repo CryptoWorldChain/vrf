@@ -6,7 +6,7 @@ import onight.oapi.scala.traits.OLog
 import org.apache.commons.lang3.StringUtils
 import org.brewchain.vrfblk.tasks.VCtrl
 import java.math.BigInteger
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.VNodeState
 import scala.collection.mutable.ListBuffer
 import org.brewchain.p22p.utils.LogHelper

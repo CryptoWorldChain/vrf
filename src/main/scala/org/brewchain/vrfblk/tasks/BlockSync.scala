@@ -21,7 +21,7 @@ import org.brewchain.vrfblk.utils.BlkTxCalc
 import org.brewchain.bcrand.model.Bcrand.PSCoinbase
 import onight.tfw.outils.serialize.UUIDGenerator
 import org.brewchain.bcrand.model.Bcrand.PBlockEntry
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import com.google.protobuf.ByteString
 import org.brewchain.vrfblk.msgproc.MPCreateBlock
 import org.brewchain.vrfblk.msgproc.ApplyBlock
@@ -30,7 +30,7 @@ import org.brewchain.bcrand.model.Bcrand.PSSyncBlocks
 import onight.tfw.async.CallBack
 import org.brewchain.bcrand.model.Bcrand.PRetSyncBlocks
 import scala.collection.JavaConverters._
-import org.brewchain.core.model.Block.BlockInfo
+import org.brewchain.mcore.model.Block.BlockInfo
 import java.util.concurrent.atomic.AtomicLong
 
 trait SyncInfo {

@@ -21,7 +21,7 @@ import org.brewchain.vrfblk.utils.BlkTxCalc
 import org.brewchain.bcrand.model.Bcrand.PSCoinbase
 import onight.tfw.outils.serialize.UUIDGenerator
 import org.brewchain.bcrand.model.Bcrand.PBlockEntry
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import com.google.protobuf.ByteString
 import org.brewchain.vrfblk.msgproc.MPCreateBlock
 import org.brewchain.vrfblk.msgproc.MPRealCreateBlock

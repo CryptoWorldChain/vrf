@@ -21,7 +21,7 @@ import org.brewchain.vrfblk.tasks.BeaconTask
 import org.brewchain.bcrand.model.Bcrand.PSNodeGraceShutDown
 import org.brewchain.vrfblk.tasks.TxSync
 import org.brewchain.vrfblk.tasks.TransactionSync
-import org.brewchain.tools.url.URLHelper
+import org.brewchain.mcore.tools.url.URLHelper
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -64,18 +64,9 @@ class VRFBGLoader() extends Runnable with LogHelper {
       }
       Thread.sleep(1000);
     }
-    //    RSM.instance = RaftStateManager(raftnet);
-
-    //     Daos.actdb.getNodeAccount();
-
-    while (Daos.chainHelper.getNodeAccountAddress == null) {
-      log.debug(" cws account not ready. " + ",ddc=" + Daos.ddc)
-      Thread.sleep(5000);
-    }
-    val naccount = Daos.chainHelper.getNodeAccountAddress;
     Daos.chainHelper.startBlockChain(vrfnet.root().bcuid, vrfnet.root().v_address, vrfnet.root().name)
     UUIDGenerator.setJVM(vrfnet.root().bcuid.substring(1))
-    vrfnet.changeNodeVAddr(Daos.enc.bytesToHexStr(naccount));
+//    vrfnet.changeNodeVAddr(Daos.enc.bytesToHexStr(naccount));
     log.info("vrfnet.initOK:My Node=" + vrfnet.root() + ",CoAddr=" + vrfnet.root().v_address
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 

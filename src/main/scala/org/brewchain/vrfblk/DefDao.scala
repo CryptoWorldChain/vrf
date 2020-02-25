@@ -3,13 +3,7 @@ package org.brewchain.vrfblk
 import scala.beans.BeanProperty
 
 import org.apache.felix.ipojo.annotations.Provides
-import org.brewchain.core.AccountHelper
-import org.brewchain.core.BlockChainHelper
-import org.brewchain.core.BlockHelper
-import org.brewchain.core.TransactionHelper
-import org.brewchain.core.handler.AccountHandler
-import org.brewchain.core.cryptoapi.ICryptoHandler;
-import org.brewchain.core.dbapi.ODBSupport;
+import org.brewchain.mcore.handler.AccountHandler
 import org.brewchain.p22p.core.PZPCtrl
 import org.fc.zippo.dispatcher.IActorDispatcher
 
@@ -25,6 +19,11 @@ import onight.tfw.ojpa.api.DomainDaoSupport
 import onight.tfw.ojpa.api.annotations.StoreDAO
 import onight.tfw.ojpa.api.IJPAClient
 import org.brewchain.bcrand.model.Bcrand.PModule
+import org.brewchain.mcore.api.ODBSupport
+import org.brewchain.mcore.handler.ChainHandler
+import org.brewchain.mcore.handler.BlockHandler
+import org.brewchain.mcore.api.ICryptoHandler
+import org.brewchain.mcore.handler.TransactionHandler
 
 abstract class PSMVRFNet[T <: Message] extends SessionModules[T] with PBUtils with OLog {
   override def getModule: String = PModule.VRF.name()
@@ -63,17 +62,17 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   @ActorRequire(scope = "global", name = "pzpctrl")
   var pzp: PZPCtrl = null;
 
-  @ActorRequire(name = "bc_blockchain_helper", scope = "global")
-  var bcHelper: BlockChainHelper = null;
-
-  @ActorRequire(name = "bc_block_helper", scope = "global")
-  var blkHelper: BlockHelper = null;
-  
-  @ActorRequire(name = "core_account_handler", scope = "global")
+  @ActorRequire(name = "bc_account", scope = "global")
   var accountHandler: AccountHandler = null;
 
-  @ActorRequire(name = "bc_transaction_helper", scope = "global")
-  var txHelper: TransactionHelper = null;
+  @ActorRequire(name = "bc_transaction", scope = "global")
+  var transactionHandler: TransactionHandler = null;
+
+  @ActorRequire(name = "bc_chain", scope = "global")
+  var chainHandler: ChainHandler = null;
+
+  @ActorRequire(name = "bc_block", scope = "global")
+  var blockHandler: BlockHandler = null;
 
   @ActorRequire(name = "bc_crypto", scope = "global") //  @BeanProperty
   var enc: ICryptoHandler = null;
@@ -85,36 +84,37 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   def getPzp(): PZPCtrl = {
     pzp
   }
-  def setBcHelper(_bcHelper: BlockChainHelper) = {
-    bcHelper = _bcHelper;
-    Daos.chainHelper = bcHelper;
-  }
-  def getBcHelper: BlockChainHelper = {
-    bcHelper
-  }
 
-  def setBlkHelper(_blkHelper: BlockHelper) = {
-    blkHelper = _blkHelper;
-    Daos.blkHelper = _blkHelper;
-  }
-  def getBlkHelper: BlockHelper = {
-    blkHelper
-  }
-
-  def setTxHelper(_txHelper: TransactionHelper) = {
-    txHelper = _txHelper;
-    Daos.txHelper = _txHelper;
-  }
-  def getTxHelper: TransactionHelper = {
-    txHelper
-  }
-  
   def setAccountHandler(_accountHandler: AccountHandler) = {
     accountHandler = _accountHandler;
     Daos.accountHandler = _accountHandler;
   }
   def getAccountHandler: AccountHandler = {
     accountHandler
+  }
+
+  def setTransactionHandler(_transactionHandler: TransactionHandler) = {
+    transactionHandler = _transactionHandler;
+    Daos.txHelper = _transactionHandler;
+  }
+  def getTransactionHandler: TransactionHandler = {
+    transactionHandler
+  }
+
+  def setChainHandler(_chainHandler: ChainHandler) = {
+    chainHandler = _chainHandler;
+    Daos.chainHelper = _chainHandler;
+  }
+  def getChainHandler: ChainHandler = {
+    chainHandler
+  }
+
+  def setBlockHandler(_blockHanlder: BlockHandler) = {
+    blockHandler = _blockHanlder;
+    Daos.blkHelper = _blockHanlder;
+  }
+  def getBlockHandler: BlockHandler = {
+    blockHandler
   }
 
   def setEnc(_enc: ICryptoHandler) = {
@@ -144,9 +144,9 @@ object Daos extends OLog {
   var vrfvotedb: ODBSupport = null
   //  var blkdb: ODBSupport = null
   var pzp: PZPCtrl = null;
-  var chainHelper: BlockChainHelper = null; 
-  var blkHelper: BlockHelper = null;
-  var txHelper: TransactionHelper = null;
+  var chainHelper: ChainHandler = null;
+  var blkHelper: BlockHandler = null;
+  var txHelper: TransactionHandler = null;
   var enc: ICryptoHandler = null;
   var ddc: IActorDispatcher = null;
   var accountHandler: AccountHandler = null;
@@ -155,7 +155,7 @@ object Daos extends OLog {
     vrfpropdb != null && vrfpropdb.getDaosupport.isInstanceOf[ODBSupport] &&
       vrfvotedb != null && vrfvotedb.getDaosupport.isInstanceOf[ODBSupport] &&
       ddc != null &&
-       pzp != null && accountHandler != null && txHelper != null && blkHelper != null && chainHelper != null
+      pzp != null && accountHandler != null && txHelper != null && blkHelper != null && chainHelper != null
   }
 }
 

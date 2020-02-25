@@ -23,7 +23,7 @@ import org.brewchain.bcrand.model.Bcrand.PSSyncBlocks
 import org.brewchain.p22p.core.Votes.NotConverge
 import org.brewchain.vrfblk.Daos
 import org.brewchain.bcrand.model.Bcrand.VNodeState
-import org.brewchain.tools.time.JodaTimeHelper
+import org.brewchain.mcore.tools.time.JodaTimeHelper
 import org.brewchain.vrfblk.msgproc.RollbackBlock
 
 //投票决定当前的节点

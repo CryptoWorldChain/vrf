@@ -12,12 +12,12 @@ import org.brewchain.p22p.node.{ Network, Node }
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos
 import org.brewchain.vrfblk.utils.{ RandFunction, VConfig }
-import org.brewchain.core.model.Block.BlockInfo
+import org.brewchain.mcore.model.Block.BlockInfo
 import scala.collection.JavaConverters._
 import scala.collection.mutable.Map
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 import com.google.protobuf.ByteString
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import scala.collection.JavaConversions._
 import java.util.ArrayList
 import org.brewchain.p22p.action.PMNodeHelper
@@ -41,7 +41,7 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         .setBitIdx(root_node.node_idx)
       Daos.vrfpropdb.put(
         VRF_NODE_DB_KEY.getBytes,
-       cur_vnode.build().toByteArray())
+        cur_vnode.build().toByteArray())
     } else {
       cur_vnode.mergeFrom(ov).setBitIdx(root_node.node_idx)
       if (!StringUtils.equals(cur_vnode.getBcuid, root_node.bcuid)) {
@@ -124,7 +124,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
   //防止ApplyBlock时节点Make出相同高度的block,或打出beaconHash错误的block
   val blockLock: ReentrantLock = new ReentrantLock();
-  
+
   def getFastNode(): String = {
     var fastNode = curVN().build();
     coMinerByUID.map { f =>
@@ -159,32 +159,32 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
   }
-  
-  def refreshNodeBalance() {    
+
+  def refreshNodeBalance() {
     allNodes.clear()
- 
+
     val network = networkByID("vrf")
-    network.directNodes.foreach (f => {
+    network.directNodes.foreach(f => {
       val n = f;
       val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
-        val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
-        val oVNode = VNode.newBuilder
-        log.error("refresh dnode " + n.v_address + " balance " + balance.toString());
-        oVNode.setAuthBalance(balance.toString());
-        oVNode.setBcuid(n.bcuid);
-        oVNode.setCoAddress(n.v_address);
-        allNodes.put(n.v_address, oVNode.build());
+//      val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
+      val oVNode = VNode.newBuilder
+//      log.error("refresh dnode " + n.v_address + " balance " + balance.toString());
+//      oVNode.setAuthBalance(balance.toString());
+      oVNode.setBcuid(n.bcuid);
+      oVNode.setCoAddress(n.v_address);
+      allNodes.put(n.v_address, oVNode.build());
     })
-    network.pendingNodes.foreach ( f => {
+    network.pendingNodes.foreach(f => {
       val n = f;
       val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
-        val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
-        val oVNode = VNode.newBuilder
-        log.error("refresh pnode " + n.v_address + " balance " + balance.toString());
-        oVNode.setAuthBalance(balance.toString());
-        oVNode.setBcuid(n.bcuid);
-        oVNode.setCoAddress(n.v_address);
-        allNodes.put(n.v_address, oVNode.build());
+//      val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
+      val oVNode = VNode.newBuilder
+//      log.error("refresh pnode " + n.v_address + " balance " + balance.toString());
+//      oVNode.setAuthBalance(balance.toString());
+      oVNode.setBcuid(n.bcuid);
+      oVNode.setCoAddress(n.v_address);
+      allNodes.put(n.v_address, oVNode.build());
     })
   }
 
@@ -203,14 +203,14 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
         val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
         val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
 
-        var sleepMS =  10l
-        if(blk.getHeader.getHeight>1&&StringUtils.isNotBlank(prevBlock.getMiner.getTerm))
-        try {
-         sleepMS =  RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTerm, mapToBigInt(prevBlock.getMiner.getBits).bigInteger, blknode.node_idx)
-        } catch {
-          case t: Throwable =>
-          
-        }
+        var sleepMS = 10l
+        if (blk.getHeader.getHeight > 1 && StringUtils.isNotBlank(prevBlock.getMiner.getTerm))
+          try {
+            sleepMS = RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTerm, mapToBigInt(prevBlock.getMiner.getBits).bigInteger, blknode.node_idx)
+          } catch {
+            case t: Throwable =>
+
+          }
 
         (sleepMS, p)
       }).sortBy(_._1).get(0)._2
@@ -226,21 +226,21 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     } else {
       val blks = Daos.chainHelper.listBlockByHeight(block);
       if (blks != null) {
-        blks.filter(f => if (block == 0 || 
-            block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+        blks.filter(f => if (block == 0 ||
+          block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
           //创世块安全块允许直接广播
           true
         } else {
           // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
-          log.error("height=" + f.getHeader.getHeight  + " hash=" + Daos.enc.bytesToHexStr(f.getHeader.getHash.toByteArray()));
+          log.error("height=" + f.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(f.getHeader.getHash.toByteArray()));
           val parentBlock = Daos.chainHelper.getBlockByHash(f.getHeader.getParentHash.toByteArray());
           val nodebits = if (f.getHeader.getHeight == 1) "" else parentBlock.getMiner.getBits;
           val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(f.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);
           if (hash.equals(f.getMiner.getTerm) || f.getHeader.getHeight == 1) {
             true
           } else {
-            true;//false,,直接通过吧，brew 20190507
-            
+            true; //false,,直接通过吧，brew 20190507
+
           }
         }).map(f => {
           // 本地block是否能校验通过，只有通过的才广播
@@ -249,12 +249,12 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
             //如果当前body里面有完整txList, 不再需要在重新构建tx, 否则会造成txBody重复
             if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
               val txlist = new ArrayList[TransactionInfo]();
-              f.getHeader.getTxHashsList.map(txHash=>{
+              f.getHeader.getTxHashsList.map(txHash => {
                 txlist.add(Daos.txHelper.getTransaction(txHash.toByteArray()));
               })
               txbodys.addAllTxs(txlist);
             }
-             
+
             val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
             recentBlocks.put(block, b);
             b

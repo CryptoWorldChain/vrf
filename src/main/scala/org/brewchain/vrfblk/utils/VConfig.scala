@@ -174,7 +174,7 @@ object VConfig {
   val RUN_COMINER = prop.get(PROP_DOMAIN + "run.cominer", 1);
   
   //节点准入Token名称
-  val AUTH_TOKEN = prop.get(PROP_DOMAIN + "auth.token", "EVS").getBytes();  
+  val AUTH_TOKEN = prop.get(PROP_DOMAIN + "auth.token", "EVS").getBytes();
   //节点准入持有Token的最小值
   var AUTH_TOKEN_MIN: BigInteger = new BigInteger(prop.get(PROP_DOMAIN + "auth.token.min", "10000000"));
 

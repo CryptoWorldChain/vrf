@@ -6,9 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.brewchain.core.model.Transaction.TransactionInfo;
+import org.brewchain.mcore.model.Transaction.TransactionInfo;
 
-import lombok.Data;
 
 public class TxArrays implements Serializable, IStorable {
 	private static final long serialVersionUID = 5829951203336980749L;

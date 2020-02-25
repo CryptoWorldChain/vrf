@@ -6,7 +6,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 
 import onight.oapi.scala.traits.OLog
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 
 object TxCache extends OLog {
 

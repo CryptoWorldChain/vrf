@@ -10,10 +10,10 @@ import com.google.protobuf.ByteString
 import onight.tfw.async.CompleteHandler
 import onight.tfw.outils.serialize.UUIDGenerator
 import org.apache.commons.codec.binary.Hex
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction.SyncType
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos

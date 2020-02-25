@@ -2,7 +2,7 @@ package org.brewchain.vrfblk.msgproc
 
 import java.math.BigInteger
 
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.BlockWitnessInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper

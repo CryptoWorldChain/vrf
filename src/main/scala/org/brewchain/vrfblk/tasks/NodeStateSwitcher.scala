@@ -4,7 +4,7 @@ import java.math.BigInteger
 import java.util.List
 
 import onight.tfw.otransio.api.PacketHelper
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand
 import org.brewchain.bcrand.model.Bcrand.{ BlockWitnessInfo, PSNodeInfo, VNodeState }
 import org.brewchain.p22p.action.PMNodeHelper

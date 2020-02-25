@@ -34,23 +34,22 @@ class PSBlockSync extends PSMVRFNet[PSSyncBlocks] {
 }
 
 /**
-  * 请求同步块
-  */
+ * 请求同步块
+ */
 object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlocks] with PMNodeHelper {
   override def onPBPacket(pack: FramePacket, pbo: PSSyncBlocks, handler: CompleteHandler) = {
     val ret = PRetSyncBlocks.newBuilder();
     if (!VCtrl.isReady()) {
       ret.setRetCode(-1).setRetMessage("VRF Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(pbo.getSignature))), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
-          // TODO 判断是否有足够余额，只发给有足够余额的节点    
-          log.error("unauthorization to get block" + pbo.getSignature);
-          ret.setRetCode(-1).setRetMessage("Unauthorization")
-          handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-        } else {
+//    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(pbo.getSignature))), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+//      // TODO 判断是否有足够余额，只发给有足够余额的节点
+//      log.error("unauthorization to get block" + pbo.getSignature);
+//      ret.setRetCode(-1).setRetMessage("Unauthorization")
+//      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+    } else {
       try {
-        
-        
+
         MDCSetBCUID(VCtrl.network())
         MDCSetMessageID(pbo.getMessageId)
         ret.setMessageId(pbo.getMessageId);
@@ -65,16 +64,16 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         ) {
           val b = VCtrl.loadFromBlock(id, pbo.getNeedBody)
           if (b != null) {
-              b.map(bs => {
-                if (bs !=null && totalSize <= maxTotalSize) {
-                  totalSize = totalSize + bs.build().toByteArray().size;
-                  if (totalSize <= maxTotalSize) {
-                    ret.addBlockHeaders(bs);
-                  } else {
-                    log.info("package too large. size=" + totalSize + " blk=" + id)
-                  } 
+            b.map(bs => {
+              if (bs != null && totalSize <= maxTotalSize) {
+                totalSize = totalSize + bs.build().toByteArray().size;
+                if (totalSize <= maxTotalSize) {
+                  ret.addBlockHeaders(bs);
+                } else {
+                  log.info("package too large. size=" + totalSize + " blk=" + id)
                 }
-              })
+              }
+            })
           }
         }
         pbo.getBlockIdxList.map { id =>
@@ -85,7 +84,7 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
             })
             if (totalSize <= maxTotalSize) {
               b.map(bs => {
-                if (bs !=null) {
+                if (bs != null) {
                   totalSize = totalSize + bs.build().toByteArray().size;
                   log.info("blk=" + id + " size=" + bs.build().toByteArray().size)
                   if (totalSize <= maxTotalSize) {

@@ -7,10 +7,10 @@ import java.util.concurrent.{ CountDownLatch, TimeUnit }
 import onight.tfw.async.CallBack
 import onight.tfw.otransio.api.beans.FramePacket
 import org.apache.commons.lang3.StringUtils
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.{ PBlockEntryOrBuilder, PRetGetTransaction, PSCoinbase, PSGetTransaction }
-import org.brewchain.core.model.Block.BlockInfo
-import org.brewchain.core.model.Transaction
+import org.brewchain.mcore.model.Block.BlockInfo
+import org.brewchain.mcore.model.Transaction
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.node.{ Network, Node }
 import org.brewchain.p22p.utils.LogHelper

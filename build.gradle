@@ -1,21 +1,18 @@
 buildscript {
 	dependencies {
 		classpath "onight.osgi:zpp-gradle_1.8:3.4.0"
-		classpath "org.brewchain:org.brewchain.core:3.0.0"
 	 }
 }
-version = '3.0.0'
-project.group='org.brewchain'
+version = '2020.1.0'
+project.group='org.brewchain.mcore'
 
 apply plugin: 'zippo'
 
 dependencies {
-	//	 testCompile 'junit:junit:4.12'
-	compile ("org.fc.zippo:org.fc.zippo.oapi:4.0.2")
-	compile ("org.brewchain:org.brewchain.p22p:3.0.0")
-	compile ("org.brewchain:org.brewchain.model:3.0.0")
-	compile ("org.brewchain:org.brewchain.core:3.0.0")
-	//   includeInJar("org.ehcache:ehcache:3.5.2")
+	compile ("org.fc.zippo:org.fc.zippo.oapi:4.1.0")
+	compile 'org.osgi:org.osgi.annotation:6.0.0'
+	compile ("org.brewchain.mcore:org.brewchain.mcore.p22p:2020.1.0")
+	compile ("org.brewchain.mcore:org.brewchain.mcore.microledger:2020.1.0")
 }
 protobuf {
     generatedFilesBaseDir = "$projectDir/src"

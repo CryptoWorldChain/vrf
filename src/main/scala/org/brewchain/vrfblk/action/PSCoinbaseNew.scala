@@ -5,7 +5,7 @@ import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
 import org.brewchain.bcrand.model.Bcrand.PCommand
 import org.brewchain.bcrand.model.Bcrand.PSCoinbase
-import org.brewchain.core.model.Block.BlockInfo;
+import org.brewchain.mcore.model.Block.BlockInfo;
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.PSMVRFNet
@@ -50,10 +50,10 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
       // NodeStateSwitcher.offerMessage(new Initialize());
-    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(block.getMiner.getAddress), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
-      // TODO 判断是否有足够余额，只发给有足够余额的节点
-      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
-      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
+//    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(block.getMiner.getAddress), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+//      // TODO 判断是否有足够余额，只发给有足够余额的节点
+//      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
+//      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)

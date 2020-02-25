@@ -1,6 +1,7 @@
 package org.brewchain.vrfblk;
 
-import org.brewchain.core.dbapi.ODBDao;
+
+import org.brewchain.mcore.odb.ODBDao;
 
 import onight.tfw.ojpa.api.ServiceSpec;
 

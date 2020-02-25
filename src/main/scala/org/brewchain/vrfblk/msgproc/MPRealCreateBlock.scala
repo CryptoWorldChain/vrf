@@ -5,16 +5,16 @@ import java.util.concurrent.TimeUnit
 
 import com.google.protobuf.ByteString
 import onight.tfw.outils.serialize.UUIDGenerator
-import org.brewchain.core.crypto.BitMap
+import org.brewchain.mcore.crypto.BitMap
 import org.brewchain.bcrand.model.Bcrand.{ BlockWitnessInfo, PBlockEntry, PSCoinbase }
-import org.brewchain.core.model.Block.BlockInfo
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Block.BlockInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.Daos
 import org.brewchain.vrfblk.tasks.{ BlockMessage, VCtrl }
 import org.brewchain.vrfblk.utils.{ BlkTxCalc, TxCache, VConfig }
-import org.brewchain.tools.bytes.BytesHelper
+import org.brewchain.mcore.tools.bytes.BytesHelper
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer

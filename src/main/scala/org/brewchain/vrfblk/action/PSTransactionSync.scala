@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.felix.ipojo.annotations.{ Instantiate, Provides }
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction.SyncType
 import org.brewchain.bcrand.model.Bcrand.{ PCommand, PRetSyncTransaction, PSSyncTransaction }
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 import org.brewchain.p22p.action.PMNodeHelper
 import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.tasks.VCtrl
@@ -33,7 +33,7 @@ import org.brewchain.vrfblk.utils.PendingQueue
 import lombok.extern.slf4j.Slf4j;
 
 import scala.collection.JavaConversions._
-import org.brewchain.core.model.Transaction.TransactionInfo
+import org.brewchain.mcore.model.Transaction.TransactionInfo
 
 @NActorProvider
 @Instantiate
