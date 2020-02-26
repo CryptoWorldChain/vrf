@@ -59,7 +59,6 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       })
     }
     var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    log.error("state=" + state);
     state match {
       case VNodeState.VN_DUTY_BLOCKMAKERS =>
         VCtrl.curVN().setState(state)

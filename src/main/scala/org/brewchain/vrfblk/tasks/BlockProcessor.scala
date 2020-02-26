@@ -60,7 +60,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       super.offerMessage(t)
     }
   }
-  
+
   def offerNotaryBlock(t: NotaryBlock): Unit = {
     var put = false;
     processHash.synchronized({
@@ -80,7 +80,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       val key = Daos.enc.bytesToHexStr(t.block.getHeader.getHash.toByteArray());
       if (processHash.containsKey(key)) {
       } else {
-        processHash.put(key,key)
+        processHash.put(key, key)
         put = true;
       }
     })
@@ -88,7 +88,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       super.offerMessage(t)
     }
   }
-  
+
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
     //单线程执行
@@ -96,13 +96,12 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-          log.error("MPCreateBlock:start");
           var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
           var isFirstMaker = false;
           if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-          log.error("MPCreateBlock:start1");
+          log.error("make block sleep="+sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
@@ -111,13 +110,12 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 sleepMS = sleepMS - 100;
                 if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
                   sleepMS = 0;
-
                 }
               } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
-              
+
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
-              log.error("MPRealCreateBlock:start");
-              BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
+                //              log.error("MPRealCreateBlock:start");
+                BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
               } else {
                 log.warn("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
               }
