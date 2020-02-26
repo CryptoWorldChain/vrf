@@ -77,6 +77,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     var newNetBits = BigInteger.ZERO
     val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
     VCtrl.coMinerByUID.foreach(f => {
+      log.info("check:"+f._2.getBcuid+":"+f._2.getCominers+"==>"+cn.getCominers+",result="+
+          mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)+",height="+f._2.getCurBlock+"==>"+VCtrl.curVN().getCurBlock);
+      
       if ( //other nodes
       f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
@@ -89,7 +92,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
 
-    //    log.error("MPRealCreateBlock:start confirm=" + wallAccount + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
+    log.error("MPRealCreateBlock:start confirm=" + wallAccount+ ",netcount="+newNetBits.bitCount()+ ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
     val (newblk, txs) = newBlockFromAccount(
       VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
@@ -148,7 +151,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       //      newhash, prevhash, mapToBigInt(netbits).bigInteger
       VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(cn.getBcuid)).foreach(f => {
         val pn = f._2;
-        val (state, blockbits, notarybits) = RandFunction.chooseGroups(newhash, newNetBits, pn.getBitIdx)
+        val (state, blockbits, notarybits) = RandFunction.chooseGroups(newblk.getMiner.getTerm, newNetBits, pn.getBitIdx)
         if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
           var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, blockbits, pn.getBitIdx);
           if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {

@@ -32,6 +32,7 @@ import org.brewchain.bcrand.model.Bcrand.VNodeState
 import org.brewchain.vrfblk.utils.VConfig
 import org.brewchain.vrfblk.Daos
 import com.google.protobuf.ByteString
+import org.brewchain.bcrand.model.Bcrand.VNode
 
 @NActorProvider
 @Instantiate
@@ -50,20 +51,27 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
       // NodeStateSwitcher.offerMessage(new Initialize());
-//    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(block.getMiner.getAddress), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
-//      // TODO 判断是否有足够余额，只发给有足够余额的节点
-//      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
-//      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
+      //    } else if (Daos.accountHandler.getTokenBalance(Daos.accountHandler.getAccountOrCreate(block.getMiner.getAddress), VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) < 0) {
+      //      // TODO 判断是否有足够余额，只发给有足够余额的节点
+      //      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
+      //      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
+//      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val parentBlock = Daos.chainHelper.getBlockByHash(block.getHeader.getParentHash.toByteArray());
+      if (VCtrl.coMinerByUID.contains(pbo.getBcuid) ) {
+        val bb = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, VNode.newBuilder().build()).toBuilder();
+        bb.setCurBlock(block.getHeader.getHeight.intValue());
+        bb.setCurBlockHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()));
+        VCtrl.coMinerByUID.put(pbo.getBcuid, bb.build());
+      }
+
       if (parentBlock == null) {
         if (VCtrl.curVN().getState != VNodeState.VN_INIT
           && VCtrl.curVN().getState != VNodeState.VN_SYNC_BLOCK
-          && VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight ) {
+          && VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) {
           BlockProcessor.offerBlock(new ApplyBlock(pbo)); //need to sync or gossip
         } else {
           log.info("Drop newBlock:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);

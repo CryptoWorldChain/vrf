@@ -110,7 +110,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         m match {
           case BeaconConverge(height, blockHash, hash, seed) => {
             // parentBlock.Hash, beaconHash, netBits
-//            log.error("blockHash=" + blockHash + " beaconHash=" + hash + " seed=" + seed);
+            log.error("blockHash=" + blockHash + " beaconHash=" + hash + " seed=" + seed);
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
             NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
           }

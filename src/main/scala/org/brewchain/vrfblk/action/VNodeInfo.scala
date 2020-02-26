@@ -61,18 +61,19 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
           // 如果消息是自己发的
           if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
-            val self = pbo.getVn
+            val vn = pbo.getVn
 
-            if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || self.getDoMine) {
-              //                  log.info("put into cominer bcuid=" + self.getBcuid + " address=" + self.getCoAddress);
+            if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || vn.getDoMine) {
+               log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
               //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
               //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-              VCtrl.addCoMiner(self);
+              VCtrl.addCoMiner(vn);
               //} else {
               //  VCtrl.coMinerByUID.remove(self.getBcuid);
               //}
             } else {
-              VCtrl.removeCoMiner(self.getBcuid);
+              log.info("remove cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
+              VCtrl.removeCoMiner(vn.getBcuid);
             }
             // log.debug("current cominer::" + VCtrl.coMinerByUID);
             val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId);
