@@ -126,7 +126,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
       //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
 
-      log.error("set beacon hash=" + newblk.getMiner.getTerm);
+      log.info("set beacon hash=" + newblk.getMiner.getTerm);
       cn.setCurBlock(newblockheight)
         .setBeaconHash(newblk.getMiner.getTerm)
         .setBeaconSign(beaconSig)

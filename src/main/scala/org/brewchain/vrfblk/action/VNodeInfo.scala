@@ -57,7 +57,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         })
         ret.setVn(VCtrl.curVN())
         MDCSetMessageID(pbo.getMessageId);
-        log.info("VNodeInfo::from=" + pbo.getVn.getBcuid);
+//        log.info("VNodeInfo::from=" + pbo.getVn.getBcuid);
         if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
           // 如果消息是自己发的
           if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
@@ -82,7 +82,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               if (blk == null) {
                 BeaconGossip.offerMessage(pbo);
               } else {
-                log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+//                log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
                 psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                 psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
                   .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
