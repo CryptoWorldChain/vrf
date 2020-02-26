@@ -801,6 +801,24 @@ public final class Bcrand {
      */
     com.google.protobuf.ByteString
         getAuthBalanceBytes();
+
+    /**
+     * <pre>
+     *cominer bits
+     * </pre>
+     *
+     * <code>string cominers = 17;</code>
+     */
+    java.lang.String getCominers();
+    /**
+     * <pre>
+     *cominer bits
+     * </pre>
+     *
+     * <code>string cominers = 17;</code>
+     */
+    com.google.protobuf.ByteString
+        getCominersBytes();
   }
   /**
    * Protobuf type {@code org.brewchain.bcrand.model.VNode}
@@ -831,6 +849,7 @@ public final class Bcrand {
       beaconSign_ = "";
       doMine_ = false;
       authBalance_ = "";
+      cominers_ = "";
     }
 
     @java.lang.Override
@@ -946,6 +965,12 @@ public final class Bcrand {
               java.lang.String s = input.readStringRequireUtf8();
 
               authBalance_ = s;
+              break;
+            }
+            case 138: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              cominers_ = s;
               break;
             }
             default: {
@@ -1462,6 +1487,48 @@ public final class Bcrand {
       }
     }
 
+    public static final int COMINERS_FIELD_NUMBER = 17;
+    private volatile java.lang.Object cominers_;
+    /**
+     * <pre>
+     *cominer bits
+     * </pre>
+     *
+     * <code>string cominers = 17;</code>
+     */
+    public java.lang.String getCominers() {
+      java.lang.Object ref = cominers_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        cominers_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     *cominer bits
+     * </pre>
+     *
+     * <code>string cominers = 17;</code>
+     */
+    public com.google.protobuf.ByteString
+        getCominersBytes() {
+      java.lang.Object ref = cominers_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        cominers_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -1523,6 +1590,9 @@ public final class Bcrand {
       }
       if (!getAuthBalanceBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 16, authBalance_);
+      }
+      if (!getCominersBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 17, cominers_);
       }
       unknownFields.writeTo(output);
     }
@@ -1587,6 +1657,9 @@ public final class Bcrand {
       if (!getAuthBalanceBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(16, authBalance_);
       }
+      if (!getCominersBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(17, cominers_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -1634,6 +1707,8 @@ public final class Bcrand {
           == other.getDoMine());
       result = result && getAuthBalance()
           .equals(other.getAuthBalance());
+      result = result && getCominers()
+          .equals(other.getCominers());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -1680,6 +1755,8 @@ public final class Bcrand {
           getDoMine());
       hash = (37 * hash) + AUTHBALANCE_FIELD_NUMBER;
       hash = (53 * hash) + getAuthBalance().hashCode();
+      hash = (37 * hash) + COMINERS_FIELD_NUMBER;
+      hash = (53 * hash) + getCominers().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -1845,6 +1922,8 @@ public final class Bcrand {
 
         authBalance_ = "";
 
+        cominers_ = "";
+
         return this;
       }
 
@@ -1887,6 +1966,7 @@ public final class Bcrand {
         result.beaconSign_ = beaconSign_;
         result.doMine_ = doMine_;
         result.authBalance_ = authBalance_;
+        result.cominers_ = cominers_;
         onBuilt();
         return result;
       }
@@ -1991,6 +2071,10 @@ public final class Bcrand {
         }
         if (!other.getAuthBalance().isEmpty()) {
           authBalance_ = other.authBalance_;
+          onChanged();
+        }
+        if (!other.getCominers().isEmpty()) {
+          cominers_ = other.cominers_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -3091,6 +3175,95 @@ public final class Bcrand {
   checkByteStringIsUtf8(value);
         
         authBalance_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object cominers_ = "";
+      /**
+       * <pre>
+       *cominer bits
+       * </pre>
+       *
+       * <code>string cominers = 17;</code>
+       */
+      public java.lang.String getCominers() {
+        java.lang.Object ref = cominers_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          cominers_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       *cominer bits
+       * </pre>
+       *
+       * <code>string cominers = 17;</code>
+       */
+      public com.google.protobuf.ByteString
+          getCominersBytes() {
+        java.lang.Object ref = cominers_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          cominers_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       *cominer bits
+       * </pre>
+       *
+       * <code>string cominers = 17;</code>
+       */
+      public Builder setCominers(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        cominers_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *cominer bits
+       * </pre>
+       *
+       * <code>string cominers = 17;</code>
+       */
+      public Builder clearCominers() {
+        
+        cominers_ = getDefaultInstance().getCominers();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *cominer bits
+       * </pre>
+       *
+       * <code>string cominers = 17;</code>
+       */
+      public Builder setCominersBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        cominers_ = value;
         onChanged();
         return this;
       }
@@ -26427,7 +26600,7 @@ public final class Bcrand {
   static {
     java.lang.String[] descriptorData = {
       "\n\014bcrand.proto\022\032org.brewchain.bcrand.mod" +
-      "el\"\376\002\n\005VNode\022\r\n\005bcuid\030\001 \001(\t\022\022\n\nco_addres" +
+      "el\"\220\003\n\005VNode\022\r\n\005bcuid\030\001 \001(\t\022\022\n\nco_addres" +
       "s\030\002 \001(\t\0225\n\005state\030\003 \001(\0162&.org.brewchain.b" +
       "crand.model.VNodeState\022\021\n\tcur_block\030\004 \001(" +
       "\005\022\033\n\023cur_block_recv_time\030\005 \001(\003\022\033\n\023cur_bl" +
@@ -26436,92 +26609,92 @@ public final class Bcrand {
       "\t \001(\005\022\025\n\rvrf_randseeds\030\n \001(\t\022\021\n\tvrf_code" +
       "s\030\013 \001(\t\022\022\n\nvrf_groups\030\014 \001(\t\022\023\n\013beacon_ha" +
       "sh\030\r \001(\t\022\023\n\013beacon_sign\030\016 \001(\t\022\017\n\007do_mine" +
-      "\030\017 \001(\010\022\023\n\013authBalance\030\020 \001(\t\"u\n\013GossipMin" +
-      "er\022\r\n\005bcuid\030\001 \001(\t\022\021\n\tcur_block\030\002 \001(\005\022\026\n\016" +
-      "cur_block_hash\030\003 \001(\t\022\023\n\013beacon_hash\030\004 \001(" +
-      "\t\022\027\n\017block_extr_data\030\005 \001(\t\"\201\001\n\020BlockWitn" +
-      "essInfo\022\023\n\013blockheight\030\001 \001(\003\022\023\n\013beacon_h" +
-      "ash\030\002 \001(\t\022\017\n\007netbitx\030\003 \001(\t\0222\n\007witness\030\n " +
-      "\003(\0132!.org.brewchain.bcrand.model.VNode\"\260" +
-      "\002\n\nPSNodeInfo\022\021\n\treq_token\030\001 \001(\t\022-\n\002vn\030\003" +
-      " \001(\0132!.org.brewchain.bcrand.model.VNode\022" +
-      "5\n\004murs\030\004 \003(\0132\'.org.brewchain.bcrand.mod" +
-      "el.GossipMiner\022\020\n\010is_query\030\005 \001(\010\022$\n\034sugg" +
-      "uest_start_sync_block_id\030\006 \001(\005\022\031\n\021gossip" +
-      "_block_info\030\007 \001(\005\022B\n\021gossip_miner_info\030\010" +
-      " \001(\0132\'.org.brewchain.bcrand.model.Gossip" +
-      "Miner\022\022\n\nmessage_id\030\036 \001(\t\"%\n\023PSNodeGrace" +
-      "ShutDown\022\016\n\006reason\030\001 \001(\t\"\220\002\n\014PRetNodeInf" +
-      "o\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t" +
-      "\022-\n\002vn\030\003 \001(\0132!.org.brewchain.bcrand.mode" +
-      "l.VNode\022\025\n\rqueue_bsbatch\030\004 \001(\003\022\025\n\rqueue_" +
-      "confirm\030\005 \001(\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007ext" +
-      "info\030\007 \001(\t\0225\n\004murs\030\010 \003(\0132\'.org.brewchain" +
-      ".bcrand.model.GossipMiner\022\022\n\nmessage_id\030" +
-      "\036 \001(\t\022\014\n\004sign\030d \001(\t\"\321\003\n\nPSCoinbase\022\023\n\013be" +
-      "acon_hash\030\001 \001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022\030\n\020" +
-      "prev_beacon_hash\030\003 \001(\t\022\023\n\013block_seeds\030\004 " +
-      "\001(\014\022\030\n\020prev_block_seeds\030\005 \001(\014\022\021\n\tvrf_cod" +
-      "es\030\006 \001(\014\022\022\n\nco_address\030\007 \001(\t\022\017\n\007rewards\030" +
-      "\010 \001(\003\022\024\n\014block_height\030\t \001(\005\022\024\n\014cws_guara" +
-      "nty\030\n \001(\003\022\020\n\010slice_id\030\013 \001(\005\022\022\n\ngroup_bit" +
-      "s\030\014 \001(\t\022\023\n\013beacon_bits\030\r \001(\t\022\024\n\014witness_" +
-      "bits\030\016 \001(\t\022\r\n\005bcuid\030\017 \001(\t\022\027\n\017block_mine_" +
-      "time\030\020 \001(\003\022\017\n\007txcount\030\021 \001(\005\022<\n\013block_ent" +
-      "ry\030\022 \001(\0132\'.org.brewchain.bcrand.model.PB" +
-      "lockEntry\022\020\n\010txbodies\030\023 \003(\014\022\022\n\nmessage_i" +
-      "d\030\036 \001(\t\"\301\001\n\010PSNotary\022\024\n\014block_height\030\001 \001" +
-      "(\005\022\022\n\nblock_hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 " +
-      "\001(\t\022H\n\016blk_voteresult\030\004 \001(\01620.org.brewch" +
-      "ain.bcrand.model.PSNotary.PVoteResult\",\n" +
-      "\013PVoteResult\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJEC" +
-      "T\020\001\"I\n\010PQNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n" +
-      "\nblock_hash\030\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231" +
-      "\001\n\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016" +
-      "coinbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021" +
-      "\n\tblockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022" +
-      "\023\n\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"|\n\014PS" +
-      "SyncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002" +
-      " \001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(" +
-      "\005\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmessage_id\030\036 \001(\t" +
-      "\"\232\001\n\016PRetSyncBlocks\022\020\n\010ret_code\030\001 \001(\005\022\023\n" +
-      "\013ret_message\030\002 \001(\t\022>\n\rblock_headers\030\003 \003(" +
-      "\0132\'.org.brewchain.bcrand.model.PBlockEnt" +
-      "ry\022\022\n\nmessage_id\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t\"\375\001" +
-      "\n\021PSSyncTransaction\022\016\n\006txHash\030\001 \003(\014\022\017\n\007t" +
-      "xDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010syncT" +
-      "ype\030\004 \001(\01626.org.brewchain.bcrand.model.P" +
-      "SSyncTransaction.SyncType\022\022\n\nfrom_bcuid\030" +
-      "\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n\010SyncType" +
-      "\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n" +
-      "\nST_INBLOCK\020\002\"<\n\023PRetSyncTransaction\022\020\n\010" +
-      "ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\"\"\n\020P" +
-      "SGetTransaction\022\016\n\006txHash\030\001 \003(\t\"N\n\022PRetG" +
-      "etTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_m" +
-      "essage\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nPSRhr" +
-      "Check\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022" +
-      "\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\023" +
-      "\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rl" +
-      "astblocktime\030\005 \001(\003\022\032\n\022maxblockheightseen" +
-      "\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022\021\n\tblockh" +
-      "ash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030\013 \001(" +
-      "\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nbanforvote" +
-      "\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n\017PRetHeal" +
-      "thCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message" +
-      "\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.brewchain." +
-      "bcrand.model.VNode\022\024\n\014pending_node\030\r \001(\t" +
-      "\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132" +
-      "!.org.brewchain.bcrand.model.VNode\022\022\n\nco" +
-      "nfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syn" +
-      "cblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007PMod" +
-      "ule\022\007\n\003VRF\020\000*v\n\010PCommand\022\007\n\003JIN\020\000\022\007\n\003INF" +
-      "\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007" +
-      "\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RH" +
-      "R\020\037\022\007\n\003VNI\020 *\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000" +
-      "\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN" +
-      "_DUTY_BLOCKMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022" +
-      "\022\n\016VN_DUTY_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006p" +
-      "roto3"
+      "\030\017 \001(\010\022\023\n\013authBalance\030\020 \001(\t\022\020\n\010cominers\030" +
+      "\021 \001(\t\"u\n\013GossipMiner\022\r\n\005bcuid\030\001 \001(\t\022\021\n\tc" +
+      "ur_block\030\002 \001(\005\022\026\n\016cur_block_hash\030\003 \001(\t\022\023" +
+      "\n\013beacon_hash\030\004 \001(\t\022\027\n\017block_extr_data\030\005" +
+      " \001(\t\"\201\001\n\020BlockWitnessInfo\022\023\n\013blockheight" +
+      "\030\001 \001(\003\022\023\n\013beacon_hash\030\002 \001(\t\022\017\n\007netbitx\030\003" +
+      " \001(\t\0222\n\007witness\030\n \003(\0132!.org.brewchain.bc" +
+      "rand.model.VNode\"\260\002\n\nPSNodeInfo\022\021\n\treq_t" +
+      "oken\030\001 \001(\t\022-\n\002vn\030\003 \001(\0132!.org.brewchain.b" +
+      "crand.model.VNode\0225\n\004murs\030\004 \003(\0132\'.org.br" +
+      "ewchain.bcrand.model.GossipMiner\022\020\n\010is_q" +
+      "uery\030\005 \001(\010\022$\n\034sugguest_start_sync_block_" +
+      "id\030\006 \001(\005\022\031\n\021gossip_block_info\030\007 \001(\005\022B\n\021g" +
+      "ossip_miner_info\030\010 \001(\0132\'.org.brewchain.b" +
+      "crand.model.GossipMiner\022\022\n\nmessage_id\030\036 " +
+      "\001(\t\"%\n\023PSNodeGraceShutDown\022\016\n\006reason\030\001 \001" +
+      "(\t\"\220\002\n\014PRetNodeInfo\022\020\n\010ret_code\030\001 \001(\005\022\023\n" +
+      "\013ret_message\030\002 \001(\t\022-\n\002vn\030\003 \001(\0132!.org.bre" +
+      "wchain.bcrand.model.VNode\022\025\n\rqueue_bsbat" +
+      "ch\030\004 \001(\003\022\025\n\rqueue_confirm\030\005 \001(\003\022\022\n\nqueue" +
+      "_wall\030\006 \001(\003\022\017\n\007extinfo\030\007 \001(\t\0225\n\004murs\030\010 \003" +
+      "(\0132\'.org.brewchain.bcrand.model.GossipMi" +
+      "ner\022\022\n\nmessage_id\030\036 \001(\t\022\014\n\004sign\030d \001(\t\"\321\003" +
+      "\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 \001(\t\022\023\n\013bea" +
+      "con_sign\030\002 \001(\t\022\030\n\020prev_beacon_hash\030\003 \001(\t" +
+      "\022\023\n\013block_seeds\030\004 \001(\014\022\030\n\020prev_block_seed" +
+      "s\030\005 \001(\014\022\021\n\tvrf_codes\030\006 \001(\014\022\022\n\nco_address" +
+      "\030\007 \001(\t\022\017\n\007rewards\030\010 \001(\003\022\024\n\014block_height\030" +
+      "\t \001(\005\022\024\n\014cws_guaranty\030\n \001(\003\022\020\n\010slice_id\030" +
+      "\013 \001(\005\022\022\n\ngroup_bits\030\014 \001(\t\022\023\n\013beacon_bits" +
+      "\030\r \001(\t\022\024\n\014witness_bits\030\016 \001(\t\022\r\n\005bcuid\030\017 " +
+      "\001(\t\022\027\n\017block_mine_time\030\020 \001(\003\022\017\n\007txcount\030" +
+      "\021 \001(\005\022<\n\013block_entry\030\022 \001(\0132\'.org.brewcha" +
+      "in.bcrand.model.PBlockEntry\022\020\n\010txbodies\030" +
+      "\023 \003(\014\022\022\n\nmessage_id\030\036 \001(\t\"\301\001\n\010PSNotary\022\024" +
+      "\n\014block_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\003" +
+      "\022\023\n\013beacon_sign\030\003 \001(\t\022H\n\016blk_voteresult\030" +
+      "\004 \001(\01620.org.brewchain.bcrand.model.PSNot" +
+      "ary.PVoteResult\",\n\013PVoteResult\022\016\n\nVR_CON" +
+      "FIRM\020\000\022\r\n\tVR_REJECT\020\001\"I\n\010PQNotary\022\024\n\014blo" +
+      "ck_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\t\022\023\n\013b" +
+      "eacon_sign\030\003 \001(\t\"\231\001\n\013PBlockEntry\022\024\n\014bloc" +
+      "k_height\030\001 \001(\005\022\026\n\016coinbase_bcuid\030\002 \001(\t\022\020" +
+      "\n\010slice_id\030\003 \001(\005\022\021\n\tblockhash\030\004 \001(\t\022\024\n\014b" +
+      "lock_header\030\n \001(\014\022\023\n\013block_miner\030\013 \001(\014\022\014" +
+      "\n\004sign\0302 \001(\t\"|\n\014PSSyncBlocks\022\020\n\010start_id" +
+      "\030\001 \001(\005\022\016\n\006end_id\030\002 \001(\005\022\020\n\010needBody\030\003 \001(\010" +
+      "\022\021\n\tblock_idx\030\004 \003(\005\022\021\n\tsignature\030\005 \001(\t\022\022" +
+      "\n\nmessage_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlocks\022\020\n" +
+      "\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n\r" +
+      "block_headers\030\003 \003(\0132\'.org.brewchain.bcra" +
+      "nd.model.PBlockEntry\022\022\n\nmessage_id\030\036 \001(\t" +
+      "\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTransaction\022\016\n" +
+      "\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessag" +
+      "eid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org.brewch" +
+      "ain.bcrand.model.PSSyncTransaction.SyncT" +
+      "ype\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfirm_bcuid" +
+      "\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST" +
+      "_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetS" +
+      "yncTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_" +
+      "message\030\002 \001(\t\"\"\n\020PSGetTransaction\022\016\n\006txH" +
+      "ash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020\n\010ret_c" +
+      "ode\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n\ttxCont" +
+      "ent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinfo\030\001 \001(\t" +
+      "\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013r" +
+      "et_message\030\002 \001(\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n" +
+      "\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 \001(\003\022\032\n\022" +
+      "maxblockheightseen\030\006 \001(\003\022\026\n\016maxtermidsee" +
+      "dn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006coaddr\030\n " +
+      "\001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepasslastblk\030\014" +
+      " \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beacon_hash\030" +
+      "\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_code\030\001 " +
+      "\001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_node\030\003 \001(" +
+      "\0132!.org.brewchain.bcrand.model.VNode\022\024\n\014" +
+      "pending_node\030\r \001(\t\022\023\n\013direct_node\030\016 \001(\t\022" +
+      "3\n\010coMiners\030\017 \003(\0132!.org.brewchain.bcrand" +
+      ".model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsa" +
+      "ve_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022\017\n\007wal" +
+      "l_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*v\n\010PComma" +
+      "nd\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007" +
+      "\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SR" +
+      "T\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 *\216\001\n\nVNode" +
+      "State\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n" +
+      "\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n" +
+      "\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n" +
+      "\014VN_DUTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -26540,7 +26713,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_VNode_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_VNode_descriptor,
-        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", "AuthBalance", });
+        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", "AuthBalance", "Cominers", });
     internal_static_org_brewchain_bcrand_model_GossipMiner_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_org_brewchain_bcrand_model_GossipMiner_fieldAccessorTable = new

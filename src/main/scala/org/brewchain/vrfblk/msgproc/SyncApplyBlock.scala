@@ -72,6 +72,7 @@ case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PM
       BlockSync.syncBlockInQueue.decrementAndGet();
 //      log.info("value=" + BlockSync.syncBlockInQueue.get);
       if (BlockSync.syncBlockInQueue.get <= 0) {
+        log.info("BlockSync.syncBlockInQueue,need gossip block again:"+BlockSync.syncBlockInQueue.get);
         BeaconGossip.gossipBlocks();
       }
     }

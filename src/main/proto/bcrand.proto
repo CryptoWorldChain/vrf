@@ -59,6 +59,7 @@ message VNode{
 	string		beacon_sign = 14;//
 	bool        do_mine = 15;
 	string 		authBalance = 16;
+	string		cominers = 17;//cominer bits
 }
 
 message GossipMiner{

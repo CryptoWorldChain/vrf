@@ -32,7 +32,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
   //b: PBlockEntryOrBuilder
   def saveBlock(block: BlockInfo.Builder, needBody: Boolean = false): (Int, Int, String) = {
     // val block = BlockEntity.newBuilder().mergeFrom(b.getBlockHeader);
-
     if (!block.getMiner.getNid.equals(VCtrl.curVN().getBcuid)) {
       val startupApply = System.currentTimeMillis();
 
@@ -55,9 +54,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
-        // TODO 更新pnode，dnode的节点balance
-        VCtrl.refreshNodeBalance();
-        
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
@@ -101,7 +97,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
             + ",VB=" + pbo.getWitnessBits
-
+            + ",MB=" + cn.getCominers
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount
             + ",CBH=" + VCtrl.curVN().getCurBlock
@@ -109,9 +105,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",C=" + (System.currentTimeMillis() - BeaconGossip.lastGossipTime)
             + ",BEMS=" + VConfig.BLK_EPOCH_MS);
 
-            // && BlockProcessor.getQueue.size() < 2
+          // && BlockProcessor.getQueue.size() < 2
           if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
-              && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
             BeaconGossip.gossipBlocks();
           }
@@ -126,6 +122,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
             + ",MN=" + VCtrl.coMinerByUID.size
             + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+            + ",MB=" + cn.getCominers
             + ",VB=" + pbo.getWitnessBits
             + ",B=" + pbo.getBlockEntry.getBlockhash
             + ",TX=" + pbo.getTxcount);
@@ -134,7 +131,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (notaBits.testBit(cn.getBitIdx)) {
             VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
           }
-          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS) {
+          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
+            log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
             BeaconGossip.gossipBlocks();
           }
 
@@ -148,7 +146,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
           if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
-            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS ) {
+            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
             BeaconGossip.gossipBlocks();
           }

@@ -40,11 +40,10 @@ object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
-//     ! NodeStateSwitcher.offerMessage(new Initialize());
+      //     ! NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
-      if(VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) 
-      {
+      if (VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) {
         BlockProcessor.offerMessage(new NotaryBlock(pbo));
       }
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))

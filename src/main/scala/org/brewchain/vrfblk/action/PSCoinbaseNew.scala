@@ -59,7 +59,6 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       MDCSetMessageID(pbo.getMessageId)
       log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
-      
       val parentBlock = Daos.chainHelper.getBlockByHash(block.getHeader.getParentHash.toByteArray());
       if (parentBlock == null) {
         if (VCtrl.curVN().getState != VNodeState.VN_INIT
@@ -67,7 +66,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
           && VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight ) {
           BlockProcessor.offerBlock(new ApplyBlock(pbo)); //need to sync or gossip
         } else {
-          
+          log.info("Drop newBlock:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
         }
       } else {
         val nodebits = parentBlock.getMiner.getBits;

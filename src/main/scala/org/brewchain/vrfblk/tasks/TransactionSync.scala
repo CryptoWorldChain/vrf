@@ -57,20 +57,7 @@ object TxSync extends LogHelper {
           syncTransaction.addTxDatas(x)
         }
 
-        // TODO 判断是否有足够余额，只发给有足够余额的节点
-        VCtrl.allNodes.foreach(f => {
-          val n = f._2;
-          if(new BigInteger(n.getAuthBalance()).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-//            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
-//            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
-              VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, n.getBcuid, '9')
-            //}
-          } else {
-            log.error("cannot broadcast block ");
-          }
-        })
-       
-//        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)
         lastSyncCount.set(res.getTxHashCount)
       } else {

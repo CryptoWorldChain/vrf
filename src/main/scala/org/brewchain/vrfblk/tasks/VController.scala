@@ -21,6 +21,7 @@ import org.brewchain.mcore.crypto.BitMap
 import scala.collection.JavaConversions._
 import java.util.ArrayList
 import org.brewchain.p22p.action.PMNodeHelper
+import java.math.BigInteger
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -98,9 +99,6 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       cur_vnode.setCurBlockHash(blockHash)
       cur_vnode.setBeaconHash(beaconHash);
       cur_vnode.setVrfRandseeds(bits);
-
-      log.error("beaconHash=" + beaconHash)
-
       syncToDB()
     })
   }
@@ -118,10 +116,27 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
-  val allNodes: Map[String, VNode] = Map.empty[String, VNode];
 
   def curVN(): VNode.Builder = instance.cur_vnode
 
+  def addCoMiner(node: VNode) = {
+    coMinerByUID.synchronized({
+      coMinerByUID.put(node.getBcuid, node);
+      var cobits = BigInteger.ZERO;
+      coMinerByUID.map(f => cobits=cobits.setBit(f._2.getBitIdx));
+      instance.cur_vnode.setCominers(hexToMapping(cobits))
+    })
+  }
+  def removeCoMiner(bcuid: String) = {
+    coMinerByUID.synchronized({
+      val existnode = coMinerByUID.remove(bcuid);
+      if (existnode != null) {
+        var cobits = BigInteger.ZERO;
+        coMinerByUID.map(f => cobits=cobits.setBit(f._2.getBitIdx));
+        instance.cur_vnode.setCominers(hexToMapping(cobits))
+      }
+    })
+  }
   //防止ApplyBlock时节点Make出相同高度的block,或打出beaconHash错误的block
   val blockLock: ReentrantLock = new ReentrantLock();
 
@@ -160,41 +175,13 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     loadFromBlock(block, false)
   }
 
-  def refreshNodeBalance() {
-    allNodes.clear()
-
-    val network = networkByID("vrf")
-    network.directNodes.foreach(f => {
-      val n = f;
-      val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
-//      val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
-      val oVNode = VNode.newBuilder
-//      log.error("refresh dnode " + n.v_address + " balance " + balance.toString());
-//      oVNode.setAuthBalance(balance.toString());
-      oVNode.setBcuid(n.bcuid);
-      oVNode.setCoAddress(n.v_address);
-      allNodes.put(n.v_address, oVNode.build());
-    })
-    network.pendingNodes.foreach(f => {
-      val n = f;
-      val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(n.v_address)));
-//      val balance = Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN);
-      val oVNode = VNode.newBuilder
-//      log.error("refresh pnode " + n.v_address + " balance " + balance.toString());
-//      oVNode.setAuthBalance(balance.toString());
-      oVNode.setBcuid(n.bcuid);
-      oVNode.setCoAddress(n.v_address);
-      allNodes.put(n.v_address, oVNode.build());
-    })
-  }
-
   // 判断这个block是否是当前beacon中的第一个块
   def getPriorityBlockInBeaconHash(blk: BlockInfo): BlockInfo = {
     // 如果已经有更高的高度了，直接返回最高块
     // 如果相同高度的区块只有1个，返回true
     val bestblks = Daos.chainHelper.listConnectBlocksByHeight(blk.getHeader.getHeight);
     if (bestblks.length == 1) {
-      log.info("ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
+      log.info("bestblks=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk
     } else {
       // 判断是否是beaconhash中更高优先级的块
@@ -215,7 +202,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
         (sleepMS, p)
       }).sortBy(_._1).get(0)._2
 
-      log.info("ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
+      log.info("bestblks=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
     }
   }

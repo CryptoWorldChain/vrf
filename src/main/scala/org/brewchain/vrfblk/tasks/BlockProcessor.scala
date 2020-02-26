@@ -139,7 +139,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();
           } else {
-            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash);
+            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash+ " blk.needHeight="+ blk.needHeight +" curblock="+VCtrl.curVN().getCurBlock );
           }
         case n @ _ =>
           log.warn("unknow info:" + n);

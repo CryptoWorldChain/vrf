@@ -59,34 +59,31 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
 
         case syncInfo: SyncBlock =>
           log.info("syncInfo =" + syncInfo.toString().replaceAll("\n", ","));
-          if (syncBlockInQueue.get > 0) {
-            Thread.sleep(2000);
-          } else {
-            Thread.sleep(1000);
-          }
+          //          if (syncBlockInQueue.get > 0) {
+          //            Thread.sleep(2000);
+          //          } else {
+          //            Thread.sleep(1000);
+          //          }
 
           if (syncInfo.reqBody.getEndId < VCtrl.curVN().getCurBlock) {
             return ;
           }
           if (lastSyncBlockHeight <= -1) {
             lastSyncBlockHeight = syncInfo.reqBody.getStartId;
-          }
-          else if(lastSyncBlockHeight==syncInfo.reqBody.getStartId){
-            lastSyncBlockHeight =  syncInfo.reqBody.getStartId - 1; 
-          }else{
-            lastSyncBlockHeight =  0;
+          } else if (lastSyncBlockHeight == syncInfo.reqBody.getStartId) {
+            lastSyncBlockHeight = syncInfo.reqBody.getStartId - 1;
+          } else {
+            lastSyncBlockHeight = 0;
           }
 
           // TODO 临时只传递address，需要验证身份
           val reqbody =
-  //          if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
-  //            syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build();
-  //          } else 
-            if(lastSyncBlockHeight>0)
-            {
+            //          if (VCtrl.curVN().getCurBlock > syncInfo.reqBody.getStartId - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+            //            syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build();
+            //          } else
+            if (lastSyncBlockHeight > 0) {
               syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).setStartId(lastSyncBlockHeight).build();
-            }
-            else{
+            } else {
               syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build()
             }
           val messageid = UUIDGenerator.generate();
@@ -94,7 +91,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
 
-          log.info("reqbody=" + reqbody + " randn=" + randn);
+          log.info("reqbody=" + reqbody.toString().replaceAll("\n", ",") + " randn=" + randn);
           // 请求一组block，执行applyBlock方法
           VCtrl.network().asendMessage("SYNVRF", reqbody, randn,
             new CallBack[FramePacket] {
@@ -112,13 +109,13 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     if (ret.getRetCode() == 0) {
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
-                      log.info("sync realBlockCount=" + realmap.size+",req=["+reqbody.getStartId+","+reqbody.getEndId+"]");
+                      log.info("sync realBlockCount=" + realmap.size + ",req=[" + reqbody.getStartId + "," + reqbody.getEndId + "]");
                       realmap.foreach { b =>
                         //同步执行 apply 并验证返回结果
                         // applyblock
                         val block = BlockInfo.newBuilder().mergeFrom(b.getBlockHeader);
-                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount()+",blockheight="+block.getHeader.getHeight
-                           +",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + ","+BlockProcessor.getQueue.size())
+                        log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount() + ",blockheight=" + block.getHeader.getHeight
+                          + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + "," + BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
                         BlockProcessor.offerSyncBlock(new SyncApplyBlock(block));
                       }
@@ -129,7 +126,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     log.warn("error In SyncBlock:" + t.getMessage, t);
                 } finally {
                   //try gossip againt
-                   BeaconGossip.tryGossip(); 
+                  BeaconGossip.tryGossip();
                 }
               }
               def onFailed(e: java.lang.Exception, fp: FramePacket) {
