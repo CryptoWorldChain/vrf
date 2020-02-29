@@ -62,20 +62,23 @@ object RandFunction extends LogHelper with BitMap {
     // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
     val notaryCount: Int = Math.max(1, netBitsCount / 3);
 
-    if (netBits.bitCount() < 3) {
+    if (netBits.bitCount() < 3 && netBits.bitCount() > 0) {
       if (netBits.testBit(curIdx)) {
-//                log.error("chooseGroups.blockmaker.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
+        log.debug("chooseGroups.blockmaker.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
         (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, BigInteger.ZERO)
       } else {
-//                log.error("chooseGroups.sync.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-        (VNodeState.VN_DUTY_SYNC, netBits, BigInteger.ZERO)
+        log.debug("chooseGroups.sync.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
+        (VNodeState.VN_DUTY_NOTARY, netBits, BigInteger.ZERO)
       }
     } else {
       val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-      ////      log.error("chooseGroups.start originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount)
+      log.debug("chooseGroups.start originNetBits=" + netBits.bitCount() + ",netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount
+          +",isblock="+blockbits.testBit(curIdx)+",isnotary="+votebits.testBit(curIdx))
+          
       //      //      log.error("originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
       //      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-      //      log.error("chooseGroups.end blockbits=" + blockbits + " votebits=" + votebits)
+//      log.debug("chooseGroups.end blockbits=" + blockbits + " votebits=" + votebits)
+      
       // TODO 如果金额不足，不能成为BLOCKMAKER
       if (blockbits.testBit(curIdx)) {
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
@@ -106,7 +109,7 @@ object RandFunction extends LogHelper with BitMap {
       val ranInt = new BigInteger(beaconHash, 16).abs();
       val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue().abs;
       val sleepms = ((indexInBits + stepRange) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
-//       log.info(s"getRandMakeBlockSleep:sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${curIdx},blockbits.bitCount=${blockbits.bitCount()},stepRange=${stepRange},beaconHash=${beaconHash}");
+      //       log.info(s"getRandMakeBlockSleep:sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${curIdx},blockbits.bitCount=${blockbits.bitCount()},stepRange=${stepRange},beaconHash=${beaconHash}");
       sleepms;
     } else {
       VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS

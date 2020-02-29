@@ -50,57 +50,61 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       } else {
         log.debug("netbits reset:seed=" + VCtrl.curVN().getVrfRandseeds + ",net=" + VCtrl.network().bitenc.strEnc + ",netb=" +
           VCtrl.network().bitenc.bits.bigInteger.bitCount() + "[" + VCtrl.network().bitenc.bits.bigInteger.toString(2) + "]");
-      }      
+      }
       VCtrl.coMinerByUID.map(f => {
         if (f._2.getCurBlock >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)) {
           netBits = netBits.setBit(f._2.getBitIdx);
         }
       })
-    } 
-    var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    state match {
-      case VNodeState.VN_DUTY_BLOCKMAKERS =>
-        VCtrl.curVN().setState(state)
-        val myWitness = VCtrl.coMinerByUID.filter {
-          case (bcuid: String, node: Bcrand.VNode) => {
-            val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
-            VNodeState.VN_DUTY_NOTARY.equals(state)
-          }
-        }.map {
-          case (bcuid: String, node: Bcrand.VNode) => node
-        }.toList
-
-        val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
-          .setBeaconHash(hash)
-          .setBlockheight(height)
-          .setNetbitx(netBits.toString(16))
-          .addAllWitness(myWitness.asJava)
-
-        val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build, height + 1);
-        BlockProcessor.offerMessage(blkInfo);
-      case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
-        var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
-        notaryCheckHash = VCtrl.curVN().getBeaconHash;
-
-        Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
-          def run() {
-            while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
-              Thread.sleep(Math.min(100, timeOutMS));
-              timeOutMS = timeOutMS - 100;
-            }
-            if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
-              //decide to make block
-              log.info("nortary block need gossip block");
-              BeaconGossip.gossipBlocks();
-            }
-          }
-        })
-        VCtrl.curVN().setState(state)
-      case _ =>
-        VCtrl.curVN().setState(state)
-        log.debug("unknow state:" + state);
     }
+    var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
+    if (netbits1.bitCount() > 0 && VCtrl.network().bitenc.bits.bigInteger.and(blockbits).bitCount() <= 0) {
+      log.info("network cannot find block maker ,try again");
+      notifyStateChange(hash, preHash, BigInteger.ZERO, height);
+    } else {
+      state match {
+        case VNodeState.VN_DUTY_BLOCKMAKERS =>
+          VCtrl.curVN().setState(state)
+          val myWitness = VCtrl.coMinerByUID.filter {
+            case (bcuid: String, node: Bcrand.VNode) => {
+              val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
+              VNodeState.VN_DUTY_NOTARY.equals(state)
+            }
+          }.map {
+            case (bcuid: String, node: Bcrand.VNode) => node
+          }.toList
 
+          val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
+            .setBeaconHash(hash)
+            .setBlockheight(height)
+            .setNetbitx(netBits.toString(16))
+            .addAllWitness(myWitness.asJava)
+
+          val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build, height + 1);
+          BlockProcessor.offerMessage(blkInfo);
+        case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
+          var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
+          notaryCheckHash = VCtrl.curVN().getBeaconHash;
+
+          Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
+            def run() {
+              while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+                Thread.sleep(Math.min(100, timeOutMS));
+                timeOutMS = timeOutMS - 100;
+              }
+              if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+                //decide to make block
+                log.info("nortary block need gossip block");
+                BeaconGossip.gossipBlocks();
+              }
+            }
+          })
+          VCtrl.curVN().setState(state)
+        case _ =>
+          VCtrl.curVN().setState(state)
+          log.debug("unknow state:" + state);
+      }
+    }
   }
 
   def runBatch(items: List[StateMessage]): Unit = {
@@ -114,12 +118,12 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             val (newhash, sign) = RandFunction.genRandHash(blockHash, hash, seed)
             NodeStateSwitcher.offerMessage(new StateChange(sign, newhash, hash, seed, height));
           }
-          case StateChange(newsign, newhash, prevhash, netbits, height) => {                        
+          case StateChange(newsign, newhash, prevhash, netbits, height) => {
             //if (height==0 || (height > 0 && VCtrl.curVN().getBeaconHash.equals(prevhash))) {
-              log.info("state change cur hash=" + VCtrl.curVN().getBeaconHash + " prevhash=" + prevhash + " newhash=" + newhash+" netbits="+netbits);
-              VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
-              // VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(prevhash).setVrfRandseeds(netbits);
-              notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);
+            log.info("state change cur hash=" + VCtrl.curVN().getBeaconHash + " prevhash=" + prevhash + " newhash=" + newhash + " netbits=" + netbits);
+            VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits);
+            // VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(prevhash).setVrfRandseeds(netbits);
+            notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);
             //} else {
             //  log.error("beacon hash not equal. chash=" + VCtrl.curVN().getBeaconHash + " hash=" + prevhash);
             //}
@@ -133,7 +137,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
                     VCtrl.curVN().getCurBlockHash,
                     VCtrl.curVN().getPrevBlockHash, block.getMiner.getBits);
 
-                    log.error("init beacon hash=" + hash);
+                  log.error("init beacon hash=" + hash);
                   VCtrl.curVN().setBeaconHash(hash).setBeaconSign(sign).setCurBlockHash(hash);
                 } else {
 

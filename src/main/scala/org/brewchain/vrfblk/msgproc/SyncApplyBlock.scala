@@ -26,31 +26,12 @@ import com.google.protobuf.ByteString
 case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
   def proc() {
     try {
-      
-//      val newCoinbase = PSCoinbase.newBuilder()
-//      .setBlockHeight(block.getHeader.getNumber.intValue()).setCoAddress(
-//          Daos.enc.hexEnc(block.getMiner.getAddress.toByteArray()))
-//      .setMessageId(block.getMiner.getTermid)
-//      .setBcuid(block.getMiner.getBcuid)
-//      .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(block.getHeader.getNumber.intValue())
-//        .setCoinbaseBcuid(block.getMiner.getBcuid).setBlockhash(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray()))
-//        .setBlockHeader(block.getHeader.toByteString())
-//        //.setBlockMiner(newblk)
-//        .setSign(Daos.enc.hexEnc(block.getHeader.getHash.toByteArray())))
-//      .setSliceId(VConfig.SLICE_ID)
-//      .setTxcount(block.getBody.getTxsCount)
-//      .setBeaconBits(block.getMiner.getBit)
-//      .setBeaconSign(block.getMiner.getTermid)
-//      .setBeaconHash(block.getMiner.getTermid)
-//      .setBlockSeeds(block.bo
-//          ByteString.copyFrom(blockbits.toByteArray()))
-//      .setPrevBeaconHash(cn.getBeaconHash)
-//      .setPrevBlockSeeds(ByteString.copyFrom(cn.getVrfRandseeds.getBytes))
-//      .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
-//      .setWitnessBits(hexToMapping(notarybits))
-      
+
       val vres = Daos.blkHelper.syncBlock(block, true);
       var lastSuccessBlock = Daos.chainHelper.getLastConnectBlock
+      if (lastSuccessBlock == null) {
+        lastSuccessBlock = Daos.chainHelper.getMaxConnectBlock
+      }
       var maxid: Int = 0
 
       if (vres.getCurrentHeight >= block.getHeader.getHeight) {
@@ -68,11 +49,14 @@ case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PM
         VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastSuccessBlock));
         // VCtrl.instance.updateBlockHeight(maxid, Daos.enc.hexEnc(lastSuccessBlock.getHeader.getHash.toByteArray()), lastSuccessBlock.getMiner.getBit)
       }
+    } catch {
+      case t: Throwable =>
+        log.error("syncblock error:" + block.getHeader.getHeight, t);
     } finally {
       BlockSync.syncBlockInQueue.decrementAndGet();
-//      log.info("value=" + BlockSync.syncBlockInQueue.get);
+      //      log.info("value=" + BlockSync.syncBlockInQueue.get);
       if (BlockSync.syncBlockInQueue.get <= 0) {
-        log.info("BlockSync.syncBlockInQueue,need gossip block again:"+BlockSync.syncBlockInQueue.get);
+        log.info("BlockSync.syncBlockInQueue,need gossip block again:" + BlockSync.syncBlockInQueue.get);
         BeaconGossip.gossipBlocks();
       }
     }
