@@ -183,7 +183,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     if (bestblks.length == 1) {
       log.info("bestblks=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk
-    } else {
+    } else if (bestblks.length > 1) { 
       // 判断是否是beaconhash中更高优先级的块
       // 循环所有相同高度的块，排序sleepMS
       val priorityBlk = bestblks.toList.map(p => {
@@ -204,6 +204,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
       log.info("bestblks=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
+    }else{
+      blk;
     }
   }
 
