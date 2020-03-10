@@ -53,6 +53,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         val lastBlock = Daos.chainHelper.getLastConnectedBlock
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
+        
+        // TODO 更新pnode，dnode的节点balance
+        // VCtrl.refreshNodeBalance();
 
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));

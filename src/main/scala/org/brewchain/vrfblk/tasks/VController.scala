@@ -22,6 +22,9 @@ import scala.collection.JavaConversions._
 import java.util.ArrayList
 import org.brewchain.p22p.action.PMNodeHelper
 import java.math.BigInteger
+import org.brewchain.mcore.concurrent.AccountInfoWrapper
+import org.brewchain.mcore.actuators.tokencontracts20.TokensContract20.TokenRC20Value
+import org.brewchain.mcore.tools.bytes.BytesHelper
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -119,6 +122,22 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
   def curVN(): VNode.Builder = instance.cur_vnode
 
+  def haveEnoughToken(nodeAddress: String) = {
+    val acct = Daos.accountHandler.getAccount(Daos.enc.hexStrToBytes(nodeAddress));
+    if (acct != null) {
+      val account = new AccountInfoWrapper(acct);
+      account.loadStorageTrie(Daos.mcore.getStateTrie());
+      val tokendata = account.getStorage(VConfig.AUTH_TOKEN);
+      if (tokendata != null) {
+        val oTokenRC20Value = TokenRC20Value.parseFrom(tokendata)
+        if (BytesHelper.bytesToBigInteger(oTokenRC20Value.getBalance.toByteArray()).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+          true
+        }
+      }
+    }
+    false
+  }
+  
   def addCoMiner(node: VNode) = {
     coMinerByUID.synchronized({
       coMinerByUID.put(node.getBcuid, node);
