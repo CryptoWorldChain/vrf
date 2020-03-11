@@ -158,7 +158,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   log.info("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
 
                   // TODO 判断是否有足够token
-                  if (VCtrl.haveEnoughToken(friendNode.getCoAddress)) {
+                  if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(friendNode.getCoAddress)) {
                     VCtrl.addCoMiner(friendNode);
                   }
                 } else {

@@ -51,7 +51,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       log.debug("VCtrl not ready:");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
       // NodeStateSwitcher.offerMessage(new Initialize());
-          } else if (!VCtrl.haveEnoughToken(Daos.enc.bytesToHexStr(block.getMiner.getAddress.toByteArray()))) {
+          } else if (VConfig.AUTH_NODE_FILTER && !VCtrl.haveEnoughToken(Daos.enc.bytesToHexStr(block.getMiner.getAddress.toByteArray()))) {
             // TODO 判断是否有足够余额，只发给有足够余额的节点
             log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
             handler.onFinished(PacketHelper.toPBReturn(pack, pbo))

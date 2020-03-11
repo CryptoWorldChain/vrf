@@ -172,7 +172,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       
        // TODO 判断是否有足够余额，只发给有足够余额的节点
         VCtrl.coMinerByUID.foreach(f => {
-          if (VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
             VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
           }
         })

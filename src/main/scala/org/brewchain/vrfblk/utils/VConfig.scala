@@ -177,6 +177,7 @@ object VConfig {
   val AUTH_TOKEN = prop.get(PROP_DOMAIN + "auth.token", "EVS").getBytes();
   //节点准入持有Token的最小值
   var AUTH_TOKEN_MIN: BigInteger = new BigInteger(prop.get(PROP_DOMAIN + "auth.token.min", "10000000"));
+  var AUTH_NODE_FILTER = if ( prop.get("org.brewchain.evfs.node.filter", "off") == "off") false else true; 
 
   //打块时，tx需要经过多少节点确认才能进行打块，按照百分比计算
   //val CREATE_BLOCK_TX_CONFIRM_PERCENT = prop.get(PROP_DOMAIN + "create.block.tx.confirm.percent", 80); //80%

@@ -59,7 +59,7 @@ object TxSync extends LogHelper {
 
        // TODO 判断是否有足够余额，只发给有足够余额的节点
         VCtrl.coMinerByUID.foreach(f => {
-          if (VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
             VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
           }
         })

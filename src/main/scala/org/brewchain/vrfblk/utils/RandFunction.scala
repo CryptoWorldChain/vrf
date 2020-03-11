@@ -81,7 +81,11 @@ object RandFunction extends LogHelper with BitMap {
       
       // TODO 如果金额不足，不能成为BLOCKMAKER
       if (blockbits.testBit(curIdx)) {
-        (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+        if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(VCtrl.curVN().getCoAddress)) {
+          (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
+        } else {
+          (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
+        }
       } else if (votebits.testBit(curIdx)) {
         (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
       } else {
