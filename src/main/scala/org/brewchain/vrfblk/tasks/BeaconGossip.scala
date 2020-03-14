@@ -246,9 +246,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           incomingInfos.clear();
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
-            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
+//            syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
           } else if (size >= currentBR.votebase * 4 / 5) {
-            // tryRollbackBlock();
+             tryRollbackBlock();
           }
       };
     } else {

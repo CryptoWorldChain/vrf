@@ -64,7 +64,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             val vn = pbo.getVn
 
             if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || vn.getDoMine) {
-               log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
+//               log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
               //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
               //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
               VCtrl.addCoMiner(vn);
@@ -72,7 +72,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               //  VCtrl.coMinerByUID.remove(self.getBcuid);
               //}
             } else {
-              log.info("remove cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
+              log.info("remove cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress+",do-Mine="+vn.getDoMine+",from="+pack.getFrom());
               VCtrl.removeCoMiner(vn.getBcuid);
             }
             // log.debug("current cominer::" + VCtrl.coMinerByUID);

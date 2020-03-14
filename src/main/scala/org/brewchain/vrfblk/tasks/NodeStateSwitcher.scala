@@ -15,6 +15,7 @@ import org.brewchain.vrfblk.utils.{ RandFunction, VConfig }
 import org.fc.zippo.dispatcher.SingletonWorkShop
 
 import scala.collection.JavaConverters._
+import java.util.ArrayList
 
 trait StateMessage {
 
@@ -57,53 +58,48 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
         }
       })
     }
-    var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
-    if (netbits1.bitCount() > 0 && VCtrl.network().bitenc.bits.bigInteger.and(blockbits).bitCount() <= 0) {
-      log.info("network cannot find block maker ,try again");
-      notifyStateChange(hash, preHash, BigInteger.ZERO, height);
-    } else {
-      state match {
-        case VNodeState.VN_DUTY_BLOCKMAKERS =>
-          VCtrl.curVN().setState(state)
-          val myWitness = VCtrl.coMinerByUID.filter {
-            case (bcuid: String, node: Bcrand.VNode) => {
-              val state = RandFunction.chooseGroups(hash, netBits, node.getBitIdx) _1;
-              VNodeState.VN_DUTY_NOTARY.equals(state)
-            }
-          }.map {
-            case (bcuid: String, node: Bcrand.VNode) => node
-          }.toList
-
-          val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
-            .setBeaconHash(hash)
-            .setBlockheight(height)
-            .setNetbitx(netBits.toString(16))
-            .addAllWitness(myWitness.asJava)
-
-          val blkInfo = new MPCreateBlock(netBits, blockbits, notarybits, hash, preHash, sign, blockWitness.build, height + 1);
-          BlockProcessor.offerMessage(blkInfo);
-        case VNodeState.VN_DUTY_NOTARY | VNodeState.VN_DUTY_SYNC =>
-          var timeOutMS = blockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
-          notaryCheckHash = VCtrl.curVN().getBeaconHash;
-
-          Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
-            def run() {
-              while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
-                Thread.sleep(Math.min(100, timeOutMS));
-                timeOutMS = timeOutMS - 100;
-              }
-              if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
-                //decide to make block
-                log.info("nortary block need gossip block");
-                BeaconGossip.gossipBlocks();
-              }
-            }
-          })
-          VCtrl.curVN().setState(state)
-        case _ =>
-          VCtrl.curVN().setState(state)
-          log.debug("unknow state:" + state);
+    val ranInt: Int = new BigInteger(hash, 16).intValue().abs;
+    val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, netBits, VCtrl.curVN().getBitIdx);
+    VCtrl.curVN().setState(state);
+    //    var (state, blockbits, notarybits) = RandFunction.chooseGroups(hash, netBits, VCtrl.curVN().getBitIdx)
+    //    if (netbits1.bitCount() > 0 && VCtrl.network().bitenc.bits.bigInteger.and(blockbits).bitCount() <= 0) {
+    //      log.info("network cannot find block maker ,try again");
+    //      notifyStateChange(hash, preHash, BigInteger.ZERO, height);
+    //    } else {
+    if (newblockbits.testBit(VCtrl.curVN().getBitIdx)) {
+      VCtrl.curVN().setState(VNodeState.VN_DUTY_BLOCKMAKERS)
+      val myWitness = new ArrayList[Bcrand.VNode];
+      VCtrl.coMinerByUID.map { pair =>
+        if (natarybits.testBit(pair._2.getBitIdx)) {
+          myWitness.add(pair._2)
+        }
       }
+      val blockWitness: BlockWitnessInfo.Builder = BlockWitnessInfo.newBuilder()
+        .setBeaconHash(hash)
+        .setBlockheight(height)
+        .setNetbitx(netBits.toString(16))
+        .addAllWitness(myWitness)
+
+      val blkInfo = new MPCreateBlock(netBits, newblockbits, natarybits, hash, preHash, sign, blockWitness.build, height + 1,sleepMs);
+      BlockProcessor.offerMessage(blkInfo);
+    } else if (natarybits.testBit(VCtrl.curVN().getBitIdx)) {
+      var timeOutMS = newblockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
+      notaryCheckHash = VCtrl.curVN().getBeaconHash;
+
+      Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {
+        def run() {
+          while (timeOutMS > 0 && VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+            Thread.sleep(Math.min(100, timeOutMS));
+            timeOutMS = timeOutMS - 100;
+          }
+          if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
+            //decide to make block
+            log.info("nortary block need gossip block");
+            BeaconGossip.gossipBlocks();
+          }
+        }
+      })
+      VCtrl.curVN().setState(state)
     }
   }
 

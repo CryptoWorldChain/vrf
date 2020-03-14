@@ -64,7 +64,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(Daos.chainHelper.getBlockByHeight(0).getHeader.getHash.toByteArray()));
         cur_vnode.setBeaconHash("")
       } else {
-        val blk = Daos.chainHelper.getMaxConnectBlock
+        var blk = Daos.chainHelper.getMaxConnectBlock
+        if(blk==null){
+           blk =  Daos.chainHelper.getLastConnectedBlock;
+        }
         cur_vnode.setCurBlock(blk.getHeader.getHeight.intValue())
         //当前块BlockHASH
         cur_vnode.setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()));
@@ -189,18 +192,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       val priorityBlk = bestblks.toList.map(p => {
         val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
         val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
-
-        var sleepMS = 10l
-        if (blk.getHeader.getHeight > 1 && StringUtils.isNotBlank(prevBlock.getMiner.getTerm))
-          try {
-            sleepMS = RandFunction.getRandMakeBlockSleep(prevBlock.getMiner.getTerm, mapToBigInt(prevBlock.getMiner.getBits).bigInteger, blknode.node_idx)
-          } catch {
-            case t: Throwable =>
-
-          }
-
-        (sleepMS, p)
-      }).sortBy(_._1).get(0)._2
+        p
+      }).sortBy(_.getHeader.getTimestamp).get(0)
 
       log.info("bestblks=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
