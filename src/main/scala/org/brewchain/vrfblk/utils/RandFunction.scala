@@ -65,7 +65,7 @@ object RandFunction extends LogHelper with BitMap {
     // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
     val notaryCount: Int = Math.max(1, nodeCounts / 3);
     var firstBlockMakerBitIndex = -1;
-    if (nodeCounts <= 3) {
+    if (nodeCounts <= 1) {
       if (netBits.testBit(curBitIdx)) {
         log.debug("chooseGroups.blockmaker.netBits=" + netBits.bitCount() + " notaryCount=" + nodeCounts + " blockMakerCount=" + blockMakerCount);
         (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, BigInteger.ZERO, VConfig.BLK_EPOCH_MS, ranInt % nodeCounts)
