@@ -57,7 +57,14 @@ object TxSync extends LogHelper {
           syncTransaction.addTxDatas(x)
         }
 
-        network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+       // TODO 判断是否有足够余额，只发给有足够余额的节点
+        VCtrl.coMinerByUID.foreach(f => {
+          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
+          }
+        })
+
+        // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)
         lastSyncCount.set(res.getTxHashCount)
       } else {

@@ -106,8 +106,7 @@ object RandFunction extends LogHelper with BitMap {
       }
       //      val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue().abs;
       val sleepms = ((indexInBits + randInx) % nodeCounts) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
-
-      log.info(s"chooseGroups,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits},blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}");
+      log.info(s"chooseGroups,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}");
 
       if ((randInx + indexInBits) % nodeCounts < blockMakerCount) {
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits, sleepms, firstBlockMakerBitIndex)

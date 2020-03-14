@@ -24,6 +24,7 @@ import org.brewchain.mcore.handler.ChainHandler
 import org.brewchain.mcore.handler.BlockHandler
 import org.brewchain.mcore.api.ICryptoHandler
 import org.brewchain.mcore.handler.TransactionHandler
+import org.brewchain.mcore.handler.MCoreServices
 
 abstract class PSMVRFNet[T <: Message] extends SessionModules[T] with PBUtils with OLog {
   override def getModule: String = PModule.VRF.name()
@@ -77,6 +78,9 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   @ActorRequire(name = "bc_crypto", scope = "global") //  @BeanProperty
   var enc: ICryptoHandler = null;
 
+  @ActorRequire(name = "MCoreServices", scope = "global")
+	var mcore: MCoreServices = null;
+  
   def setPzp(_pzp: PZPCtrl) = {
     pzp = _pzp;
     Daos.pzp = pzp;
@@ -124,6 +128,15 @@ class Daos extends PSMVRFNet[Message] with ActorService {
   def getEnc(): ICryptoHandler = {
     enc;
   }
+  
+  def setMcore(_mcore: MCoreServices) = {
+    mcore = _mcore;
+    Daos.mcore = _mcore;
+  }
+  def getMcore(): MCoreServices = {
+    mcore;
+  }
+  
 
   @ActorRequire(name = "zippo.ddc", scope = "global")
   var ddc: IActorDispatcher = null;
@@ -150,6 +163,7 @@ object Daos extends OLog {
   var enc: ICryptoHandler = null;
   var ddc: IActorDispatcher = null;
   var accountHandler: AccountHandler = null;
+  var mcore: MCoreServices = null;
 
   def isDbReady(): Boolean = {
     vrfpropdb != null && vrfpropdb.getDaosupport.isInstanceOf[ODBSupport] &&

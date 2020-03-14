@@ -29,6 +29,11 @@ import org.brewchain.vrfblk.tasks.NodeStateSwitcher
 import org.brewchain.vrfblk.tasks.Initialize
 import org.brewchain.vrfblk.Daos
 import com.google.protobuf.ByteString
+import org.brewchain.mcore.model.Account.AccountInfo
+import org.brewchain.mcore.actuators.tokencontracts20.TokensContract20.TokenRC20Info
+import org.brewchain.mcore.concurrent.AccountInfoWrapper
+import org.brewchain.mcore.actuators.tokencontracts20.TokensContract20.TokenRC20Value
+import org.brewchain.mcore.tools.bytes.BytesHelper
 
 @NActorProvider
 @Instantiate
@@ -57,7 +62,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
         })
         ret.setVn(VCtrl.curVN())
         MDCSetMessageID(pbo.getMessageId);
-//        log.info("VNodeInfo::from=" + pbo.getVn.getBcuid);
+        //        log.info("VNodeInfo::from=" + pbo.getVn.getBcuid);
         if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || StringUtils.equals(pbo.getMessageId, BeaconGossip.currentBR.messageId)) {
           // 如果消息是自己发的
           if (network.nodeByBcuid(pack.getFrom()) != network.noneNode && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
@@ -83,7 +88,7 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               if (blk == null) {
                 BeaconGossip.offerMessage(pbo);
               } else {
-//                log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
+                //                log.error("set beacon hash =" + blk.getMiner.getTerm + " height=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
                 psret.setGossipBlockInfo(pbo.getGossipBlockInfo)
                 psret.setGossipMinerInfo(GossipMiner.newBuilder().setBcuid(blk.getMiner.getNid)
                   .setCurBlockHash(Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()))
@@ -151,7 +156,11 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                 val friendNode = pbo.getVn
                 if (friendNode.getDoMine) {
                   log.info("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
-                  VCtrl.addCoMiner(friendNode);
+
+                  // TODO 判断是否有足够token
+                  if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(friendNode.getCoAddress)) {
+                    VCtrl.addCoMiner(friendNode);
+                  }
                 } else {
                   log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
                   VCtrl.removeCoMiner(friendNode.getBcuid);

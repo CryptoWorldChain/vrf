@@ -103,6 +103,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     if (newblk == null) {
       log.debug("mining error: ch=" + cn.getCurBlock);
     } else {
+      // TODO 更新pnode，dnode的节点balance
+      // VCtrl.refreshNodeBalance();
+
       val newblockheight = newblk.getHeader.getHeight.intValue()
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
@@ -170,8 +173,27 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
         .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
         .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
+      
+       // TODO 判断是否有足够余额，只发给有足够余额的节点
+        VCtrl.coMinerByUID.foreach(f => {
+          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+            VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
+          }
+        })
+//      VCtrl.allNodes.foreach(f => {
+//          val n = f._2;
+//          if(Integer.parseInt(n.getAuthBalance()) >= VConfig.AUTH_TOKEN_MIN) {
+////            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
+////            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+//              log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
+//              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
+//            //}
+//          } else {
+//            log.error("cannot broadcast block ");
+//          }
+//        })
       TxCache.cacheTxs(txs);
-      VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
+      // VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
 
     }
 
