@@ -106,7 +106,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",BEMS=" + VConfig.BLK_EPOCH_MS);
 
           // && BlockProcessor.getQueue.size() < 2
-          if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
+          if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
             && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
             BeaconGossip.gossipBlocks();

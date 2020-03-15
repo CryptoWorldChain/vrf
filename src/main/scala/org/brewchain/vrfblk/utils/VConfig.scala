@@ -192,6 +192,13 @@ object VConfig {
   val DCTRL_CONTINUE_LOOP_COUNT = prop.get(PROP_DOMAIN + "dctrl.continue.loop.count", 100); //80%
   //出块后，块确认需要广播节点的比例 MAX 100 min 0
   val DCTRL_BLOCK_CONFIRMATION_RATIO = prop.get(PROP_DOMAIN + "block.confirmation.ratio", 0); //60%
+  
+  
+    //最多有多少个矿机
+  val MAX_BLOCK_MAKER = prop.get(PROP_DOMAIN + "max.block.maker", 21); //60%
+  
+  // 最多有多少个验证节点
+  val MAX_BLOCK_NOTARY = prop.get(PROP_DOMAIN + "max.block.notary", 13); //60%
 
 }
 
