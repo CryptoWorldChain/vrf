@@ -32,27 +32,29 @@ object ChainKeySyncHelper extends LogHelper {
   def dposNet(): Network = instance.network;
 
   def trySync(network: Network): Unit = {
-    log.debug("start chainkey sync. need refresh:" + Daos.accountHandler.getChainConfig.isEnableRefresh);
-    if (Daos.accountHandler.getChainConfig.isEnableRefresh) {
-      var vNetwork: Option[Node] = null;
-      val miners = VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid))
-        .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
-      if (miners.isDefined) {
-        vNetwork = network.directNodeByBcuid.get(miners.get._1);
-      } else {
-        val randomNode = randomNodeInNetwork(network)
-        vNetwork = randomNode;
-      }
+    if (Daos.accountHandler.getChainConfig != null) {
+      log.debug("start chainkey sync. need refresh:" + Daos.accountHandler.getChainConfig.isEnableRefresh);
+      if (Daos.accountHandler.getChainConfig.isEnableRefresh) {
+        var vNetwork: Option[Node] = null;
+        val miners = VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid))
+          .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
+        if (miners.isDefined) {
+          vNetwork = network.directNodeByBcuid.get(miners.get._1);
+        } else {
+          val randomNode = randomNodeInNetwork(network)
+          vNetwork = randomNode;
+        }
 
-      val msgid = UUIDGenerator.generate();
-      var oSyncChainKey = SyncChainKey.newBuilder();
-      oSyncChainKey
-        .setTimestamp((new Date()).getTime)
-        .setTmpPubKey(Daos.enc.bytesToHexStr(Daos.accountHandler.getChainConfig.coinbase_account_public_key));
-     
-      var signBytes = Daos.enc.sign(Daos.accountHandler.getChainConfig.coinbase_account_private_key, oSyncChainKey.build().toByteArray());
-      oSyncChainKey.setSignature(Daos.enc.bytesToHexStr(signBytes));
-      VCtrl.network().postMessage("SCKVRF", Left(oSyncChainKey.build()), msgid, vNetwork.get.bcuid, '9')
+        val msgid = UUIDGenerator.generate();
+        var oSyncChainKey = SyncChainKey.newBuilder();
+        oSyncChainKey
+          .setTimestamp((new Date()).getTime)
+          .setTmpPubKey(Daos.enc.bytesToHexStr(Daos.accountHandler.getChainConfig.coinbase_account_public_key));
+
+        var signBytes = Daos.enc.sign(Daos.accountHandler.getChainConfig.coinbase_account_private_key, oSyncChainKey.build().toByteArray());
+        oSyncChainKey.setSignature(Daos.enc.bytesToHexStr(signBytes));
+        VCtrl.network().postMessage("SCKVRF", Left(oSyncChainKey.build()), msgid, vNetwork.get.bcuid, '9')
+      }
     }
   }
 
