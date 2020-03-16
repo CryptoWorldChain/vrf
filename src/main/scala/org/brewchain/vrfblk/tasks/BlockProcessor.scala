@@ -96,12 +96,12 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-          var sleepMS = RandFunction.getRandMakeBlockSleep(blkInfo.beaconHash, blkInfo.blockbits, VCtrl.curVN().getBitIdx);
+          var sleepMS = blkInfo.sleepMs;
           var isFirstMaker = false;
-          if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+          if (sleepMS <= VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-//          log.error("make block sleep="+sleepMS);
+          log.error("make block sleep="+sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
@@ -111,7 +111,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
                   sleepMS = 0;
                 }
-              } while (sleepMS > 0 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
+              } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
 
               if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
                 //              log.error("MPRealCreateBlock:start");

@@ -23,6 +23,8 @@ import org.brewchain.bcrand.model.Bcrand.VNodeState
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.ArrayList
+import scala.collection.mutable.Seq
+import scala.collection.mutable.Buffer
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -77,9 +79,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     var newNetBits = BigInteger.ZERO
     val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
     VCtrl.coMinerByUID.foreach(f => {
-      log.info("check:"+f._2.getBcuid+":"+f._2.getCominers+"==>"+cn.getCominers+",result="+
-          mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)+",height="+f._2.getCurBlock+"==>"+VCtrl.curVN().getCurBlock);
-      
+      log.info("check:" + f._2.getBcuid + ":" + f._2.getCominers + "==>" + cn.getCominers + ",result=" +
+        mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits) + ",height=" + f._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock);
+
       if ( //other nodes
       f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
@@ -92,7 +94,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
 
-    log.error("MPRealCreateBlock:start confirm=" + wallAccount+ ",netcount="+newNetBits.bitCount()+ ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
+    log.error("MPRealCreateBlock:start confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
     val (newblk, txs) = newBlockFromAccount(
       VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
@@ -152,17 +154,19 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       }
       val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
       //      newhash, prevhash, mapToBigInt(netbits).bigInteger
+      val ranInt: Int = new BigInteger(newblk.getMiner.getTerm, 16).intValue().abs;
+      val (state, newblockbits,natarybits,sleepMs,firstBlockMakerBitIndex)= RandFunction.chooseGroups(ranInt, netBits, cn.getBitIdx);
+
+      //        , netIndexs: Array[Int], curArrayIndex: Int;
       VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(cn.getBcuid)).foreach(f => {
         val pn = f._2;
-        val (state, blockbits, notarybits) = RandFunction.chooseGroups(newblk.getMiner.getTerm, newNetBits, pn.getBitIdx)
-        if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
-          var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, blockbits, pn.getBitIdx);
-          if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+        if(newblockbits.testBit(pn.getBitIdx)){
+          if (firstBlockMakerBitIndex==pn.getBitIdx) {
             log.info("found next first maker:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
             VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
           }
         }
-        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits+ " bcuid="+pn.getBcuid)
+        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
       })
 
       newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
