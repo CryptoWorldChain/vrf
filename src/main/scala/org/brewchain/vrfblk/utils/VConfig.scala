@@ -34,9 +34,12 @@ object VConfig {
   //等待同步块的时间，防止总是循环请求
   val BLK_WAIT_SYNC_SEC = prop.get(PROP_DOMAIN + "blk.wait.sync.sec", 1); //2 seconds each block
 
-  //控制延迟，每次循环状态转变需要等待的时间
+  // 控制延迟，Tx每次循环状态转变需要等待的时间
   val TXS_EPOCH_MS = prop.get(PROP_DOMAIN + "txs.epoch.ms", 1000);
-
+  
+  // 控制延迟，ChainKey每次循环状态转变需要等待的时间
+  val CHAINKEY_EPOCH_MS = prop.get(PROP_DOMAIN + "chainkey.epoch.ms", 10000);
+  
   //每个块超时最大等待时间
   val MAX_WAIT_BLK_EPOCH_MS = prop.get(PROP_DOMAIN + "max.wait.blk.epoch.ms", 60000); //1 min to wait for next block mine
 
@@ -174,7 +177,7 @@ object VConfig {
   val RUN_COMINER = prop.get(PROP_DOMAIN + "run.cominer", 1);
   
   //节点准入Token名称
-  val AUTH_TOKEN = prop.get(PROP_DOMAIN + "auth.token", "EVS").getBytes();
+  val AUTH_TOKEN = prop.get(PROP_DOMAIN + "auth.token", "");
   //节点准入持有Token的最小值
   var AUTH_TOKEN_MIN: BigInteger = new BigInteger(prop.get(PROP_DOMAIN + "auth.token.min", "10000000"));
   var AUTH_NODE_FILTER = if ( prop.get("org.brewchain.evfs.node.filter", "off") == "off") false else true; 

@@ -127,7 +127,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     if (acct != null) {
       val account = new AccountInfoWrapper(acct);
       account.loadStorageTrie(Daos.mcore.getStateTrie());
-      val tokendata = account.getStorage(VConfig.AUTH_TOKEN);
+      val tokendata = account.getStorage(Daos.enc.hexStrToBytes(VConfig.AUTH_TOKEN));
       if (tokendata != null) {
         val oTokenRC20Value = TokenRC20Value.parseFrom(tokendata)
         if (BytesHelper.bytesToBigInteger(oTokenRC20Value.getBalance.toByteArray()).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {

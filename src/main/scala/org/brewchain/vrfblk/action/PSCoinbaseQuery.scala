@@ -5,11 +5,11 @@ import org.apache.felix.ipojo.annotations.Instantiate
 import org.apache.felix.ipojo.annotations.Provides
 import org.brewchain.bcrand.model.Bcrand.PCommand
 import org.brewchain.bcrand.model.Bcrand.PSCoinbase
-import org.brewchain.p22p.action.PMNodeHelper
-import org.brewchain.p22p.utils.LogHelper
 import org.brewchain.vrfblk.PSMVRFNet
 import org.brewchain.vrfblk.tasks.BlockProcessor
 import org.brewchain.vrfblk.tasks.VCtrl
+import org.brewchain.p22p.action.PMNodeHelper
+import org.brewchain.p22p.utils.LogHelper
 
 import onight.oapi.scala.commons.LService
 import onight.oapi.scala.commons.PBUtils
@@ -21,28 +21,60 @@ import onight.tfw.ntrans.api.ActorService
 import onight.tfw.proxy.IActor
 import onight.tfw.otransio.api.session.CMDService
 import org.brewchain.vrfblk.msgproc.ApplyBlock
+import org.brewchain.bcrand.model.Bcrand.SyncChainKey
+import org.brewchain.vrfblk.Daos
+import org.brewchain.bcrand.model.Bcrand.RespSyncChainKey
+import org.brewchain.bcrand.model.Bcrand.RespSyncChainKey
+import java.util.Date
+import org.brewchain.vrfblk.utils.VConfig
+import org.brewchain.mcore.model.Chain.ChainKeyList
+import org.brewchain.mcore.model.Chain.ChainKeyList
 
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
-class PDCoinbaseQ extends PSMVRFNet[PSCoinbase] {
+class PDCoinbaseQ extends PSMVRFNet[SyncChainKey] {
   override def service = PDCoinbaseQuery
 }
 
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
-object PDCoinbaseQuery extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
-  override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
+object PDCoinbaseQuery extends LogHelper with PBUtils with LService[SyncChainKey] with PMNodeHelper {
+  override def onPBPacket(pack: FramePacket, pbo: SyncChainKey, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
+    var oRespSyncChainKey = RespSyncChainKey.newBuilder();
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
-//      BlockProcessor.offerMessage(new ApplyBlock(pbo));
-      handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
+      var now:Date = new Date();
+      var begin:Date = new Date((pbo.getTimestamp.toLong*1000l));
+      var between:Long=(now.getTime()-begin.getTime())/1000;
+      if (between > 60) {
+        oRespSyncChainKey.clear();
+      } else {
+        var signTxt = pbo.getSignature();
+        
+        var hexPubKey = Daos.enc.signatureToKey(pbo.toBuilder().clearSignature().build().toByteArray(), Daos.enc.hexStrToBytes(signTxt));
+        if(Daos.enc.verify(hexPubKey, pbo.toByteArray(), Daos.enc.hexStrToBytes(signTxt))) {
+          var hexAddress = Daos.enc.signatureToAddress(pbo.toBuilder().clearSignature().build().toByteArray(), Daos.enc.hexStrToBytes(signTxt));
+          if (VConfig.AUTH_NODE_FILTER && VCtrl.haveEnoughToken(Daos.enc.bytesToHexStr(hexAddress))) {
+            var keyList = ChainKeyList.newBuilder();
+            keyList.putAllChainKeys(Daos.accountHandler.getChainConfig.getChainKeys);
+            
+            Daos.enc.encrypt(Daos.enc.hexStrToBytes(pbo.getTmpPubKey) ,keyList.build().toByteArray());
+          } else {
+            oRespSyncChainKey.clear();
+          }
+        } else {
+          oRespSyncChainKey.clear();
+        }
+      }
+      
+      handler.onFinished(PacketHelper.toPBReturn(pack, oRespSyncChainKey))
     }
   }
 
   //  override def getCmds(): Array[String] = Array(PWCommand.LST.name())
-  override def cmd: String = PCommand.CBR.name();
+  override def cmd: String = PCommand.SCK.name();
 }

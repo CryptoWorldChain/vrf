@@ -22,6 +22,8 @@ import org.brewchain.bcrand.model.Bcrand.PSNodeGraceShutDown
 import org.brewchain.vrfblk.tasks.TxSync
 import org.brewchain.vrfblk.tasks.TransactionSync
 import org.brewchain.mcore.tools.url.URLHelper
+import org.brewchain.vrfblk.tasks.ChainKeySync
+import org.brewchain.vrfblk.tasks.ChainKeySyncHelper
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -66,7 +68,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
     }
     Daos.chainHelper.startBlockChain(vrfnet.root().bcuid, vrfnet.root().v_address, vrfnet.root().name)
     UUIDGenerator.setJVM(vrfnet.root().bcuid.substring(1))
-//    vrfnet.changeNodeVAddr(Daos.enc.bytesToHexStr(naccount));
+    //    vrfnet.changeNodeVAddr(Daos.enc.bytesToHexStr(naccount));
     log.info("vrfnet.initOK:My Node=" + vrfnet.root() + ",CoAddr=" + vrfnet.root().v_address
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 
@@ -91,7 +93,11 @@ class VRFBGLoader() extends Runnable with LogHelper {
 
     TxSync.instance = TransactionSync(VCtrl.network());
     Daos.ddc.scheduleWithFixedDelay(TxSync.instance, VConfig.INITDELAY_GOSSIP_SEC,
-      Math.min(VConfig.TICK_DCTRL_MS_TX, VConfig.TXS_EPOCH_MS),TimeUnit.MILLISECONDS)
+      Math.min(VConfig.TICK_DCTRL_MS_TX, VConfig.TXS_EPOCH_MS), TimeUnit.MILLISECONDS)
+
+    ChainKeySyncHelper.instance = ChainKeySync(VCtrl.network());
+    Daos.ddc.scheduleWithFixedDelay(ChainKeySyncHelper.instance, VConfig.INITDELAY_GOSSIP_SEC,
+      VConfig.CHAINKEY_EPOCH_MS, TimeUnit.MILLISECONDS)
 
     //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
     //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)

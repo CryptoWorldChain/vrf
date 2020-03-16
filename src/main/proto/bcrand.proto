@@ -27,9 +27,17 @@ enum PCommand {
 	RHR = 31;//给运维使用的心跳
 
 	VNI = 32; // 查看节点信息
-
-
+	SCK = 33; // 同步chainKey
 };
+
+message SyncChainKey {
+	string tmpPubKey = 1;
+	string signature = 2;
+	int64 timestamp = 3;
+}
+message RespSyncChainKey {
+	string encChainKey = 1;
+}
 
 enum VNodeState{
 	VN_INIT = 0;		//初始化状态
