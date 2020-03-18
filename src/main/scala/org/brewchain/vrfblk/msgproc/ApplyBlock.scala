@@ -242,7 +242,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                 if (rspTx != null && rspTx.getTxContentCount > 0) {
                   val startSave = System.currentTimeMillis()
                   val txList = rspTx.getTxContentList.asScala.map(TransactionInfo.newBuilder().mergeFrom(_).build()).toList
-                  Daos.txHelper.syncTransactionBatch(txList.asJava, false, new BigInteger("0").setBit(vNetwork.get.node_idx))
+                  Daos.txHelper.syncTransactionBatch(txList.asJava, true, new BigInteger("0").setBit(vNetwork.get.node_idx))
                   notSuccess = false
                   log.debug(s"SRTVRF success height:${miner.getHeader.getHeight} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
 
