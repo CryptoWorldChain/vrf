@@ -182,9 +182,6 @@ object VConfig {
   var AUTH_TOKEN_MIN: BigInteger = new BigInteger(prop.get(PROP_DOMAIN + "auth.token.min", "10000000"));
   var AUTH_NODE_FILTER = if ( prop.get("org.brewchain.evfs.node.filter", "off") == "off") false else true; 
 
-  //打块时，tx需要经过多少节点确认才能进行打块，按照百分比计算
-  //val CREATE_BLOCK_TX_CONFIRM_PERCENT = prop.get(PROP_DOMAIN + "create.block.tx.confirm.percent", 80); //80%
-
   //同步交易时，在本地的缓存，给其他节点调用
   val TX_MAX_CACHE_SIZE = prop.get(PROP_DOMAIN + "tx.max.cache.size", 100000); //80%
   val TX_WALL_MAX_CACHE_SIZE = prop.get(PROP_DOMAIN + "tx.wall.max.cache.size", 300000); //80%

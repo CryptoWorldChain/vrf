@@ -41,7 +41,10 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
             case t if t != null => t
             case _ => {
               val t = Daos.txHelper.getTransaction(Daos.enc.hexStrToBytes(wantedHash))
-              TxCache.recentBlkTx.put(wantedHash, t)
+              if(t!=null)
+              {
+                TxCache.recentBlkTx.put(wantedHash, t)
+              }
               t
             }
           }
