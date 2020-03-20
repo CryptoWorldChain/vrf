@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.ArrayList
 import scala.collection.mutable.Seq
 import scala.collection.mutable.Buffer
+import java.util.HashSet
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -78,12 +79,14 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
     var newNetBits = BigInteger.ZERO
     val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
+    val curtime = System.currentTimeMillis();
     VCtrl.coMinerByUID.foreach(f => {
       log.info("check:" + f._2.getBcuid + ":" + f._2.getCominers + "==>" + cn.getCominers + ",result=" +
         mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits) + ",height=" + f._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock);
 
       if ( //other nodes
-      f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
+      (curtime - f._2.getCurBlockRecvTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
+        f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
         || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
         newNetBits = newNetBits.setBit(f._2.getBitIdx);
@@ -155,44 +158,60 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
       //      newhash, prevhash, mapToBigInt(netbits).bigInteger
       val ranInt: Int = new BigInteger(newblk.getMiner.getTerm, 16).intValue().abs;
-      val (state, newblockbits,natarybits,sleepMs,firstBlockMakerBitIndex)= RandFunction.chooseGroups(ranInt, netBits, cn.getBitIdx);
+      val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, netBits, cn.getBitIdx);
 
       //        , netIndexs: Array[Int], curArrayIndex: Int;
+      val keys = VCtrl.network().nodesByLocID.keySet
+      val sentkeyset = new HashSet[String];
+      
+      TxCache.cacheTxs(txs);
+
       VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(cn.getBcuid)).foreach(f => {
         val pn = f._2;
-        if(newblockbits.testBit(pn.getBitIdx)){
-          if (firstBlockMakerBitIndex==pn.getBitIdx) {
+        var dn = VCtrl.network().directNodeByBcuid.getOrElse(pn.getBcuid, VCtrl.network().noneNode)
+        if (newblockbits.testBit(pn.getBitIdx)) {
+          if (firstBlockMakerBitIndex == pn.getBitIdx) {
             log.info("found next first maker:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
             VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
+            dn = null;
           }
         }
-        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
+        if (dn != null && dn != VCtrl.network().noneNode && !sentkeyset.contains(dn.loc_id)
+          && dn.loc_gwuris.contains(dn.uri)) {
+          log.info("send to loc mainer:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
+          VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
+        }
+
+//        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
       })
 
       newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
         .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
         .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
         .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
+
+      // TODO 判断是否有足够余额，只发给有足够余额的节点
+        var bits = BigInteger.ZERO
+      VCtrl.coMinerByUID.foreach(f => {
+        if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+          bits = bits.setBit(f._2.getBitIdx);
+        }
+      })
+      VCtrl.network().bwallMessage("CBNVRF", Left(newCoinbase.build()), bits, newCoinbase.getMessageId, '9')
+//      VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
+      //      VCtrl.allNodes.foreach(f => {
+      //          val n = f._2;
+      //          if(Integer.parseInt(n.getAuthBalance()) >= VConfig.AUTH_TOKEN_MIN) {
+      ////            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
+      ////            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+      //              log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
+      //              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
+      //            //}
+      //          } else {
+      //            log.error("cannot broadcast block ");
+      //          }
+      //        })
       
-       // TODO 判断是否有足够余额，只发给有足够余额的节点
-        VCtrl.coMinerByUID.foreach(f => {
-          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-            VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
-          }
-        })
-//      VCtrl.allNodes.foreach(f => {
-//          val n = f._2;
-//          if(Integer.parseInt(n.getAuthBalance()) >= VConfig.AUTH_TOKEN_MIN) {
-////            var sleepMS = RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
-////            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
-//              log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
-//              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
-//            //}
-//          } else {
-//            log.error("cannot broadcast block ");
-//          }
-//        })
-      TxCache.cacheTxs(txs);
       // VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
 
     }

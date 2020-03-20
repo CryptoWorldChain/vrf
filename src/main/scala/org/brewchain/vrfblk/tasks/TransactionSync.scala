@@ -58,11 +58,19 @@ object TxSync extends LogHelper {
         }
 
        // TODO 判断是否有足够余额，只发给有足够余额的节点
-        VCtrl.coMinerByUID.foreach(f => {
-          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
-          }
-        })
+//        VCtrl.coMinerByUID.foreach(f => {
+//          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+//            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
+//          }
+//        })
+        
+          var bits = BigInteger.ZERO
+      VCtrl.coMinerByUID.foreach(f => {
+        if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+          bits = bits.setBit(f._2.getBitIdx);
+        }
+      })
+      VCtrl.network().bwallMessage("BRTVRF", Left(syncTransaction.build()), bits,msgid, '9')
 
         // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)

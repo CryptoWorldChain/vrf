@@ -102,6 +102,8 @@ object VConfig {
   val BLOCK_DISTANCE_COMINE = prop.get(PROP_DOMAIN + "block.distance.comine", 3);
 
   val BLOCK_DISTANCE_NETBITS = prop.get(PROP_DOMAIN + "block.distance.netbits", 2);
+  
+  val BLOCK_DISTANCE_WAITMS = prop.get(PROP_DOMAIN + "block.distance.waitsec", 10)*1000;
 
   //term投票被否决是最少等待时间，sleep = random(BAN_MINSEC_FOR_VOTE_REJECT,BAN_MAXSEC_FOR_VOTE_REJECT)
   val BAN_MINSEC_FOR_VOTE_REJECT = prop.get(PROP_DOMAIN + "ban.minsec.for.vote.reject", 20);

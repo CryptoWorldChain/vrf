@@ -53,7 +53,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         val lastBlock = Daos.chainHelper.getLastConnectedBlock
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
-        
+
         if (lastBlock != null) {
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
@@ -184,13 +184,29 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getNid)
     if (vNetwork.isEmpty) {
       log.info("not find miner in network")
-      val miners = VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid))
+
+      val cn = network.directNodeByBcuid.getOrElse(VCtrl.instance.cur_vnode.getBcuid, network.noneNode);
+      val localminers = VCtrl.coMinerByUID.filter(n => {
+
+        val dn = network.directNodeByBcuid.getOrElse(n._1, network.noneNode);
+        dn.loc_id.equals(cn.loc_id) &&
+          !n._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid)
+      })
         .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
-      if (miners.isDefined) {
-        vNetwork = network.directNodeByBcuid.get(miners.get._1)
+      if (localminers.isDefined) {
+        vNetwork = network.directNodeByBcuid.get(localminers.get._1)
       } else {
-        val randomNode = randomNodeInNetwork(network)
-        vNetwork = randomNode
+        val himiners = VCtrl.coMinerByUID.filter(n => {
+          !n._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid)
+        })
+          .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
+        if (himiners.isDefined) {
+          vNetwork = network.directNodeByBcuid.get(himiners.get._1)
+        } else {
+
+          val randomNode = randomNodeInNetwork(network)
+          vNetwork = randomNode
+        }
       }
     }
     log.debug("pick node=" + vNetwork)
