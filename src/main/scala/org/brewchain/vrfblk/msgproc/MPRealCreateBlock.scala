@@ -70,6 +70,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     (newblk, txs)
   }
 
+  var lastMakeBlockHeight = 0;
+  var lastMakeBlockCounter = 0;
+
   def proc(): Unit = {
     val start = System.currentTimeMillis();
     val cn = VCtrl.curVN();
@@ -80,13 +83,14 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     var newNetBits = BigInteger.ZERO
     val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
     val curtime = System.currentTimeMillis();
+
     VCtrl.coMinerByUID.foreach(f => {
       log.info("check:" + f._2.getBcuid + ":" + f._2.getCominers + "==>" + cn.getCominers + ",result=" +
         mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits) + ",height=" + f._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock);
 
       if ( //other nodes
-      (curtime - f._2.getCurBlockRecvTime) < VConfig.BLOCK_DISTANCE_WAITMS &&
-        f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
+      //      (curtime - f._2.getCurBlockRecvTime) < VConfig.BLOCK_DISTANCE_WAITMS &&
+      f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
         || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
         newNetBits = newNetBits.setBit(f._2.getBitIdx);
@@ -94,6 +98,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     })
     //}
 
+    if (lastMakeBlockCounter > VConfig.MAX_CONTINUE_BLOCK && newNetBits.bitCount() > 3) {
+        newNetBits = newNetBits.clearBit(cn.getBitIdx)
+    }
     val strnetBits = hexToMapping(newNetBits);
     // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
 
@@ -110,6 +117,13 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       // VCtrl.refreshNodeBalance();
 
       val newblockheight = newblk.getHeader.getHeight.intValue()
+      if (lastMakeBlockHeight == newblockheight - 1) {
+        lastMakeBlockCounter = lastMakeBlockCounter + 1;
+      }else{
+        lastMakeBlockCounter = 0;
+      }
+      lastMakeBlockHeight = newblockheight;
+
       //        log.debug("MineNewBlock:" + newblk);
       val now = System.currentTimeMillis();
       log.info("mining check ok :new block=" + newblockheight + ",CO=" + cn.getCoAddress

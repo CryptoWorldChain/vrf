@@ -202,5 +202,6 @@ object VConfig {
   // 最多有多少个验证节点
   val MAX_BLOCK_NOTARY = prop.get(PROP_DOMAIN + "max.block.notary", 13); //60%
 
+  val MAX_CONTINUE_BLOCK = prop.get(PROP_DOMAIN + "max.continue.block", 6); //60%
 }
 

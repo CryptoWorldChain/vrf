@@ -69,10 +69,13 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             val vn = pbo.getVn
 
             if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || vn.getDoMine) {
+              if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
+                  && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE * 3) {
 //               log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
               //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
               //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
-              VCtrl.addCoMiner(vn);
+                VCtrl.addCoMiner(vn);
+              }
               //} else {
               //  VCtrl.coMinerByUID.remove(self.getBcuid);
               //}
@@ -149,7 +152,9 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               log.info("nonenode=" + pack.getFrom() + " msgid=" + pbo.getMessageId)
             }
             case n: PNode =>
-              if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)) {
+              if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
+              && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE * 3    
+              ) {
                 // 成为打快节点
                 //log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
 
