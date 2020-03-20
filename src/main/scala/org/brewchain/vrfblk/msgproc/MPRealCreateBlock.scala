@@ -85,7 +85,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits) + ",height=" + f._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock);
 
       if ( //other nodes
-      (curtime - f._2.getCurBlockRecvTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
+      (curtime - f._2.getCurBlockRecvTime) < VConfig.BLOCK_DISTANCE_WAITMS &&
         f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
         && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
         || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
@@ -163,7 +163,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       //        , netIndexs: Array[Int], curArrayIndex: Int;
       val keys = VCtrl.network().nodesByLocID.keySet
       val sentkeyset = new HashSet[String];
-      
+      val sentbcuid = new HashSet[String];
       TxCache.cacheTxs(txs);
 
       VCtrl.coMinerByUID.filter(!_._2.getBcuid.equalsIgnoreCase(cn.getBcuid)).foreach(f => {
@@ -173,6 +173,10 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           if (firstBlockMakerBitIndex == pn.getBitIdx) {
             log.info("found next first maker:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
             VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
+            sentbcuid.add(pn.getBcuid)
+            if (dn.loc_gwuris.contains(dn.uri)) {
+              sentkeyset.add(dn.loc_id)
+            }
             dn = null;
           }
         }
@@ -180,9 +184,11 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           && dn.loc_gwuris.contains(dn.uri)) {
           log.info("send to loc mainer:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
           VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
+          sentbcuid.add(pn.getBcuid)
+          sentkeyset.add(dn.loc_id)
         }
 
-//        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
+        //        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
       })
 
       newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
@@ -191,14 +197,14 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
 
       // TODO 判断是否有足够余额，只发给有足够余额的节点
-        var bits = BigInteger.ZERO
+      var bits = BigInteger.ZERO
       VCtrl.coMinerByUID.foreach(f => {
-        if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+        if ((!sentbcuid.contains(f._2.getBcuid)) && (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress))) {
           bits = bits.setBit(f._2.getBitIdx);
         }
       })
       VCtrl.network().bwallMessage("CBNVRF", Left(newCoinbase.build()), bits, newCoinbase.getMessageId, '9')
-//      VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
+      //      VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
       //      VCtrl.allNodes.foreach(f => {
       //          val n = f._2;
       //          if(Integer.parseInt(n.getAuthBalance()) >= VConfig.AUTH_TOKEN_MIN) {
@@ -211,7 +217,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       //            log.error("cannot broadcast block ");
       //          }
       //        })
-      
+
       // VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
 
     }

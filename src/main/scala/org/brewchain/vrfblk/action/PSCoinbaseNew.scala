@@ -117,7 +117,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
   new Thread(ApplyRunner).start();
 
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
-    log.debug("Mine Block blk::" + pbo.getBlockHeight+",from="+pbo.getBcuid)
+    log.info("Mine Block blk::" + pbo.getBlockHeight+",from="+pbo.getBcuid)
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
@@ -127,7 +127,8 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       //update load
       val cominern = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, null);
       if (cominern != null && cominern == VCtrl.network().noneNode) {
-        VCtrl.coMinerByUID.put(pbo.getBcuid, cominern.toBuilder().setCurBlock(pbo.getBlockHeight).build());
+//        VCtrl.addCoMiner(bb.build());
+//        VCtrl.coMinerByUID.put(pbo.getBcuid, cominern.toBuilder().setCurBlock(pbo.getBlockHeight).build());
       }
       queue.offer(pbo);
 
@@ -151,7 +152,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
         val bb = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, VNode.newBuilder().build()).toBuilder();
         bb.setCurBlock(block.getHeader.getHeight.intValue());
         bb.setCurBlockHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()));
-        VCtrl.coMinerByUID.put(pbo.getBcuid, bb.build());
+        VCtrl.addCoMiner(bb.build());
       }
 
       if (parentBlock == null) {
