@@ -68,6 +68,7 @@ message VNode{
 	bool        do_mine = 15;
 	string 		authBalance = 16;
 	string		cominers = 17;//cominer bits
+	int64		last_begin_miner_time = 18;
 }
 
 message GossipMiner{

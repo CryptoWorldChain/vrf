@@ -33,7 +33,7 @@ object BeaconTask extends SRunner {
   def getName() = "beacontask"
 
   def runOnce() = {
-    log.debug("time check try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
+    log.info("time check try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
       + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
     if (System.currentTimeMillis() - VCtrl.curVN().getCurBlockMakeTime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) {
       log.info("do try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
@@ -104,7 +104,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def gossipBeaconInfo(gossipBlock: Int = -1) {
     val messageId = UUIDGenerator.generate();
-    //log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId)
+    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId)
 
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 

@@ -153,14 +153,14 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             }
             case n: PNode =>
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
-              && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE * 3    
+              && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE    
               ) {
                 // 成为打快节点
                 //log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
 
                 val friendNode = pbo.getVn
                 if (friendNode.getDoMine) {
-                  log.info("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                  log.debug("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
 
                   // TODO 判断是否有足够token
                   if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(friendNode.getCoAddress)) {

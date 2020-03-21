@@ -52,7 +52,7 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   def setBlocksPendingQ(queue: PendingQueue) = {
     //PSTransactionSyncService.dbBatchSaveList = ;
   }
-  
+
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
@@ -238,16 +238,18 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 }
               }
             case _ =>
-              val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);
-              if (fromNode != VCtrl.instance.network.noneNode) {
-                bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
+              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
+                val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);
+                if (fromNode != VCtrl.instance.network.noneNode) {
+                  bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
+                }
+                log.debug("" + pbo.getTxHashCount);
+                val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
+                pbo.getTxHashList.map { txHash =>
+                  tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
+                }
+                confirmHashList.addAll(tmpList)
               }
-              log.debug("" + pbo.getTxHashCount);
-              val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
-              pbo.getTxHashList.map { txHash =>
-                tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
-              }
-              confirmHashList.addAll(tmpList)
           }
 
         }

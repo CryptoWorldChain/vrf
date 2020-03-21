@@ -143,7 +143,12 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   
   def addCoMiner(node: VNode) = {
     coMinerByUID.synchronized({
-      coMinerByUID.put(node.getBcuid, node);
+      val lastnode=coMinerByUID.getOrElse(node.getBcuid,null)
+      if(lastnode==null){
+        coMinerByUID.put(node.getBcuid,node.toBuilder().setLastBeginMinerTime(System.currentTimeMillis()).build)
+      }else{
+        coMinerByUID.put(node.getBcuid,node.toBuilder().setLastBeginMinerTime(lastnode.getLastBeginMinerTime).build);
+      }
       var cobits = BigInteger.ZERO;
       coMinerByUID.map(f => cobits=cobits.setBit(f._2.getBitIdx));
       instance.cur_vnode.setCominers(hexToMapping(cobits))

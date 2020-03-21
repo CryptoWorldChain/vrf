@@ -125,11 +125,11 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
      {
       pendingBlockCache.put(pbo.getBlockHeight, pbo.getBcuid)
       //update load
-      val cominern = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, null);
-      if (cominern != null && cominern == VCtrl.network().noneNode) {
+//      val cominern = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, null);
+//      if (cominern != null && cominern == VCtrl.network().noneNode) {
 //        VCtrl.addCoMiner(bb.build());
 //        VCtrl.coMinerByUID.put(pbo.getBcuid, cominern.toBuilder().setCurBlock(pbo.getBlockHeight).build());
-      }
+//      }
       queue.offer(pbo);
 
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
@@ -164,8 +164,8 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
           log.info("Drop newBlock:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
         }
       } else {
-        val nodebits = parentBlock.getMiner.getBits;
-        val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);
+//        val nodebits = parentBlock.getMiner.getBits;
+        val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, parentBlock.getMiner.getBits);
         if (hash.equals(block.getMiner.getTerm) || block.getHeader.getHeight == 1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));
         } else {
@@ -180,11 +180,11 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
                 + " prvbh=" + Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()) + " dbprevbh=" + Daos.enc.bytesToHexStr(parentBlock.getHeader.getHash.toByteArray())
                 + " termid=" + block.getMiner.getTerm + " ptermid=" + parentBlock.getMiner.getTerm
                 + " need=" + rollbackhash + " get=" + pbo.getBeaconHash
-                + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits
+                + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + parentBlock.getMiner.getBits
                 + ",rollbackseed=" + BeaconGossip.rollbackGossipNetBits)
             }
           } else {
-            log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()) + " termid=" + block.getMiner.getTerm + " ptermid=" + parentBlock.getMiner.getTerm + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + nodebits)
+            log.warn("beaconhash not equal:: BH=" + pbo.getBlockEntry.getBlockhash + " prvbh=" + Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()) + " termid=" + block.getMiner.getTerm + " ptermid=" + parentBlock.getMiner.getTerm + " need=" + hash + " get=" + pbo.getBeaconHash + " prevBeaconHash=" + pbo.getPrevBeaconHash + " BeaconBits=" + parentBlock.getMiner.getBits)
           }
         }
       }

@@ -54,7 +54,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
-        if (lastBlock != null) {
+        if (lastBlock != null ) {
+          log.info("last connect block not equal c="+lastBlock.getHeader.getHeight+"==>b="+block.getHeader.getHeight);
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), lastBlock.getMiner.getBits)
@@ -63,25 +64,26 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
         }
       } else {
+        VCtrl.instance.updateBlockHeight(block.build());
         (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
       }
 
     } else {
-      val lastBlock = Daos.chainHelper.getLastConnectedBlock();
-      if (lastBlock != null) {
-        VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
-        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, lastBlock.getMiner.getBits)
-      } else {
+//      val lastBlock = Daos.chainHelper.getLastConnectedBlock();
+//      if (lastBlock != null && lastBlock.getHeader.getHeight != block.getHeader.getHeight ) {
+//        VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
+//        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, lastBlock.getMiner.getBits)
+//      } else {
         VCtrl.instance.updateBlockHeight(block.build())
         (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, block.getMiner.getBits)
-      }
+//      }
     }
   }
 
   def tryNotifyState(blockHash: String, blockHeight: Int, beaconHash: String, nodeBit: String) {
     log.info("tryNotifyState height=" + blockHeight + " Blockhash=" + blockHash + " BeaconHash=" + beaconHash + " nodeBit=" + nodeBit)
     val (hash, sign) = RandFunction.genRandHash(blockHash, beaconHash, nodeBit)
-    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, beaconHash, nodeBit, blockHeight));
+    NodeStateSwitcher.offerMessage(new StateChange(sign, hash, blockHash, nodeBit, blockHeight));
   }
 
   def proc() {
