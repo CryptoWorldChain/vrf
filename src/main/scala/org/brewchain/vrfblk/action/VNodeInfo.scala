@@ -152,13 +152,14 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
               log.info("nonenode=" + pack.getFrom() + " msgid=" + pbo.getMessageId)
             }
             case n: PNode =>
+              val friendNode = pbo.getVn
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
               && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE    
               ) {
                 // 成为打快节点
                 //log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
 
-                val friendNode = pbo.getVn
+                
                 if (friendNode.getDoMine) {
                   log.debug("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
 
@@ -171,6 +172,10 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
                   VCtrl.removeCoMiner(friendNode.getBcuid);
                 }
                 // log.debug("current cominer::" + VCtrl.coMinerByUID);
+              }else if (friendNode.getDoMine){
+                 // log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                 // VCtrl.removeCoMiner(friendNode.getBcuid);
+                
               }
 
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());
