@@ -55,7 +55,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
         if (lastBlock != null ) {
-          log.info("last connect block not equal c="+lastBlock.getHeader.getHeight+"==>b="+block.getHeader.getHeight);
+          log.info("last connect block equal c="+lastBlock.getHeader.getHeight+"==>b="+block.getHeader.getHeight);
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), lastBlock.getMiner.getBits)

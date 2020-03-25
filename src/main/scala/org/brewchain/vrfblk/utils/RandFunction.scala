@@ -61,6 +61,10 @@ object RandFunction extends LogHelper with BitMap {
 
   def chooseGroups(ranInt: Int, netBits: BigInteger, curBitIdx: Int): (VNodeState, BigInteger, BigInteger, Int, Int) = {
     val nodeCounts = netBits.bitCount();
+    _chooseGroups(ranInt, netBits, curBitIdx, nodeCounts);
+  }
+  
+  def _chooseGroups(ranInt: Int, netBits: BigInteger, curBitIdx: Int,nodeCounts:Int): (VNodeState, BigInteger, BigInteger, Int, Int) = {
     val blockMakerCount: Int = Math.min(VConfig.MAX_BLOCK_MAKER,Math.max(1, nodeCounts / 2));
     // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
     val notaryCount: Int = Math.min(VConfig.MAX_BLOCK_NOTARY,Math.max(1, nodeCounts / 3));

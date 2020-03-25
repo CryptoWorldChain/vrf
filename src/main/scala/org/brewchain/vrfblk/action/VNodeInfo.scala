@@ -70,17 +70,18 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
 
             if (StringUtils.equals(pack.getFrom(), network.root.bcuid) || vn.getDoMine) {
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
-                  && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE * 3) {
-//               log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
-              //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
-              //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
+                && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE * 3) {
+                log.info("put into cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress);
+                //val currentCoinbaseAccount = Daos.accountHandler.getAccountOrCreate(ByteString.copyFrom(Daos.enc.hexStrToBytes(self.getCoAddress)));
+                //if (Daos.accountHandler.getTokenBalance(currentCoinbaseAccount, VConfig.AUTH_TOKEN).compareTo(VConfig.AUTH_TOKEN_MIN) >= 0) {
                 VCtrl.addCoMiner(vn);
+              } else {
+                log.info("remove cominer for block not height enough:my.cur=" + VCtrl.curVN().getCurBlock + ",my.lastseenheight=" + VCtrl.instance.heightBlkSeen.get
+                  + ",dist.cur=" + pbo.getVn.getCurBlock);
+                VCtrl.coMinerByUID.remove(vn.getBcuid);
               }
-              //} else {
-              //  VCtrl.coMinerByUID.remove(self.getBcuid);
-              //}
             } else {
-              log.info("remove cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress+",do-Mine="+vn.getDoMine+",from="+pack.getFrom());
+              log.info("remove cominer bcuid=" + vn.getBcuid + " address=" + vn.getCoAddress + ",do-Mine=" + vn.getDoMine + ",from=" + pack.getFrom());
               VCtrl.removeCoMiner(vn.getBcuid);
             }
             // log.debug("current cominer::" + VCtrl.coMinerByUID);
@@ -154,28 +155,29 @@ object VNodeInfoService extends LogHelper with PBUtils with LService[PSNodeInfo]
             case n: PNode =>
               val friendNode = pbo.getVn
               if (pbo.getVn.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE && StringUtils.isNotBlank(pbo.getVn.getBcuid)
-              && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE    
-              ) {
+                && pbo.getVn.getCurBlock >= VCtrl.instance.heightBlkSeen.get - VConfig.BLOCK_DISTANCE_COMINE) {
                 // 成为打快节点
                 //log.debug("add cominer:" + pbo.getVn.getBcuid + ",blockheight=" + pbo.getVn.getCurBlock + ",cur=" + VCtrl.curVN().getCurBlock);
 
-                
                 if (friendNode.getDoMine) {
-                  log.debug("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                  log.info("put into cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
 
                   // TODO 判断是否有足够token
                   if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(friendNode.getCoAddress)) {
                     VCtrl.addCoMiner(friendNode);
                   }
                 } else {
-                  log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                  //                  log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                  log.info("remove cominer for block not height enough:test2:my.cur=" + VCtrl.curVN().getCurBlock + ",my.lastseenheight=" + VCtrl.instance.heightBlkSeen.get
+                    + ",dist.cur=" + pbo.getVn.getCurBlock);
+
                   VCtrl.removeCoMiner(friendNode.getBcuid);
                 }
                 // log.debug("current cominer::" + VCtrl.coMinerByUID);
-              }else if (friendNode.getDoMine){
-                 // log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
-                 // VCtrl.removeCoMiner(friendNode.getBcuid);
-                
+              } else if (friendNode.getDoMine) {
+                // log.info("remove cominer bcuid=" + friendNode.getBcuid + " address=" + friendNode.getCoAddress);
+                // VCtrl.removeCoMiner(friendNode.getBcuid);
+
               }
 
               val psret = PSNodeInfo.newBuilder().setMessageId(pbo.getMessageId).setVn(VCtrl.curVN());

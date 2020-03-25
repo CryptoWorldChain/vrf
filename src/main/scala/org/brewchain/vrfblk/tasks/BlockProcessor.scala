@@ -101,7 +101,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           if (sleepMS <= VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
-          log.error("make block sleep="+sleepMS);
+          log.error("make block sleep=" + sleepMS);
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
@@ -110,6 +110,20 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 sleepMS = sleepMS - 100;
                 if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
                   sleepMS = 0;
+                }
+                if (sleepMS > 1000) {
+                  val ranInt: Int = new BigInteger(blkInfo.beaconHash, 16).intValue().abs;
+                  var newBits = BigInteger.ZERO;
+                  VCtrl.coMinerByUID.map(f=>{
+                    newBits = newBits.setBit(f._2.getBitIdx)
+                  })
+                  newBits = newBits.and(blkInfo.netBits);
+                  val (state, newblockbits, natarybits, realSleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newBits, VCtrl.curVN().getBitIdx);
+                  if (System.currentTimeMillis() - realSleepMs <= VConfig.BLK_EPOCH_MS + 500) {
+                    log.info("waitup for realSleepMs should waitup,realSleepMs="+realSleepMs+",newBits="+newBits.toString(2)+",netBits="+blkInfo.netBits.toString(2));
+                    sleepMS = 0;
+                  }
+
                 }
               } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
 
@@ -139,7 +153,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
             && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();
           } else {
-            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash+ " blk.needHeight="+ blk.needHeight +" curblock="+VCtrl.curVN().getCurBlock );
+            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash + " blk.needHeight=" + blk.needHeight + " curblock=" + VCtrl.curVN().getCurBlock);
           }
         case n @ _ =>
           log.warn("unknow info:" + n);

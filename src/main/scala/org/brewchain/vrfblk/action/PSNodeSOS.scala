@@ -44,14 +44,17 @@ object PSNodeSOS extends LogHelper with PBUtils with LService[PSNodeGraceShutDow
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else {
       try {
-        log.debug("node shutdown:" + pack.getFrom() + ",reason=" + pbo.getReason)
+        log.info("node shutdown:" + pack.getFrom() + ",reason=" + pbo.getReason)
         val network = VCtrl.network();
-        network.nodeByBcuid(pack.getFrom()) match {
-              case network.noneNode =>
-              case n: PNode =>
-                network.removeDNode(n)
-                network.removePendingNode(n);
-        }
+        VCtrl.removeCoMiner(pack.getFrom())
+        
+        
+//        network.nodeByBcuid(pack.getFrom()) match {
+//              case network.noneNode =>
+//              case n: PNode =>
+//                network.removeDNode(n)
+//                network.removePendingNode(n);
+//        }
       } catch {
         case e: FBSException => {
           ret.clear()
