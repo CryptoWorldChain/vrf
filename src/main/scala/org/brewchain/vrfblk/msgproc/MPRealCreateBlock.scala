@@ -93,7 +93,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         VCtrl.network().node_bits().testBit(f._2.getBitIdx) &&
           (curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
           f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
-          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
+//          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
           || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
           newNetBits = newNetBits.setBit(f._2.getBitIdx);
         }

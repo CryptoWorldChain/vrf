@@ -96,22 +96,27 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-          var sleepMS = blkInfo.sleepMs;
+          val startupMS= System.currentTimeMillis();
+          var sleepMS = blkInfo.sleepMs.longValue();
           var isFirstMaker = false;
           if (sleepMS <= VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
             isFirstMaker = true;
           }
           log.error("make block sleep=" + sleepMS);
+          var checkcc = 0;
+          var lastCominercc = VCtrl.coMinerByUID.size
           Daos.ddc.executeNow(NewBlockFP, new Runnable() {
             def run() {
               do {
                 //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
-                if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
+                if ( isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
                   sleepMS = 0;
                 }
-                if (sleepMS > 1000) {
+                checkcc = checkcc+1;
+                if (!isFirstMaker && sleepMS > 1000 && ( lastCominercc !=  VCtrl.coMinerByUID.size || checkcc%100 == 0)) {
+                  lastCominercc = VCtrl.coMinerByUID.size
                   val ranInt: Int = new BigInteger(blkInfo.beaconHash, 16).intValue().abs;
                   var newBits = BigInteger.ZERO;
                   VCtrl.coMinerByUID.map(f=>{
@@ -119,9 +124,11 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                   })
                   newBits = newBits.and(blkInfo.netBits);
                   val (state, newblockbits, natarybits, realSleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newBits, VCtrl.curVN().getBitIdx);
-                  if (System.currentTimeMillis() - realSleepMs <= VConfig.BLK_EPOCH_MS + 500) {
+                  if (System.currentTimeMillis() - startupMS >  realSleepMs + 500) {
                     log.info("waitup for realSleepMs should waitup,realSleepMs="+realSleepMs+",newBits="+newBits.toString(2)+",netBits="+blkInfo.netBits.toString(2));
                     sleepMS = 0;
+                  }else{
+                    sleepMS = realSleepMs.longValue() - (System.currentTimeMillis() - startupMS) - 100;
                   }
 
                 }
