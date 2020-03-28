@@ -23,7 +23,7 @@ import scala.util.Random
 import org.brewchain.bcrand.model.Bcrand.PBlockEntry
 import com.google.protobuf.ByteString
 
-case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
+case class SyncApplyBlock(block: BlockInfo.Builder, syncInfo: SyncBlock) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
   def proc() {
     try {
 
@@ -57,7 +57,11 @@ case class SyncApplyBlock(block: BlockInfo.Builder) extends BlockMessage with PM
       //      log.info("value=" + BlockSync.syncBlockInQueue.get);
       if (BlockSync.syncBlockInQueue.get <= 0) {
         log.info("BlockSync.syncBlockInQueue,need gossip block again:" + BlockSync.syncBlockInQueue.get);
-        BeaconGossip.gossipBlocks();
+        if (syncInfo.reqBody.getMaxHeight > syncInfo.reqBody.getEndId - 10) {
+          BeaconGossip.syncBlock(syncInfo.reqBody.getMaxHeight, VCtrl.instance.cur_vnode.getCurBlock,syncInfo.fromBuid)
+        }else{
+          BeaconGossip.gossipBlocks();
+        }
       }
     }
   }

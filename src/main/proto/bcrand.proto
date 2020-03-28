@@ -188,6 +188,7 @@ message PSSyncBlocks{
 	bool needBody = 3;	
 	repeated int32 block_idx = 4;//byids
 	string signature = 5;
+	int32	max_height = 6;//最大高度
 	string message_id = 30;
 	
 //	VNode 	vn = 1;			//获取信息

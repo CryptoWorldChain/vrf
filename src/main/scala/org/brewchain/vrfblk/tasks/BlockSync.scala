@@ -117,7 +117,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount() + ",blockheight=" + block.getHeader.getHeight
                           + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + "," + BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
-                        BlockProcessor.offerSyncBlock(new SyncApplyBlock(block));
+                        BlockProcessor.offerSyncBlock(new SyncApplyBlock(block,syncInfo));
                       }
                     }
                   }

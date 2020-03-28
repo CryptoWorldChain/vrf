@@ -17454,6 +17454,15 @@ public final class Bcrand {
         getSignatureBytes();
 
     /**
+     * <pre>
+     *最大高度
+     * </pre>
+     *
+     * <code>int32 max_height = 6;</code>
+     */
+    int getMaxHeight();
+
+    /**
      * <code>string message_id = 30;</code>
      */
     java.lang.String getMessageId();
@@ -17481,6 +17490,7 @@ public final class Bcrand {
       needBody_ = false;
       blockIdx_ = java.util.Collections.emptyList();
       signature_ = "";
+      maxHeight_ = 0;
       messageId_ = "";
     }
 
@@ -17548,6 +17558,11 @@ public final class Bcrand {
               java.lang.String s = input.readStringRequireUtf8();
 
               signature_ = s;
+              break;
+            }
+            case 48: {
+
+              maxHeight_ = input.readInt32();
               break;
             }
             case 242: {
@@ -17696,6 +17711,19 @@ public final class Bcrand {
       }
     }
 
+    public static final int MAX_HEIGHT_FIELD_NUMBER = 6;
+    private int maxHeight_;
+    /**
+     * <pre>
+     *最大高度
+     * </pre>
+     *
+     * <code>int32 max_height = 6;</code>
+     */
+    public int getMaxHeight() {
+      return maxHeight_;
+    }
+
     public static final int MESSAGE_ID_FIELD_NUMBER = 30;
     private volatile java.lang.Object messageId_;
     /**
@@ -17764,6 +17792,9 @@ public final class Bcrand {
       if (!getSignatureBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 5, signature_);
       }
+      if (maxHeight_ != 0) {
+        output.writeInt32(6, maxHeight_);
+      }
       if (!getMessageIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 30, messageId_);
       }
@@ -17805,6 +17836,10 @@ public final class Bcrand {
       if (!getSignatureBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, signature_);
       }
+      if (maxHeight_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(6, maxHeight_);
+      }
       if (!getMessageIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(30, messageId_);
       }
@@ -17834,6 +17869,8 @@ public final class Bcrand {
           .equals(other.getBlockIdxList());
       result = result && getSignature()
           .equals(other.getSignature());
+      result = result && (getMaxHeight()
+          == other.getMaxHeight());
       result = result && getMessageId()
           .equals(other.getMessageId());
       result = result && unknownFields.equals(other.unknownFields);
@@ -17860,6 +17897,8 @@ public final class Bcrand {
       }
       hash = (37 * hash) + SIGNATURE_FIELD_NUMBER;
       hash = (53 * hash) + getSignature().hashCode();
+      hash = (37 * hash) + MAX_HEIGHT_FIELD_NUMBER;
+      hash = (53 * hash) + getMaxHeight();
       hash = (37 * hash) + MESSAGE_ID_FIELD_NUMBER;
       hash = (53 * hash) + getMessageId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -18005,6 +18044,8 @@ public final class Bcrand {
         bitField0_ = (bitField0_ & ~0x00000008);
         signature_ = "";
 
+        maxHeight_ = 0;
+
         messageId_ = "";
 
         return this;
@@ -18044,6 +18085,7 @@ public final class Bcrand {
         }
         result.blockIdx_ = blockIdx_;
         result.signature_ = signature_;
+        result.maxHeight_ = maxHeight_;
         result.messageId_ = messageId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -18116,6 +18158,9 @@ public final class Bcrand {
         if (!other.getSignature().isEmpty()) {
           signature_ = other.signature_;
           onChanged();
+        }
+        if (other.getMaxHeight() != 0) {
+          setMaxHeight(other.getMaxHeight());
         }
         if (!other.getMessageId().isEmpty()) {
           messageId_ = other.messageId_;
@@ -18412,6 +18457,44 @@ public final class Bcrand {
   checkByteStringIsUtf8(value);
         
         signature_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int maxHeight_ ;
+      /**
+       * <pre>
+       *最大高度
+       * </pre>
+       *
+       * <code>int32 max_height = 6;</code>
+       */
+      public int getMaxHeight() {
+        return maxHeight_;
+      }
+      /**
+       * <pre>
+       *最大高度
+       * </pre>
+       *
+       * <code>int32 max_height = 6;</code>
+       */
+      public Builder setMaxHeight(int value) {
+        
+        maxHeight_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *最大高度
+       * </pre>
+       *
+       * <code>int32 max_height = 6;</code>
+       */
+      public Builder clearMaxHeight() {
+        
+        maxHeight_ = 0;
         onChanged();
         return this;
       }
@@ -28049,48 +28132,48 @@ public final class Bcrand {
       "\t\"\231\001\n\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022" +
       "\026\n\016coinbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(" +
       "\005\022\021\n\tblockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001" +
-      "(\014\022\023\n\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"|\n" +
-      "\014PSSyncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_i" +
-      "d\030\002 \001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004" +
-      " \003(\005\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmessage_id\030\036 " +
-      "\001(\t\"\232\001\n\016PRetSyncBlocks\022\020\n\010ret_code\030\001 \001(\005" +
-      "\022\023\n\013ret_message\030\002 \001(\t\022>\n\rblock_headers\030\003" +
-      " \003(\0132\'.org.brewchain.bcrand.model.PBlock" +
-      "Entry\022\022\n\nmessage_id\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t" +
-      "\"\375\001\n\021PSSyncTransaction\022\016\n\006txHash\030\001 \003(\014\022\017" +
-      "\n\007txDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010sy" +
-      "ncType\030\004 \001(\01626.org.brewchain.bcrand.mode" +
-      "l.PSSyncTransaction.SyncType\022\022\n\nfrom_bcu" +
-      "id\030\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n\010SyncT" +
-      "ype\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020\001" +
-      "\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetSyncTransaction\022" +
-      "\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\"\"" +
-      "\n\020PSGetTransaction\022\016\n\006txHash\030\001 \003(\t\"N\n\022PR" +
-      "etGetTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013re" +
-      "t_message\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nPS" +
-      "RhrCheck\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrChe" +
-      "ck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(" +
-      "\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022\025" +
-      "\n\rlastblocktime\030\005 \001(\003\022\032\n\022maxblockheights" +
-      "een\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022\021\n\tblo" +
-      "ckhash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030\013" +
-      " \001(\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nbanforv" +
-      "ote\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n\017PRetH" +
-      "ealthCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_mess" +
-      "age\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.brewcha" +
-      "in.bcrand.model.VNode\022\024\n\014pending_node\030\r " +
-      "\001(\t\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMiners\030\017 \003" +
-      "(\0132!.org.brewchain.bcrand.model.VNode\022\022\n" +
-      "\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n\014" +
-      "syncblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007P" +
-      "Module\022\007\n\003VRF\020\000*\177\n\010PCommand\022\007\n\003JIN\020\000\022\007\n\003" +
-      "INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020" +
-      "\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n" +
-      "\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!*\216\001\n\nVNodeState\022" +
-      "\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n\tVN_BA" +
-      "KCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n\016VN_DU" +
-      "TY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n\014VN_DU" +
-      "TY_SYNC\020\007b\006proto3"
+      "(\014\022\023\n\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001" +
+      "\n\014PSSyncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_" +
+      "id\030\002 \001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030" +
+      "\004 \003(\005\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmax_height\030\006" +
+      " \001(\005\022\022\n\nmessage_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlo" +
+      "cks\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001" +
+      "(\t\022>\n\rblock_headers\030\003 \003(\0132\'.org.brewchai" +
+      "n.bcrand.model.PBlockEntry\022\022\n\nmessage_id" +
+      "\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTransact" +
+      "ion\022\016\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\t" +
+      "messageid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org." +
+      "brewchain.bcrand.model.PSSyncTransaction" +
+      ".SyncType\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfirm" +
+      "_bcuid\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020\000" +
+      "\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n" +
+      "\023PRetSyncTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023" +
+      "\n\013ret_message\030\002 \001(\t\"\"\n\020PSGetTransaction\022" +
+      "\016\n\006txHash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020\n" +
+      "\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n\t" +
+      "txContent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinfo" +
+      "\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001(" +
+      "\005\022\023\n\013ret_message\030\002 \001(\t\022\023\n\013blockheight\030\003 " +
+      "\001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 \001" +
+      "(\003\022\032\n\022maxblockheightseen\030\006 \001(\003\022\026\n\016maxter" +
+      "midseedn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006coa" +
+      "ddr\030\n \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepasslas" +
+      "tblk\030\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beacon" +
+      "_hash\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_c" +
+      "ode\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_nod" +
+      "e\030\003 \001(\0132!.org.brewchain.bcrand.model.VNo" +
+      "de\022\024\n\014pending_node\030\r \001(\t\022\023\n\013direct_node\030" +
+      "\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132!.org.brewchain." +
+      "bcrand.model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021" +
+      "\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022" +
+      "\017\n\007wall_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010" +
+      "PCommand\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003C" +
+      "BW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010" +
+      "\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003" +
+      "SCK\020!*\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN_" +
+      "SYNC_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_B" +
+      "LOCKMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_D" +
+      "UTY_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -28181,7 +28264,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_PSSyncBlocks_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_PSSyncBlocks_descriptor,
-        new java.lang.String[] { "StartId", "EndId", "NeedBody", "BlockIdx", "Signature", "MessageId", });
+        new java.lang.String[] { "StartId", "EndId", "NeedBody", "BlockIdx", "Signature", "MaxHeight", "MessageId", });
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_fieldAccessorTable = new
