@@ -68,7 +68,8 @@ class VRFBGLoader() extends Runnable with LogHelper {
     }
     Daos.chainHelper.startBlockChain(vrfnet.root().bcuid, vrfnet.root().v_address, vrfnet.root().name)
     UUIDGenerator.setJVM(vrfnet.root().bcuid.substring(1))
-    //    vrfnet.changeNodeVAddr(Daos.enc.bytesToHexStr(naccount));
+    vrfnet.changeNodeVAddr(vrfnet.root().v_address);
+    
     log.info("vrfnet.initOK:My Node=" + vrfnet.root() + ",CoAddr=" + vrfnet.root().v_address
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 

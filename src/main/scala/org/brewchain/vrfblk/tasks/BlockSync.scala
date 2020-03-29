@@ -110,14 +110,17 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.info("sync realBlockCount=" + realmap.size + ",req=[" + reqbody.getStartId + "," + reqbody.getEndId + "]");
-                      realmap.foreach { b =>
+                      val blocks = realmap.map { b =>
                         //同步执行 apply 并验证返回结果
                         // applyblock
                         val block = BlockInfo.newBuilder().mergeFrom(b.getBlockHeader);
                         log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount() + ",blockheight=" + block.getHeader.getHeight
                           + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + "," + BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
-                        BlockProcessor.offerSyncBlock(new SyncApplyBlock(block,syncInfo));
+                        block
+                      }
+                      blocks.map { block =>
+                        BlockProcessor.offerSyncBlock(new SyncApplyBlock(block, syncInfo));
                       }
                     }
                   }
@@ -134,7 +137,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
                 log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",s=" + syncInfo + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
-                BeaconGossip.gossipBlocks();
+                BeaconGossip.tryGossip();
               }
             })
         case n @ _ =>

@@ -12,6 +12,7 @@ import org.brewchain.p22p.core.Votes
 import scala.collection.JavaConverters._
 import org.brewchain.p22p.core.Votes.Converge
 import org.brewchain.p22p.core.Votes.NotConverge
+import org.brewchain.bcrand.model.Bcrand.VNode
 
 case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -19,6 +20,13 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
     //块确认
     //to notify other.
     MDCSetBCUID(VCtrl.network())
+
+    if (VCtrl.coMinerByUID.contains(pbo.getBcuid)) {
+      val bb = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, VNode.newBuilder().build()).toBuilder();
+      bb.setCurBlock(pbo.getBlockHeight);
+      bb.setCurBlockHash(pbo.getBlockEntry.getBlockhash);
+      VCtrl.addCoMiner(bb.build());
+    }
     //log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
     //  + ",MN=" + VCtrl.coMinerByUID.size
     //  + ",from=" + pbo.getBcuid
@@ -29,23 +37,23 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
     //  + ",TX=" + pbo.getTxcount);
 
     //save to db
-//    val key = OEntityBuilder.byteKey2OKey(pbo.getBlockEntry.getBlockhashBytes);
-//    val value = OEntityBuilder.byteValue2OValue(pbo.getBlockEntry.getBlockMiner.toByteArray()).toBuilder()
-//    value.setSecondKey(String.valueOf(pbo.getBlockHeight))
-//    value.setInfo(pbo.getBlockEntry.getBlockhash);
-//    Daos.vrfvotedb.put(key, value.build());
-//    val vs = Daos.vrfvotedb.listBySecondKey(String.valueOf(pbo.getBlockHeight));
-//    Votes.vote(vs.get.asScala).PBFTVote(n => {
-//      Some(n.getValue.getInfo)
-//    }, mapToHex(pbo.getWitnessBits).bitCount) match {
-//      case Converge(blockhash) =>
-//        //log.info("get merge blockhash :" + blockhash + ",height=" + pbo.getBlockHeight);
-//        //Daos.chainHelper.confirmBlock(blockhash.toString());
-//      case n: NotConverge =>
-//        //log.info("cannot get converge for pbft vote:" + vs.get.size);
-//      case n @ _ =>
-//        //log.debug("need more results:" + vs.get.size);
-//    };
+    //    val key = OEntityBuilder.byteKey2OKey(pbo.getBlockEntry.getBlockhashBytes);
+    //    val value = OEntityBuilder.byteValue2OValue(pbo.getBlockEntry.getBlockMiner.toByteArray()).toBuilder()
+    //    value.setSecondKey(String.valueOf(pbo.getBlockHeight))
+    //    value.setInfo(pbo.getBlockEntry.getBlockhash);
+    //    Daos.vrfvotedb.put(key, value.build());
+    //    val vs = Daos.vrfvotedb.listBySecondKey(String.valueOf(pbo.getBlockHeight));
+    //    Votes.vote(vs.get.asScala).PBFTVote(n => {
+    //      Some(n.getValue.getInfo)
+    //    }, mapToHex(pbo.getWitnessBits).bitCount) match {
+    //      case Converge(blockhash) =>
+    //        //log.info("get merge blockhash :" + blockhash + ",height=" + pbo.getBlockHeight);
+    //        //Daos.chainHelper.confirmBlock(blockhash.toString());
+    //      case n: NotConverge =>
+    //        //log.info("cannot get converge for pbft vote:" + vs.get.size);
+    //      case n @ _ =>
+    //        //log.debug("need more results:" + vs.get.size);
+    //    };
 
   }
 }

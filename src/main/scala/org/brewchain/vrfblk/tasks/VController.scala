@@ -150,7 +150,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
         coMinerByUID.put(node.getBcuid,node.toBuilder().setLastBeginMinerTime(lastnode.getLastBeginMinerTime).build);
       }
       var cobits = BigInteger.ZERO;
-      coMinerByUID.map(f => cobits=cobits.setBit(f._2.getBitIdx));
+      coMinerByUID.map(f => if(f._2.getBitIdx>0) cobits=cobits.setBit(f._2.getBitIdx));
       instance.cur_vnode.setCominers(hexToMapping(cobits))
     })
   }

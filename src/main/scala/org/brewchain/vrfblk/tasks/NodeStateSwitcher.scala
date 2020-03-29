@@ -116,7 +116,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           }
           case StateChange(newsign, newhash, prevhash, netbits, height) => {
             //if (height==0 || (height > 0 && VCtrl.curVN().getBeaconHash.equals(prevhash))) {
-            log.info("state change cur hash=" + VCtrl.curVN().getBeaconHash + " prevhash=" + prevhash + " newhash=" + newhash + " netbits=" + netbits);
+            log.info("state change cur hash=" + VCtrl.curVN().getBeaconHash + " prevhash=" + prevhash + " newhash=" + newhash + " netbits=" + netbits
+                +",height="+height);
             VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(newhash).setVrfRandseeds(netbits).setPrevBlockHash(prevhash);
             // VCtrl.curVN().setBeaconSign(newsign).setBeaconHash(prevhash).setVrfRandseeds(netbits);
             notifyStateChange(newhash, prevhash, mapToBigInt(netbits).bigInteger, height);

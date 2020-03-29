@@ -95,7 +95,7 @@ object RandFunction extends LogHelper with BitMap {
           if (curBitIdx == testcc) {
             indexInBits = foundCount;
           }
-          if (firstBlockMakerBitIndex < 0 && ((randInx + foundCount) % nodeCounts < blockMakerCount)) {
+          if (firstBlockMakerBitIndex < 0 && ((randInx + foundCount) % nodeCounts == 0)) {
             firstBlockMakerBitIndex = testcc;
           }
           if ((randInx + foundCount) % nodeCounts < blockMakerCount) {
@@ -109,16 +109,19 @@ object RandFunction extends LogHelper with BitMap {
         testcc = testcc + 1;
       }
       //      val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue().abs;
-      val sleepms = ((indexInBits + randInx) % nodeCounts) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+      
 
       if ((randInx + indexInBits) % nodeCounts < blockMakerCount) {
-        log.info(s"chooseGroups=BLOCKMAKER,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}");
+        val sleepms = ((indexInBits + randInx) % nodeCounts) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        log.info(s"chooseGroups=BLOCKMAKER,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       } else if ((randInx + indexInBits) % nodeCounts < blockMakerCount + notaryCount) {
-        log.info(s"chooseGroups=NOTRAY,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}");
+        val sleepms = ((indexInBits + randInx) % (blockMakerCount + notaryCount)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        log.info(s"chooseGroups=NOTRAY,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_NOTARY, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       } else {
-        log.info(s"chooseGroups=SYNC,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}");
+        val sleepms = ((indexInBits + randInx) % (nodeCounts)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        log.info(s"chooseGroups=SYNC,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_SYNC, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       }
     }

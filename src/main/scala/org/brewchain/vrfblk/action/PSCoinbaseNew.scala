@@ -123,7 +123,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else 
      {
-      pendingBlockCache.put(pbo.getBlockHeight, pbo.getBcuid)
+//      pendingBlockCache.put(pbo.getBlockHeight, pbo.getBcuid)
       //update load
 //      val cominern = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, null);
 //      if (cominern != null && cominern == VCtrl.network().noneNode) {

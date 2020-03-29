@@ -79,7 +79,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     MDCSetBCUID(VCtrl.network())
     try {
       //需要广播的节点数量
-      val wallAccount: Int = VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+      val wallAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER*2/3,VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
 
       var newNetBits = BigInteger.ZERO
       val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
@@ -92,6 +92,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         if ( //other nodes
         VCtrl.network().node_bits().testBit(f._2.getBitIdx) &&
           (curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
+          (f._2.getState == VNodeState.VN_DUTY_BLOCKMAKERS||f._2.getState == VNodeState.VN_DUTY_NOTARY
+              ||f._2.getState == VNodeState.VN_SYNC_BLOCK) && 
+          f._2.getCurBlock > VConfig.BLOCK_DISTANCE_NETBITS &&
           f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
 //          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
           || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
@@ -174,7 +177,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
         //      newhash, prevhash, mapToBigInt(netbits).bigInteger
         val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
-        val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, netBits, cn.getBitIdx);
+        val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
 
         //        , netIndexs: Array[Int], curArrayIndex: Int;
         val keys = VCtrl.network().nodesByLocID.keySet
@@ -187,7 +190,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           var dn = VCtrl.network().directNodeByBcuid.getOrElse(pn.getBcuid, VCtrl.network().noneNode)
           if (newblockbits.testBit(pn.getBitIdx)) {
             if (firstBlockMakerBitIndex == pn.getBitIdx) {
-              log.info("found next first maker:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
+              log.info("found next first maker:" + pn.getBcuid +",coadd="+pn.getCoAddress+ ",nextblock=" + (newblk.getHeader.getHeight + 1));
               VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
               sentbcuid.add(pn.getBcuid)
               if (dn.loc_gwuris.contains(dn.uri)) {
@@ -231,7 +234,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             bits = bits.setBit(f._2.getBitIdx);
           }
         })
-        log.info("d-nodes.counts=" + bits.bitCount() + ",cominer=" + VCtrl.coMinerByUID.size);
+        log.info("bits-nodes.counts=" + bits.bitCount() + ",cominer=" + VCtrl.coMinerByUID.size);
         VCtrl.network().bwallMessage("CBNVRF", Left(newCoinbase.build()), bits, newCoinbase.getMessageId, '9')
         //      VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
         //      VCtrl.allNodes.foreach(f => {

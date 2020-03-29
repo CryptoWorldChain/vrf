@@ -53,15 +53,19 @@ case class SyncApplyBlock(block: BlockInfo.Builder, syncInfo: SyncBlock) extends
       case t: Throwable =>
         log.error("syncblock error:" + block.getHeader.getHeight, t);
     } finally {
-      BlockSync.syncBlockInQueue.decrementAndGet();
+      val cc=BlockSync.syncBlockInQueue.decrementAndGet();
       //      log.info("value=" + BlockSync.syncBlockInQueue.get);
-      if (BlockSync.syncBlockInQueue.get <= 0) {
-        log.info("BlockSync.syncBlockInQueue,need gossip block again:" + BlockSync.syncBlockInQueue.get);
-        if (syncInfo.reqBody.getMaxHeight > syncInfo.reqBody.getEndId - 10) {
+      if (cc <= 0) {
+        log.info("BlockSync.syncBlockInQueue,need gossip block again:" + cc
+            +",maxheight="+syncInfo.reqBody.getMaxHeight+",endid="+syncInfo.reqBody.getEndId);
+        if (syncInfo.reqBody.getMaxHeight > syncInfo.reqBody.getEndId + 10) {
           BeaconGossip.syncBlock(syncInfo.reqBody.getMaxHeight, VCtrl.instance.cur_vnode.getCurBlock,syncInfo.fromBuid)
         }else{
           BeaconGossip.gossipBlocks();
         }
+      }else{
+        log.info("BlockSync.waiting for more  block " + cc
+            +",maxheight="+syncInfo.reqBody.getMaxHeight+",endid="+syncInfo.reqBody.getEndId);
       }
     }
   }

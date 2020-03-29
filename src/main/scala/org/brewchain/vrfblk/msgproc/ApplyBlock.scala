@@ -60,7 +60,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), lastBlock.getMiner.getBits)
         } else {
-          VCtrl.instance.updateBlockHeight(vres.getWantHeight.intValue(), "", "", "", 0)
+//          VCtrl.instance.updateBlockHeight(vres.getWantHeight.intValue(), "", "", "", 0)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
         }
       } else {
@@ -111,7 +111,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
             && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
-            BeaconGossip.gossipBlocks();
+            BeaconGossip.tryGossip();
           }
         case n if n > 0 =>
           val vstr =
@@ -130,12 +130,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",TX=" + pbo.getTxcount);
           bestheight.set(n);
           val notaBits = mapToBigInt(pbo.getWitnessBits);
-          if (notaBits.testBit(cn.getBitIdx)) {
-            VCtrl.network().dwallMessage("CBWVRF", Left(pbo.toBuilder().setBcuid(cn.getBcuid).build()), pbo.getMessageId, '9')
-          }
+          //if (notaBits.testBit(cn.getBitIdx)) {
+          val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid);
+            VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+          //}
           if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
             log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
-            BeaconGossip.gossipBlocks();
+            BeaconGossip.tryGossip();
           }
 
           tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, nodebit);
@@ -150,7 +151,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
             && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
             log.info("cannot apply block, do gossip");
-            BeaconGossip.gossipBlocks();
+            BeaconGossip.tryGossip();
           }
       }
       //更新PZP节点信息，用于区块浏览器查看块高
