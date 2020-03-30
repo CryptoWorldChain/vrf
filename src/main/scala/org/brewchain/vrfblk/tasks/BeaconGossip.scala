@@ -114,9 +114,16 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
+    val removeList = ListBuffer.empty[String]
     VCtrl.coMinerByUID.map(m => {
       body.addMurs(GossipMiner.newBuilder().setBcuid(m._2.getBcuid).setCurBlock(m._2.getCurBlock).setCurBlockHash(m._2.getCurBlockHash))
+      
+      if(VCtrl.curVN().getCurBlock - m._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT  ){
+          log.info("remove cominer for block distance too large:"+m._2.getCurBlock+"==>"+VCtrl.curVN().getCurBlock)
+          removeList.append(m._2.getBcuid)
+      }
     })
+    removeList.map(n=>VCtrl.removeCoMiner(n))
     //get all vote block
     incomingInfos.clear();
     MDCSetMessageID(messageId);
@@ -143,6 +150,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       if (vnode.getCurBlock >= endId && StringUtils.equals(VCtrl.network().nodeByBcuid(frombcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
         fastFromBcuid = bcuid;
       }
+  
     })
 
     VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)

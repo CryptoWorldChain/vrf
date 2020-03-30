@@ -79,7 +79,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     MDCSetBCUID(VCtrl.network())
     try {
       //需要广播的节点数量
-      val wallAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER*2/3,VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
+      val wallAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
 
       var newNetBits = BigInteger.ZERO
       val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
@@ -92,12 +92,12 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         if ( //other nodes
         VCtrl.network().node_bits().testBit(f._2.getBitIdx) &&
           (curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
-          (f._2.getState == VNodeState.VN_DUTY_BLOCKMAKERS||f._2.getState == VNodeState.VN_DUTY_NOTARY
-              ||f._2.getState == VNodeState.VN_SYNC_BLOCK) && 
-          f._2.getCurBlock > VConfig.BLOCK_DISTANCE_NETBITS &&
-          f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
-//          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
-          || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
+          (f._2.getState == VNodeState.VN_DUTY_BLOCKMAKERS || f._2.getState == VNodeState.VN_DUTY_NOTARY
+            || f._2.getState == VNodeState.VN_SYNC_BLOCK) &&
+            f._2.getCurBlock > VConfig.BLOCK_DISTANCE_NETBITS &&
+            f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
+            //          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
+            || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
           newNetBits = newNetBits.setBit(f._2.getBitIdx);
         }
       })
@@ -190,7 +190,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           var dn = VCtrl.network().directNodeByBcuid.getOrElse(pn.getBcuid, VCtrl.network().noneNode)
           if (newblockbits.testBit(pn.getBitIdx)) {
             if (firstBlockMakerBitIndex == pn.getBitIdx) {
-              log.info("found next first maker:" + pn.getBcuid +",coadd="+pn.getCoAddress+ ",nextblock=" + (newblk.getHeader.getHeight + 1));
+              log.info("found next first maker:" + pn.getBcuid + ",coadd=" + pn.getCoAddress + ",nextblock=" + (newblk.getHeader.getHeight + 1));
               VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
               sentbcuid.add(pn.getBcuid)
               if (dn.loc_gwuris.contains(dn.uri)) {
@@ -199,14 +199,14 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
               dn = null;
             }
           }
-          if (dn != null && dn != VCtrl.network().noneNode && !sentkeyset.contains(dn.loc_id)
-            && dn.loc_gwuris.contains(dn.uri)) {
-            log.info("send to loc mainer:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
-            VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
-            sentbcuid.add(pn.getBcuid)
-            sentkeyset.add(dn.loc_id)
+          if (dn != null && dn != VCtrl.network().noneNode) {
+            if (!sentkeyset.contains(dn.loc_id)  && dn.loc_gwuris.contains(dn.uri)) {
+              log.info("send to loc mainer:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
+              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
+              sentbcuid.add(pn.getBcuid)
+              sentkeyset.add(dn.loc_id)
+            }
           }
-
           //        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
         })
 
@@ -224,7 +224,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           if (!sentbcuid.contains(f.bcuid)) {
             if (f.node_idx >= 0) {
               bits = bits.setBit(f.node_idx);
-            }else if (f.try_node_idx >= 0) {
+            } else if (f.try_node_idx >= 0) {
               bits = bits.setBit(f.try_node_idx);
             }
           }
