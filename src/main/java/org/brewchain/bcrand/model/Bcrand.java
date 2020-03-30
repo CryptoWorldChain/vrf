@@ -2142,6 +2142,16 @@ public final class Bcrand {
      * <code>int64 last_begin_miner_time = 18;</code>
      */
     long getLastBeginMinerTime();
+
+    /**
+     * <code>string cur_block_miner_coaddr = 19;</code>
+     */
+    java.lang.String getCurBlockMinerCoaddr();
+    /**
+     * <code>string cur_block_miner_coaddr = 19;</code>
+     */
+    com.google.protobuf.ByteString
+        getCurBlockMinerCoaddrBytes();
   }
   /**
    * Protobuf type {@code org.brewchain.bcrand.model.VNode}
@@ -2174,6 +2184,7 @@ public final class Bcrand {
       authBalance_ = "";
       cominers_ = "";
       lastBeginMinerTime_ = 0L;
+      curBlockMinerCoaddr_ = "";
     }
 
     @java.lang.Override
@@ -2300,6 +2311,12 @@ public final class Bcrand {
             case 144: {
 
               lastBeginMinerTime_ = input.readInt64();
+              break;
+            }
+            case 154: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              curBlockMinerCoaddr_ = s;
               break;
             }
             default: {
@@ -2867,6 +2884,40 @@ public final class Bcrand {
       return lastBeginMinerTime_;
     }
 
+    public static final int CUR_BLOCK_MINER_COADDR_FIELD_NUMBER = 19;
+    private volatile java.lang.Object curBlockMinerCoaddr_;
+    /**
+     * <code>string cur_block_miner_coaddr = 19;</code>
+     */
+    public java.lang.String getCurBlockMinerCoaddr() {
+      java.lang.Object ref = curBlockMinerCoaddr_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        curBlockMinerCoaddr_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string cur_block_miner_coaddr = 19;</code>
+     */
+    public com.google.protobuf.ByteString
+        getCurBlockMinerCoaddrBytes() {
+      java.lang.Object ref = curBlockMinerCoaddr_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        curBlockMinerCoaddr_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2934,6 +2985,9 @@ public final class Bcrand {
       }
       if (lastBeginMinerTime_ != 0L) {
         output.writeInt64(18, lastBeginMinerTime_);
+      }
+      if (!getCurBlockMinerCoaddrBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 19, curBlockMinerCoaddr_);
       }
       unknownFields.writeTo(output);
     }
@@ -3005,6 +3059,9 @@ public final class Bcrand {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(18, lastBeginMinerTime_);
       }
+      if (!getCurBlockMinerCoaddrBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(19, curBlockMinerCoaddr_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -3056,6 +3113,8 @@ public final class Bcrand {
           .equals(other.getCominers());
       result = result && (getLastBeginMinerTime()
           == other.getLastBeginMinerTime());
+      result = result && getCurBlockMinerCoaddr()
+          .equals(other.getCurBlockMinerCoaddr());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -3107,6 +3166,8 @@ public final class Bcrand {
       hash = (37 * hash) + LAST_BEGIN_MINER_TIME_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
           getLastBeginMinerTime());
+      hash = (37 * hash) + CUR_BLOCK_MINER_COADDR_FIELD_NUMBER;
+      hash = (53 * hash) + getCurBlockMinerCoaddr().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -3276,6 +3337,8 @@ public final class Bcrand {
 
         lastBeginMinerTime_ = 0L;
 
+        curBlockMinerCoaddr_ = "";
+
         return this;
       }
 
@@ -3320,6 +3383,7 @@ public final class Bcrand {
         result.authBalance_ = authBalance_;
         result.cominers_ = cominers_;
         result.lastBeginMinerTime_ = lastBeginMinerTime_;
+        result.curBlockMinerCoaddr_ = curBlockMinerCoaddr_;
         onBuilt();
         return result;
       }
@@ -3432,6 +3496,10 @@ public final class Bcrand {
         }
         if (other.getLastBeginMinerTime() != 0L) {
           setLastBeginMinerTime(other.getLastBeginMinerTime());
+        }
+        if (!other.getCurBlockMinerCoaddr().isEmpty()) {
+          curBlockMinerCoaddr_ = other.curBlockMinerCoaddr_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -4649,6 +4717,75 @@ public final class Bcrand {
         onChanged();
         return this;
       }
+
+      private java.lang.Object curBlockMinerCoaddr_ = "";
+      /**
+       * <code>string cur_block_miner_coaddr = 19;</code>
+       */
+      public java.lang.String getCurBlockMinerCoaddr() {
+        java.lang.Object ref = curBlockMinerCoaddr_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          curBlockMinerCoaddr_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 19;</code>
+       */
+      public com.google.protobuf.ByteString
+          getCurBlockMinerCoaddrBytes() {
+        java.lang.Object ref = curBlockMinerCoaddr_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          curBlockMinerCoaddr_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 19;</code>
+       */
+      public Builder setCurBlockMinerCoaddr(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        curBlockMinerCoaddr_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 19;</code>
+       */
+      public Builder clearCurBlockMinerCoaddr() {
+        
+        curBlockMinerCoaddr_ = getDefaultInstance().getCurBlockMinerCoaddr();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 19;</code>
+       */
+      public Builder setCurBlockMinerCoaddrBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        curBlockMinerCoaddr_ = value;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -4750,6 +4887,16 @@ public final class Bcrand {
      */
     com.google.protobuf.ByteString
         getBlockExtrDataBytes();
+
+    /**
+     * <code>string cur_block_miner_coaddr = 6;</code>
+     */
+    java.lang.String getCurBlockMinerCoaddr();
+    /**
+     * <code>string cur_block_miner_coaddr = 6;</code>
+     */
+    com.google.protobuf.ByteString
+        getCurBlockMinerCoaddrBytes();
   }
   /**
    * Protobuf type {@code org.brewchain.bcrand.model.GossipMiner}
@@ -4769,6 +4916,7 @@ public final class Bcrand {
       curBlockHash_ = "";
       beaconHash_ = "";
       blockExtrData_ = "";
+      curBlockMinerCoaddr_ = "";
     }
 
     @java.lang.Override
@@ -4822,6 +4970,12 @@ public final class Bcrand {
               java.lang.String s = input.readStringRequireUtf8();
 
               blockExtrData_ = s;
+              break;
+            }
+            case 50: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              curBlockMinerCoaddr_ = s;
               break;
             }
             default: {
@@ -5001,6 +5155,40 @@ public final class Bcrand {
       }
     }
 
+    public static final int CUR_BLOCK_MINER_COADDR_FIELD_NUMBER = 6;
+    private volatile java.lang.Object curBlockMinerCoaddr_;
+    /**
+     * <code>string cur_block_miner_coaddr = 6;</code>
+     */
+    public java.lang.String getCurBlockMinerCoaddr() {
+      java.lang.Object ref = curBlockMinerCoaddr_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        curBlockMinerCoaddr_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string cur_block_miner_coaddr = 6;</code>
+     */
+    public com.google.protobuf.ByteString
+        getCurBlockMinerCoaddrBytes() {
+      java.lang.Object ref = curBlockMinerCoaddr_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        curBlockMinerCoaddr_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -5030,6 +5218,9 @@ public final class Bcrand {
       if (!getBlockExtrDataBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 5, blockExtrData_);
       }
+      if (!getCurBlockMinerCoaddrBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, curBlockMinerCoaddr_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -5054,6 +5245,9 @@ public final class Bcrand {
       }
       if (!getBlockExtrDataBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, blockExtrData_);
+      }
+      if (!getCurBlockMinerCoaddrBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, curBlockMinerCoaddr_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -5081,6 +5275,8 @@ public final class Bcrand {
           .equals(other.getBeaconHash());
       result = result && getBlockExtrData()
           .equals(other.getBlockExtrData());
+      result = result && getCurBlockMinerCoaddr()
+          .equals(other.getCurBlockMinerCoaddr());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -5102,6 +5298,8 @@ public final class Bcrand {
       hash = (53 * hash) + getBeaconHash().hashCode();
       hash = (37 * hash) + BLOCK_EXTR_DATA_FIELD_NUMBER;
       hash = (53 * hash) + getBlockExtrData().hashCode();
+      hash = (37 * hash) + CUR_BLOCK_MINER_COADDR_FIELD_NUMBER;
+      hash = (53 * hash) + getCurBlockMinerCoaddr().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -5245,6 +5443,8 @@ public final class Bcrand {
 
         blockExtrData_ = "";
 
+        curBlockMinerCoaddr_ = "";
+
         return this;
       }
 
@@ -5276,6 +5476,7 @@ public final class Bcrand {
         result.curBlockHash_ = curBlockHash_;
         result.beaconHash_ = beaconHash_;
         result.blockExtrData_ = blockExtrData_;
+        result.curBlockMinerCoaddr_ = curBlockMinerCoaddr_;
         onBuilt();
         return result;
       }
@@ -5341,6 +5542,10 @@ public final class Bcrand {
         }
         if (!other.getBlockExtrData().isEmpty()) {
           blockExtrData_ = other.blockExtrData_;
+          onChanged();
+        }
+        if (!other.getCurBlockMinerCoaddr().isEmpty()) {
+          curBlockMinerCoaddr_ = other.curBlockMinerCoaddr_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -5670,6 +5875,75 @@ public final class Bcrand {
   checkByteStringIsUtf8(value);
         
         blockExtrData_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object curBlockMinerCoaddr_ = "";
+      /**
+       * <code>string cur_block_miner_coaddr = 6;</code>
+       */
+      public java.lang.String getCurBlockMinerCoaddr() {
+        java.lang.Object ref = curBlockMinerCoaddr_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          curBlockMinerCoaddr_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 6;</code>
+       */
+      public com.google.protobuf.ByteString
+          getCurBlockMinerCoaddrBytes() {
+        java.lang.Object ref = curBlockMinerCoaddr_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          curBlockMinerCoaddr_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 6;</code>
+       */
+      public Builder setCurBlockMinerCoaddr(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        curBlockMinerCoaddr_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 6;</code>
+       */
+      public Builder clearCurBlockMinerCoaddr() {
+        
+        curBlockMinerCoaddr_ = getDefaultInstance().getCurBlockMinerCoaddr();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string cur_block_miner_coaddr = 6;</code>
+       */
+      public Builder setCurBlockMinerCoaddrBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        curBlockMinerCoaddr_ = value;
         onChanged();
         return this;
       }
@@ -28077,7 +28351,7 @@ public final class Bcrand {
       "\n\014bcrand.proto\022\032org.brewchain.bcrand.mod" +
       "el\"G\n\014SyncChainKey\022\021\n\ttmpPubKey\030\001 \001(\t\022\021\n" +
       "\tsignature\030\002 \001(\t\022\021\n\ttimestamp\030\003 \001(\003\"\'\n\020R" +
-      "espSyncChainKey\022\023\n\013encChainKey\030\001 \001(\t\"\257\003\n" +
+      "espSyncChainKey\022\023\n\013encChainKey\030\001 \001(\t\"\317\003\n" +
       "\005VNode\022\r\n\005bcuid\030\001 \001(\t\022\022\n\nco_address\030\002 \001(" +
       "\t\0225\n\005state\030\003 \001(\0162&.org.brewchain.bcrand." +
       "model.VNodeState\022\021\n\tcur_block\030\004 \001(\005\022\033\n\023c" +
@@ -28088,92 +28362,94 @@ public final class Bcrand {
       "\t\022\022\n\nvrf_groups\030\014 \001(\t\022\023\n\013beacon_hash\030\r \001" +
       "(\t\022\023\n\013beacon_sign\030\016 \001(\t\022\017\n\007do_mine\030\017 \001(\010" +
       "\022\023\n\013authBalance\030\020 \001(\t\022\020\n\010cominers\030\021 \001(\t\022" +
-      "\035\n\025last_begin_miner_time\030\022 \001(\003\"u\n\013Gossip" +
-      "Miner\022\r\n\005bcuid\030\001 \001(\t\022\021\n\tcur_block\030\002 \001(\005\022" +
-      "\026\n\016cur_block_hash\030\003 \001(\t\022\023\n\013beacon_hash\030\004" +
-      " \001(\t\022\027\n\017block_extr_data\030\005 \001(\t\"\201\001\n\020BlockW" +
-      "itnessInfo\022\023\n\013blockheight\030\001 \001(\003\022\023\n\013beaco" +
-      "n_hash\030\002 \001(\t\022\017\n\007netbitx\030\003 \001(\t\0222\n\007witness" +
-      "\030\n \003(\0132!.org.brewchain.bcrand.model.VNod" +
-      "e\"\260\002\n\nPSNodeInfo\022\021\n\treq_token\030\001 \001(\t\022-\n\002v" +
-      "n\030\003 \001(\0132!.org.brewchain.bcrand.model.VNo" +
-      "de\0225\n\004murs\030\004 \003(\0132\'.org.brewchain.bcrand." +
-      "model.GossipMiner\022\020\n\010is_query\030\005 \001(\010\022$\n\034s" +
-      "ugguest_start_sync_block_id\030\006 \001(\005\022\031\n\021gos" +
-      "sip_block_info\030\007 \001(\005\022B\n\021gossip_miner_inf" +
-      "o\030\010 \001(\0132\'.org.brewchain.bcrand.model.Gos" +
-      "sipMiner\022\022\n\nmessage_id\030\036 \001(\t\"%\n\023PSNodeGr" +
-      "aceShutDown\022\016\n\006reason\030\001 \001(\t\"\220\002\n\014PRetNode" +
-      "Info\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 " +
-      "\001(\t\022-\n\002vn\030\003 \001(\0132!.org.brewchain.bcrand.m" +
-      "odel.VNode\022\025\n\rqueue_bsbatch\030\004 \001(\003\022\025\n\rque" +
-      "ue_confirm\030\005 \001(\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007" +
-      "extinfo\030\007 \001(\t\0225\n\004murs\030\010 \003(\0132\'.org.brewch" +
-      "ain.bcrand.model.GossipMiner\022\022\n\nmessage_" +
-      "id\030\036 \001(\t\022\014\n\004sign\030d \001(\t\"\321\003\n\nPSCoinbase\022\023\n" +
-      "\013beacon_hash\030\001 \001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022" +
-      "\030\n\020prev_beacon_hash\030\003 \001(\t\022\023\n\013block_seeds" +
-      "\030\004 \001(\014\022\030\n\020prev_block_seeds\030\005 \001(\014\022\021\n\tvrf_" +
-      "codes\030\006 \001(\014\022\022\n\nco_address\030\007 \001(\t\022\017\n\007rewar" +
-      "ds\030\010 \001(\003\022\024\n\014block_height\030\t \001(\005\022\024\n\014cws_gu" +
-      "aranty\030\n \001(\003\022\020\n\010slice_id\030\013 \001(\005\022\022\n\ngroup_" +
-      "bits\030\014 \001(\t\022\023\n\013beacon_bits\030\r \001(\t\022\024\n\014witne" +
-      "ss_bits\030\016 \001(\t\022\r\n\005bcuid\030\017 \001(\t\022\027\n\017block_mi" +
-      "ne_time\030\020 \001(\003\022\017\n\007txcount\030\021 \001(\005\022<\n\013block_" +
-      "entry\030\022 \001(\0132\'.org.brewchain.bcrand.model" +
-      ".PBlockEntry\022\020\n\010txbodies\030\023 \003(\014\022\022\n\nmessag" +
-      "e_id\030\036 \001(\t\"\301\001\n\010PSNotary\022\024\n\014block_height\030" +
-      "\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\003\022\023\n\013beacon_sign" +
-      "\030\003 \001(\t\022H\n\016blk_voteresult\030\004 \001(\01620.org.bre" +
-      "wchain.bcrand.model.PSNotary.PVoteResult" +
-      "\",\n\013PVoteResult\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_RE" +
-      "JECT\020\001\"I\n\010PQNotary\022\024\n\014block_height\030\001 \001(\005" +
-      "\022\022\n\nblock_hash\030\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(" +
-      "\t\"\231\001\n\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022" +
-      "\026\n\016coinbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(" +
-      "\005\022\021\n\tblockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001" +
-      "(\014\022\023\n\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001" +
-      "\n\014PSSyncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_" +
-      "id\030\002 \001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030" +
-      "\004 \003(\005\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmax_height\030\006" +
-      " \001(\005\022\022\n\nmessage_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlo" +
-      "cks\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001" +
-      "(\t\022>\n\rblock_headers\030\003 \003(\0132\'.org.brewchai" +
-      "n.bcrand.model.PBlockEntry\022\022\n\nmessage_id" +
-      "\030\036 \001(\t\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTransact" +
-      "ion\022\016\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\t" +
-      "messageid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org." +
-      "brewchain.bcrand.model.PSSyncTransaction" +
-      ".SyncType\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfirm" +
-      "_bcuid\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020\000" +
-      "\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n" +
-      "\023PRetSyncTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023" +
-      "\n\013ret_message\030\002 \001(\t\"\"\n\020PSGetTransaction\022" +
-      "\016\n\006txHash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020\n" +
-      "\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n\t" +
-      "txContent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinfo" +
-      "\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001(" +
-      "\005\022\023\n\013ret_message\030\002 \001(\t\022\023\n\013blockheight\030\003 " +
-      "\001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 \001" +
-      "(\003\022\032\n\022maxblockheightseen\030\006 \001(\003\022\026\n\016maxter" +
-      "midseedn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006coa" +
-      "ddr\030\n \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepasslas" +
-      "tblk\030\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beacon" +
-      "_hash\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_c" +
-      "ode\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_nod" +
-      "e\030\003 \001(\0132!.org.brewchain.bcrand.model.VNo" +
-      "de\022\024\n\014pending_node\030\r \001(\t\022\023\n\013direct_node\030" +
-      "\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132!.org.brewchain." +
-      "bcrand.model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021" +
-      "\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022" +
-      "\017\n\007wall_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010" +
-      "PCommand\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003C" +
-      "BW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010" +
-      "\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003" +
-      "SCK\020!*\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN_" +
-      "SYNC_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_B" +
-      "LOCKMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_D" +
-      "UTY_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
+      "\035\n\025last_begin_miner_time\030\022 \001(\003\022\036\n\026cur_bl" +
+      "ock_miner_coaddr\030\023 \001(\t\"\225\001\n\013GossipMiner\022\r" +
+      "\n\005bcuid\030\001 \001(\t\022\021\n\tcur_block\030\002 \001(\005\022\026\n\016cur_" +
+      "block_hash\030\003 \001(\t\022\023\n\013beacon_hash\030\004 \001(\t\022\027\n" +
+      "\017block_extr_data\030\005 \001(\t\022\036\n\026cur_block_mine" +
+      "r_coaddr\030\006 \001(\t\"\201\001\n\020BlockWitnessInfo\022\023\n\013b" +
+      "lockheight\030\001 \001(\003\022\023\n\013beacon_hash\030\002 \001(\t\022\017\n" +
+      "\007netbitx\030\003 \001(\t\0222\n\007witness\030\n \003(\0132!.org.br" +
+      "ewchain.bcrand.model.VNode\"\260\002\n\nPSNodeInf" +
+      "o\022\021\n\treq_token\030\001 \001(\t\022-\n\002vn\030\003 \001(\0132!.org.b" +
+      "rewchain.bcrand.model.VNode\0225\n\004murs\030\004 \003(" +
+      "\0132\'.org.brewchain.bcrand.model.GossipMin" +
+      "er\022\020\n\010is_query\030\005 \001(\010\022$\n\034sugguest_start_s" +
+      "ync_block_id\030\006 \001(\005\022\031\n\021gossip_block_info\030" +
+      "\007 \001(\005\022B\n\021gossip_miner_info\030\010 \001(\0132\'.org.b" +
+      "rewchain.bcrand.model.GossipMiner\022\022\n\nmes" +
+      "sage_id\030\036 \001(\t\"%\n\023PSNodeGraceShutDown\022\016\n\006" +
+      "reason\030\001 \001(\t\"\220\002\n\014PRetNodeInfo\022\020\n\010ret_cod" +
+      "e\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022-\n\002vn\030\003 \001(\013" +
+      "2!.org.brewchain.bcrand.model.VNode\022\025\n\rq" +
+      "ueue_bsbatch\030\004 \001(\003\022\025\n\rqueue_confirm\030\005 \001(" +
+      "\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007extinfo\030\007 \001(\t\0225" +
+      "\n\004murs\030\010 \003(\0132\'.org.brewchain.bcrand.mode" +
+      "l.GossipMiner\022\022\n\nmessage_id\030\036 \001(\t\022\014\n\004sig" +
+      "n\030d \001(\t\"\321\003\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 " +
+      "\001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022\030\n\020prev_beacon_" +
+      "hash\030\003 \001(\t\022\023\n\013block_seeds\030\004 \001(\014\022\030\n\020prev_" +
+      "block_seeds\030\005 \001(\014\022\021\n\tvrf_codes\030\006 \001(\014\022\022\n\n" +
+      "co_address\030\007 \001(\t\022\017\n\007rewards\030\010 \001(\003\022\024\n\014blo" +
+      "ck_height\030\t \001(\005\022\024\n\014cws_guaranty\030\n \001(\003\022\020\n" +
+      "\010slice_id\030\013 \001(\005\022\022\n\ngroup_bits\030\014 \001(\t\022\023\n\013b" +
+      "eacon_bits\030\r \001(\t\022\024\n\014witness_bits\030\016 \001(\t\022\r" +
+      "\n\005bcuid\030\017 \001(\t\022\027\n\017block_mine_time\030\020 \001(\003\022\017" +
+      "\n\007txcount\030\021 \001(\005\022<\n\013block_entry\030\022 \001(\0132\'.o" +
+      "rg.brewchain.bcrand.model.PBlockEntry\022\020\n" +
+      "\010txbodies\030\023 \003(\014\022\022\n\nmessage_id\030\036 \001(\t\"\301\001\n\010" +
+      "PSNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_" +
+      "hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 \001(\t\022H\n\016blk_v" +
+      "oteresult\030\004 \001(\01620.org.brewchain.bcrand.m" +
+      "odel.PSNotary.PVoteResult\",\n\013PVoteResult" +
+      "\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJECT\020\001\"I\n\010PQNot" +
+      "ary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_hash\030" +
+      "\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231\001\n\013PBlockEnt" +
+      "ry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016coinbase_bcu" +
+      "id\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021\n\tblockhash\030" +
+      "\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022\023\n\013block_min" +
+      "er\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001\n\014PSSyncBlocks\022" +
+      "\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002 \001(\005\022\020\n\010nee" +
+      "dBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(\005\022\021\n\tsignat" +
+      "ure\030\005 \001(\t\022\022\n\nmax_height\030\006 \001(\005\022\022\n\nmessage" +
+      "_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlocks\022\020\n\010ret_code" +
+      "\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n\rblock_hea" +
+      "ders\030\003 \003(\0132\'.org.brewchain.bcrand.model." +
+      "PBlockEntry\022\022\n\nmessage_id\030\036 \001(\t\022\r\n\005bcuid" +
+      "\030\n \001(\t\"\375\001\n\021PSSyncTransaction\022\016\n\006txHash\030\001" +
+      " \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t" +
+      "\022H\n\010syncType\030\004 \001(\01626.org.brewchain.bcran" +
+      "d.model.PSSyncTransaction.SyncType\022\022\n\nfr" +
+      "om_bcuid\030\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n" +
+      "\010SyncType\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_" +
+      "RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetSyncTransa" +
+      "ction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002" +
+      " \001(\t\"\"\n\020PSGetTransaction\022\016\n\006txHash\030\001 \003(\t" +
+      "\"N\n\022PRetGetTransaction\022\020\n\010ret_code\030\001 \001(\005" +
+      "\022\023\n\013ret_message\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014" +
+      "\"\035\n\nPSRhrCheck\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRet" +
+      "RhrCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_messag" +
+      "e\030\002 \001(\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004" +
+      " \001(\003\022\025\n\rlastblocktime\030\005 \001(\003\022\032\n\022maxblockh" +
+      "eightseen\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022" +
+      "\021\n\tblockhash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006st" +
+      "atus\030\013 \001(\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nb" +
+      "anforvote\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n" +
+      "\017PRetHealthCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013re" +
+      "t_message\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.b" +
+      "rewchain.bcrand.model.VNode\022\024\n\014pending_n" +
+      "ode\030\r \001(\t\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMine" +
+      "rs\030\017 \003(\0132!.org.brewchain.bcrand.model.VN" +
+      "ode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001" +
+      "(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(" +
+      "\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010PCommand\022\007\n\003JIN" +
+      "\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007" +
+      "\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SO" +
+      "S\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!*\216\001\n\nVNode" +
+      "State\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n" +
+      "\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n" +
+      "\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n" +
+      "\014VN_DUTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -28204,13 +28480,13 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_VNode_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_VNode_descriptor,
-        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", "AuthBalance", "Cominers", "LastBeginMinerTime", });
+        new java.lang.String[] { "Bcuid", "CoAddress", "State", "CurBlock", "CurBlockRecvTime", "CurBlockMakeTime", "CurBlockHash", "PrevBlockHash", "BitIdx", "VrfRandseeds", "VrfCodes", "VrfGroups", "BeaconHash", "BeaconSign", "DoMine", "AuthBalance", "Cominers", "LastBeginMinerTime", "CurBlockMinerCoaddr", });
     internal_static_org_brewchain_bcrand_model_GossipMiner_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_org_brewchain_bcrand_model_GossipMiner_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_GossipMiner_descriptor,
-        new java.lang.String[] { "Bcuid", "CurBlock", "CurBlockHash", "BeaconHash", "BlockExtrData", });
+        new java.lang.String[] { "Bcuid", "CurBlock", "CurBlockHash", "BeaconHash", "BlockExtrData", "CurBlockMinerCoaddr", });
     internal_static_org_brewchain_bcrand_model_BlockWitnessInfo_descriptor =
       getDescriptor().getMessageTypes().get(4);
     internal_static_org_brewchain_bcrand_model_BlockWitnessInfo_fieldAccessorTable = new

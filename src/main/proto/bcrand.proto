@@ -69,6 +69,7 @@ message VNode{
 	string 		authBalance = 16;
 	string		cominers = 17;//cominer bits
 	int64		last_begin_miner_time = 18;
+	string		cur_block_miner_coaddr = 19;
 }
 
 message GossipMiner{
@@ -77,6 +78,7 @@ message GossipMiner{
 	string	cur_block_hash = 3;
 	string	beacon_hash = 4;
 	string  block_extr_data = 5;
+	string	cur_block_miner_coaddr = 6;
 }
 
 //块认证者
