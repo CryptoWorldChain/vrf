@@ -11967,6 +11967,23 @@ public final class Bcrand {
     com.google.protobuf.ByteString getTxbodies(int index);
 
     /**
+     * <pre>
+     *区块apply的返回状态
+     * </pre>
+     *
+     * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+     */
+    int getApplyStatusValue();
+    /**
+     * <pre>
+     *区块apply的返回状态
+     * </pre>
+     *
+     * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+     */
+    org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus getApplyStatus();
+
+    /**
      * <code>string message_id = 30;</code>
      */
     java.lang.String getMessageId();
@@ -12011,6 +12028,7 @@ public final class Bcrand {
       blockMineTime_ = 0L;
       txcount_ = 0;
       txbodies_ = java.util.Collections.emptyList();
+      applyStatus_ = 0;
       messageId_ = "";
     }
 
@@ -12152,6 +12170,12 @@ public final class Bcrand {
               txbodies_.add(input.readBytes());
               break;
             }
+            case 160: {
+              int rawValue = input.readEnum();
+
+              applyStatus_ = rawValue;
+              break;
+            }
             case 242: {
               java.lang.String s = input.readStringRequireUtf8();
 
@@ -12191,6 +12215,122 @@ public final class Bcrand {
       return org.brewchain.bcrand.model.Bcrand.internal_static_org_brewchain_bcrand_model_PSCoinbase_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.brewchain.bcrand.model.Bcrand.PSCoinbase.class, org.brewchain.bcrand.model.Bcrand.PSCoinbase.Builder.class);
+    }
+
+    /**
+     * Protobuf enum {@code org.brewchain.bcrand.model.PSCoinbase.ApplyStatus}
+     */
+    public enum ApplyStatus
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>APPLY_OK = 0;</code>
+       */
+      APPLY_OK(0),
+      /**
+       * <code>APPLY_OK_LOW_MEMORY = 1;</code>
+       */
+      APPLY_OK_LOW_MEMORY(1),
+      /**
+       * <code>APPLY_NOT_CONTINUE = 2;</code>
+       */
+      APPLY_NOT_CONTINUE(2),
+      /**
+       * <code>APPLY_REJECT = 3;</code>
+       */
+      APPLY_REJECT(3),
+      UNRECOGNIZED(-1),
+      ;
+
+      /**
+       * <code>APPLY_OK = 0;</code>
+       */
+      public static final int APPLY_OK_VALUE = 0;
+      /**
+       * <code>APPLY_OK_LOW_MEMORY = 1;</code>
+       */
+      public static final int APPLY_OK_LOW_MEMORY_VALUE = 1;
+      /**
+       * <code>APPLY_NOT_CONTINUE = 2;</code>
+       */
+      public static final int APPLY_NOT_CONTINUE_VALUE = 2;
+      /**
+       * <code>APPLY_REJECT = 3;</code>
+       */
+      public static final int APPLY_REJECT_VALUE = 3;
+
+
+      public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
+        return value;
+      }
+
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static ApplyStatus valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static ApplyStatus forNumber(int value) {
+        switch (value) {
+          case 0: return APPLY_OK;
+          case 1: return APPLY_OK_LOW_MEMORY;
+          case 2: return APPLY_NOT_CONTINUE;
+          case 3: return APPLY_REJECT;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<ApplyStatus>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          ApplyStatus> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<ApplyStatus>() {
+              public ApplyStatus findValueByNumber(int number) {
+                return ApplyStatus.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return org.brewchain.bcrand.model.Bcrand.PSCoinbase.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final ApplyStatus[] VALUES = values();
+
+      public static ApplyStatus valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        if (desc.getIndex() == -1) {
+          return UNRECOGNIZED;
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private ApplyStatus(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:org.brewchain.bcrand.model.PSCoinbase.ApplyStatus)
     }
 
     private int bitField0_;
@@ -12693,6 +12833,31 @@ public final class Bcrand {
       return txbodies_.get(index);
     }
 
+    public static final int APPLY_STATUS_FIELD_NUMBER = 20;
+    private int applyStatus_;
+    /**
+     * <pre>
+     *区块apply的返回状态
+     * </pre>
+     *
+     * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+     */
+    public int getApplyStatusValue() {
+      return applyStatus_;
+    }
+    /**
+     * <pre>
+     *区块apply的返回状态
+     * </pre>
+     *
+     * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+     */
+    public org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus getApplyStatus() {
+      @SuppressWarnings("deprecation")
+      org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus result = org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.valueOf(applyStatus_);
+      return result == null ? org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.UNRECOGNIZED : result;
+    }
+
     public static final int MESSAGE_ID_FIELD_NUMBER = 30;
     private volatile java.lang.Object messageId_;
     /**
@@ -12798,6 +12963,9 @@ public final class Bcrand {
       for (int i = 0; i < txbodies_.size(); i++) {
         output.writeBytes(19, txbodies_.get(i));
       }
+      if (applyStatus_ != org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.APPLY_OK.getNumber()) {
+        output.writeEnum(20, applyStatus_);
+      }
       if (!getMessageIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 30, messageId_);
       }
@@ -12883,6 +13051,10 @@ public final class Bcrand {
         size += dataSize;
         size += 2 * getTxbodiesList().size();
       }
+      if (applyStatus_ != org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.APPLY_OK.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(20, applyStatus_);
+      }
       if (!getMessageIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(30, messageId_);
       }
@@ -12943,6 +13115,7 @@ public final class Bcrand {
       }
       result = result && getTxbodiesList()
           .equals(other.getTxbodiesList());
+      result = result && applyStatus_ == other.applyStatus_;
       result = result && getMessageId()
           .equals(other.getMessageId());
       result = result && unknownFields.equals(other.unknownFields);
@@ -13001,6 +13174,8 @@ public final class Bcrand {
         hash = (37 * hash) + TXBODIES_FIELD_NUMBER;
         hash = (53 * hash) + getTxbodiesList().hashCode();
       }
+      hash = (37 * hash) + APPLY_STATUS_FIELD_NUMBER;
+      hash = (53 * hash) + applyStatus_;
       hash = (37 * hash) + MESSAGE_ID_FIELD_NUMBER;
       hash = (53 * hash) + getMessageId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -13182,6 +13357,8 @@ public final class Bcrand {
         }
         txbodies_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00040000);
+        applyStatus_ = 0;
+
         messageId_ = "";
 
         return this;
@@ -13239,6 +13416,7 @@ public final class Bcrand {
           bitField0_ = (bitField0_ & ~0x00040000);
         }
         result.txbodies_ = txbodies_;
+        result.applyStatus_ = applyStatus_;
         result.messageId_ = messageId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -13360,6 +13538,9 @@ public final class Bcrand {
             txbodies_.addAll(other.txbodies_);
           }
           onChanged();
+        }
+        if (other.applyStatus_ != 0) {
+          setApplyStatusValue(other.getApplyStatusValue());
         }
         if (!other.getMessageId().isEmpty()) {
           messageId_ = other.messageId_;
@@ -14652,6 +14833,71 @@ public final class Bcrand {
       public Builder clearTxbodies() {
         txbodies_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00040000);
+        onChanged();
+        return this;
+      }
+
+      private int applyStatus_ = 0;
+      /**
+       * <pre>
+       *区块apply的返回状态
+       * </pre>
+       *
+       * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+       */
+      public int getApplyStatusValue() {
+        return applyStatus_;
+      }
+      /**
+       * <pre>
+       *区块apply的返回状态
+       * </pre>
+       *
+       * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+       */
+      public Builder setApplyStatusValue(int value) {
+        applyStatus_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *区块apply的返回状态
+       * </pre>
+       *
+       * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+       */
+      public org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus getApplyStatus() {
+        @SuppressWarnings("deprecation")
+        org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus result = org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.valueOf(applyStatus_);
+        return result == null ? org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus.UNRECOGNIZED : result;
+      }
+      /**
+       * <pre>
+       *区块apply的返回状态
+       * </pre>
+       *
+       * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+       */
+      public Builder setApplyStatus(org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        applyStatus_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *区块apply的返回状态
+       * </pre>
+       *
+       * <code>.org.brewchain.bcrand.model.PSCoinbase.ApplyStatus apply_status = 20;</code>
+       */
+      public Builder clearApplyStatus() {
+        
+        applyStatus_ = 0;
         onChanged();
         return this;
       }
@@ -28386,7 +28632,7 @@ public final class Bcrand {
       "\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007extinfo\030\007 \001(\t\0225" +
       "\n\004murs\030\010 \003(\0132\'.org.brewchain.bcrand.mode" +
       "l.GossipMiner\022\022\n\nmessage_id\030\036 \001(\t\022\014\n\004sig" +
-      "n\030d \001(\t\"\321\003\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 " +
+      "n\030d \001(\t\"\373\004\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 " +
       "\001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022\030\n\020prev_beacon_" +
       "hash\030\003 \001(\t\022\023\n\013block_seeds\030\004 \001(\014\022\030\n\020prev_" +
       "block_seeds\030\005 \001(\014\022\021\n\tvrf_codes\030\006 \001(\014\022\022\n\n" +
@@ -28397,59 +28643,63 @@ public final class Bcrand {
       "\n\005bcuid\030\017 \001(\t\022\027\n\017block_mine_time\030\020 \001(\003\022\017" +
       "\n\007txcount\030\021 \001(\005\022<\n\013block_entry\030\022 \001(\0132\'.o" +
       "rg.brewchain.bcrand.model.PBlockEntry\022\020\n" +
-      "\010txbodies\030\023 \003(\014\022\022\n\nmessage_id\030\036 \001(\t\"\301\001\n\010" +
-      "PSNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_" +
-      "hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 \001(\t\022H\n\016blk_v" +
-      "oteresult\030\004 \001(\01620.org.brewchain.bcrand.m" +
-      "odel.PSNotary.PVoteResult\",\n\013PVoteResult" +
-      "\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJECT\020\001\"I\n\010PQNot" +
-      "ary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_hash\030" +
-      "\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231\001\n\013PBlockEnt" +
-      "ry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016coinbase_bcu" +
-      "id\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021\n\tblockhash\030" +
-      "\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022\023\n\013block_min" +
-      "er\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001\n\014PSSyncBlocks\022" +
-      "\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002 \001(\005\022\020\n\010nee" +
-      "dBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(\005\022\021\n\tsignat" +
-      "ure\030\005 \001(\t\022\022\n\nmax_height\030\006 \001(\005\022\022\n\nmessage" +
-      "_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlocks\022\020\n\010ret_code" +
-      "\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n\rblock_hea" +
-      "ders\030\003 \003(\0132\'.org.brewchain.bcrand.model." +
-      "PBlockEntry\022\022\n\nmessage_id\030\036 \001(\t\022\r\n\005bcuid" +
-      "\030\n \001(\t\"\375\001\n\021PSSyncTransaction\022\016\n\006txHash\030\001" +
-      " \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t" +
-      "\022H\n\010syncType\030\004 \001(\01626.org.brewchain.bcran" +
-      "d.model.PSSyncTransaction.SyncType\022\022\n\nfr" +
-      "om_bcuid\030\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n" +
-      "\010SyncType\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_" +
-      "RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetSyncTransa" +
-      "ction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002" +
-      " \001(\t\"\"\n\020PSGetTransaction\022\016\n\006txHash\030\001 \003(\t" +
-      "\"N\n\022PRetGetTransaction\022\020\n\010ret_code\030\001 \001(\005" +
-      "\022\023\n\013ret_message\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014" +
-      "\"\035\n\nPSRhrCheck\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRet" +
-      "RhrCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_messag" +
-      "e\030\002 \001(\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004" +
-      " \001(\003\022\025\n\rlastblocktime\030\005 \001(\003\022\032\n\022maxblockh" +
-      "eightseen\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022" +
-      "\021\n\tblockhash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006st" +
-      "atus\030\013 \001(\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nb" +
-      "anforvote\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n" +
-      "\017PRetHealthCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013re" +
-      "t_message\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.b" +
-      "rewchain.bcrand.model.VNode\022\024\n\014pending_n" +
-      "ode\030\r \001(\t\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMine" +
-      "rs\030\017 \003(\0132!.org.brewchain.bcrand.model.VN" +
-      "ode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001" +
-      "(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(" +
-      "\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010PCommand\022\007\n\003JIN" +
-      "\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007" +
-      "\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SO" +
-      "S\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!*\216\001\n\nVNode" +
-      "State\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n" +
-      "\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n" +
-      "\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n" +
-      "\014VN_DUTY_SYNC\020\007b\006proto3"
+      "\010txbodies\030\023 \003(\014\022H\n\014apply_status\030\024 \001(\01622." +
+      "org.brewchain.bcrand.model.PSCoinbase.Ap" +
+      "plyStatus\022\022\n\nmessage_id\030\036 \001(\t\"^\n\013ApplySt" +
+      "atus\022\014\n\010APPLY_OK\020\000\022\027\n\023APPLY_OK_LOW_MEMOR" +
+      "Y\020\001\022\026\n\022APPLY_NOT_CONTINUE\020\002\022\020\n\014APPLY_REJ" +
+      "ECT\020\003\"\301\001\n\010PSNotary\022\024\n\014block_height\030\001 \001(\005" +
+      "\022\022\n\nblock_hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 \001(" +
+      "\t\022H\n\016blk_voteresult\030\004 \001(\01620.org.brewchai" +
+      "n.bcrand.model.PSNotary.PVoteResult\",\n\013P" +
+      "VoteResult\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJECT\020" +
+      "\001\"I\n\010PQNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nb" +
+      "lock_hash\030\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231\001\n" +
+      "\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016co" +
+      "inbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021\n\t" +
+      "blockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022\023\n" +
+      "\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001\n\014PSS" +
+      "yncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002 " +
+      "\001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(\005" +
+      "\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmax_height\030\006 \001(\005\022" +
+      "\022\n\nmessage_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlocks\022\020" +
+      "\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n" +
+      "\rblock_headers\030\003 \003(\0132\'.org.brewchain.bcr" +
+      "and.model.PBlockEntry\022\022\n\nmessage_id\030\036 \001(" +
+      "\t\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTransaction\022\016" +
+      "\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessa" +
+      "geid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org.brewc" +
+      "hain.bcrand.model.PSSyncTransaction.Sync" +
+      "Type\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfirm_bcui" +
+      "d\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020\000\022\023\n\017S" +
+      "T_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRet" +
+      "SyncTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret" +
+      "_message\030\002 \001(\t\"\"\n\020PSGetTransaction\022\016\n\006tx" +
+      "Hash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020\n\010ret_" +
+      "code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n\ttxCon" +
+      "tent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinfo\030\001 \001(" +
+      "\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013" +
+      "ret_message\030\002 \001(\t\022\023\n\013blockheight\030\003 \001(\003\022\016" +
+      "\n\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 \001(\003\022\032\n" +
+      "\022maxblockheightseen\030\006 \001(\003\022\026\n\016maxtermidse" +
+      "edn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006coaddr\030\n" +
+      " \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepasslastblk\030" +
+      "\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beacon_hash" +
+      "\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_code\030\001" +
+      " \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_node\030\003 \001" +
+      "(\0132!.org.brewchain.bcrand.model.VNode\022\024\n" +
+      "\014pending_node\030\r \001(\t\022\023\n\013direct_node\030\016 \001(\t" +
+      "\0223\n\010coMiners\030\017 \003(\0132!.org.brewchain.bcran" +
+      "d.model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbs" +
+      "ave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022\017\n\007wa" +
+      "ll_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010PComm" +
+      "and\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022" +
+      "\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003S" +
+      "RT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!" +
+      "*\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_" +
+      "BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOCKM" +
+      "AKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY_B" +
+      "EACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -28516,7 +28766,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_PSCoinbase_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_PSCoinbase_descriptor,
-        new java.lang.String[] { "BeaconHash", "BeaconSign", "PrevBeaconHash", "BlockSeeds", "PrevBlockSeeds", "VrfCodes", "CoAddress", "Rewards", "BlockHeight", "CwsGuaranty", "SliceId", "GroupBits", "BeaconBits", "WitnessBits", "Bcuid", "BlockMineTime", "Txcount", "BlockEntry", "Txbodies", "MessageId", });
+        new java.lang.String[] { "BeaconHash", "BeaconSign", "PrevBeaconHash", "BlockSeeds", "PrevBlockSeeds", "VrfCodes", "CoAddress", "Rewards", "BlockHeight", "CwsGuaranty", "SliceId", "GroupBits", "BeaconBits", "WitnessBits", "Bcuid", "BlockMineTime", "Txcount", "BlockEntry", "Txbodies", "ApplyStatus", "MessageId", });
     internal_static_org_brewchain_bcrand_model_PSNotary_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_org_brewchain_bcrand_model_PSNotary_fieldAccessorTable = new

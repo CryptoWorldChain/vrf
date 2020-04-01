@@ -148,7 +148,14 @@ message  PSCoinbase{
 	int32	txcount = 17;		 //交易数量
 	PBlockEntry block_entry = 18;//块体
 	repeated bytes txbodies = 19; //交易体
+	enum	ApplyStatus{
+		APPLY_OK = 0;
+		APPLY_OK_LOW_MEMORY = 1;
+		APPLY_NOT_CONTINUE = 2;
+		APPLY_REJECT = 3;
 
+	}
+	ApplyStatus	apply_status = 20;//区块apply的返回状态
 	string 	message_id = 30;
 }
 

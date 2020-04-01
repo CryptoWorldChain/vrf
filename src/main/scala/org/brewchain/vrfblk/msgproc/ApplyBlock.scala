@@ -23,6 +23,9 @@ import scala.collection.JavaConverters._
 import scala.util.Random
 import com.google.protobuf.ByteString
 import scala.collection.mutable.Buffer
+import org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus
+import org.brewchain.bcrand.model.Bcrand.VNodeState
+import onight.tfw.otransio.api.PacketHelper
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -54,13 +57,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
-        if (lastBlock != null ) {
-          log.info("last connect block equal c="+lastBlock.getHeader.getHeight+"==>b="+block.getHeader.getHeight);
+        if (lastBlock != null) {
+          log.info("last connect block equal c=" + lastBlock.getHeader.getHeight + "==>b=" + block.getHeader.getHeight);
           VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
           // VCtrl.instance.updateBlockHeight(lastBlock.getHeader.getNumber.intValue, b.getSign, lastBlock.getMiner.getBit)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), lastBlock.getMiner.getBits)
         } else {
-//          VCtrl.instance.updateBlockHeight(vres.getWantHeight.intValue(), "", "", "", 0)
+          //          VCtrl.instance.updateBlockHeight(vres.getWantHeight.intValue(), "", "", "", 0)
           (vres.getCurrentHeight.intValue(), vres.getWantHeight.intValue(), block.getMiner.getBits)
         }
       } else {
@@ -69,14 +72,14 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       }
 
     } else {
-//      val lastBlock = Daos.chainHelper.getLastConnectedBlock();
-//      if (lastBlock != null && lastBlock.getHeader.getHeight != block.getHeader.getHeight ) {
-//        VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
-//        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, lastBlock.getMiner.getBits)
-//      } else {
-        VCtrl.instance.updateBlockHeight(block.build())
-        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, block.getMiner.getBits)
-//      }
+      //      val lastBlock = Daos.chainHelper.getLastConnectedBlock();
+      //      if (lastBlock != null && lastBlock.getHeader.getHeight != block.getHeader.getHeight ) {
+      //        VCtrl.instance.updateBlockHeight(VCtrl.getPriorityBlockInBeaconHash(lastBlock));
+      //        (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, lastBlock.getMiner.getBits)
+      //      } else {
+      VCtrl.instance.updateBlockHeight(block.build())
+      (block.getHeader.getHeight.intValue, block.getHeader.getHeight.intValue, block.getMiner.getBits)
+      //      }
     }
   }
 
@@ -86,77 +89,123 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     NodeStateSwitcher.offerMessage(new StateChange(sign, hash, blockHash, nodeBit, blockHeight));
   }
 
+  val ApplyBlockFP = PacketHelper.genPack("APPLYBLOCK", "__VRF", "", true, 9);
   def proc() {
     val cn = VCtrl.curVN();
     MDCSetBCUID(VCtrl.network())
-    if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
-      val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
-      val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
-      acceptHeight match {
-        case n if n > 0 && n < pbo.getBlockHeight =>
-          //                  ret.setResult(CoinbaseResult.CR_PROVEN)
-          log.error("applyblock:UU,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            + ",VB=" + pbo.getWitnessBits
-            + ",MB=" + cn.getCominers
-            + ",B=" + pbo.getBlockEntry.getSign
-            + ",TX=" + pbo.getTxcount
-            + ",CBH=" + VCtrl.curVN().getCurBlock
-            + ",QS=" + BlockProcessor.getQueue.size()
-            + ",C=" + (System.currentTimeMillis() - BeaconGossip.lastGossipTime)
-            + ",BEMS=" + VConfig.BLK_EPOCH_MS);
-
-          // && BlockProcessor.getQueue.size() < 2
-          if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
-            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
-            log.info("cannot apply block, do gossip");
-            BeaconGossip.tryGossip();
-          }
-        case n if n > 0 =>
-          val vstr =
-            if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress)) {
-              "MY"
-            } else {
-              "OK"
-            }
-          log.error("applyblock:" + vstr + ",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-            + ",MN=" + VCtrl.coMinerByUID.size
-            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            + ",MB=" + cn.getCominers
-            + ",VB=" + pbo.getWitnessBits
-            + ",B=" + pbo.getBlockEntry.getBlockhash
-            + ",TX=" + pbo.getTxcount);
-          bestheight.set(n);
-          val notaBits = mapToBigInt(pbo.getWitnessBits);
-          //if (notaBits.testBit(cn.getBitIdx)) {
-          val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid);
-            VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
-          //}
-          if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
-            log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
-            BeaconGossip.tryGossip();
-          }
-
-          tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, nodebit);
-        //          tryNotifyState(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getHeader.getHeight.intValue, block.getMiner.getTerm, nodebit);
-        case n @ _ =>
-          log.error("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
-            + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
-            + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
-            + ",VB=" + pbo.getWitnessBits
-            + ",B=" + pbo.getBlockEntry.getSign
-            + ",TX=" + pbo.getTxcount);
-          if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
-            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
-            log.info("cannot apply block, do gossip");
-            BeaconGossip.tryGossip();
-          }
-      }
-      //更新PZP节点信息，用于区块浏览器查看块高
-      VCtrl.network().root().counter.blocks.set(VCtrl.curVN().getCurBlock)
+    //    if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
+    if (Runtime.getRuntime.freeMemory() < VConfig.METRIC_COMINER_MIN_FREE_MEMEORY_MB * 1024 * 1024) {
+      VCtrl.instance.lowMemoryCounter.incrementAndGet();
+      log.error("local system is low memory:counter=" + VCtrl.instance.lowMemoryCounter.get());
+    } else if (VCtrl.instance.lowMemoryCounter.get > 1) {
+      VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
+    log.info("current free memory.MB = "+ (Runtime.getRuntime.freeMemory()/ 1024 / 1024));
+    val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+    val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
+    acceptHeight match {
+      case n if n > 0 && n < pbo.getBlockHeight =>
+        //                  ret.setResult(CoinbaseResult.CR_PROVEN)
+        log.error("applyblock:UU,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+          + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+          + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+          + ",VB=" + pbo.getWitnessBits
+          + ",MB=" + cn.getCominers
+          + ",B=" + pbo.getBlockEntry.getSign
+          + ",TX=" + pbo.getTxcount
+          + ",CBH=" + VCtrl.curVN().getCurBlock
+          + ",QS=" + BlockProcessor.getQueue.size()
+          + ",C=" + (System.currentTimeMillis() - BeaconGossip.lastGossipTime)
+          + ",BEMS=" + VConfig.BLK_EPOCH_MS);
+
+        // && BlockProcessor.getQueue.size() < 2
+//        if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
+//          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+//          log.info("cannot apply block, do gossip");
+          BeaconGossip.tryGossip();
+//        } else {
+
+          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
+          //      newhash, prevhash, mapToBigInt(netbits).bigInteger
+          val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
+          val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
+          val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
+          if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
+            log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
+            val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
+            Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
+              def run() {
+                do {
+                  //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
+                  Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
+                } while (sleepMS > System.currentTimeMillis() && VCtrl.curVN().getCurBlock < pbo.getBlockHeight);
+                if (VCtrl.curVN().getCurBlock < pbo.getBlockHeight) {
+                  //              log.error("MPRealCreateBlock:start");
+                  val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).clearBlockEntry().setApplyStatus(ApplyStatus.APPLY_NOT_CONTINUE);
+                  log.info("ban for create block from="+pbo.getBlockHeight);
+                  VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight,System.currentTimeMillis()))
+                  VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+                } else {
+                  log.info("still try to  create block");
+                  BeaconGossip.tryGossip();
+                }
+              }
+            })
+          }else{
+            log.info("cannot apply block, do gossip");
+            BeaconGossip.tryGossip();
+          }
+//        }
+
+      //          在这里启动监听线程，如果每法apply，则放弃打快
+      case n if n > 0 =>
+        val vstr =
+          if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress)) {
+            "MY"
+          } else {
+            "OK"
+          }
+        log.error("applyblock:" + vstr + ",H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+          + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+          + ",MN=" + VCtrl.coMinerByUID.size
+          + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+          + ",MB=" + cn.getCominers
+          + ",VB=" + pbo.getWitnessBits
+          + ",B=" + pbo.getBlockEntry.getBlockhash
+          + ",TX=" + pbo.getTxcount);
+        bestheight.set(n);
+        val notaBits = mapToBigInt(pbo.getWitnessBits);
+        //if (notaBits.testBit(cn.getBitIdx)) {
+        val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).clearBlockEntry();
+        if (VCtrl.instance.lowMemoryCounter.get > VConfig.METRIC_COMINER_LOW_MEMORY_COUNT) {
+          log.error("ban for miner. low memory counter too large " + VCtrl.instance.lowMemoryCounter.get + "==>max=" + VConfig.METRIC_COMINER_LOW_MEMORY_COUNT);
+          wallmsg.setApplyStatus(ApplyStatus.APPLY_OK_LOW_MEMORY);
+        }
+        VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+        //}
+        if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
+          log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
+          BeaconGossip.tryGossip();
+        }
+
+        tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, nodebit);
+      //          tryNotifyState(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getHeader.getHeight.intValue, block.getMiner.getTerm, nodebit);
+      case n @ _ =>
+        log.error("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
+          + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
+          + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
+          + ",VB=" + pbo.getWitnessBits
+          + ",B=" + pbo.getBlockEntry.getSign
+          + ",TX=" + pbo.getTxcount);
+        if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
+          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+          log.info("cannot apply block, do gossip");
+          BeaconGossip.tryGossip();
+        }
+    }
+    //更新PZP节点信息，用于区块浏览器查看块高
+    VCtrl.network().root().counter.blocks.set(VCtrl.curVN().getCurBlock)
+    //    }
 
   }
 

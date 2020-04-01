@@ -36,6 +36,8 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
   val heightBlkSeen = new AtomicInteger(0);
 
+  val lowMemoryCounter = new AtomicInteger(0);
+
   def loadNodeFromDB() = {
     val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY.getBytes).get
     val root_node = network.root();
@@ -68,8 +70,8 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
         cur_vnode.setBeaconHash("")
       } else {
         var blk = Daos.chainHelper.getMaxConnectBlock
-        if(blk==null){
-           blk =  Daos.chainHelper.getLastConnectedBlock;
+        if (blk == null) {
+          blk = Daos.chainHelper.getLastConnectedBlock;
         }
         cur_vnode.setCurBlock(blk.getHeader.getHeight.intValue())
         //当前块BlockHASH
@@ -94,9 +96,9 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   }
 
   def updateBlockHeight(block: BlockInfo): Unit = {
-//    updateBlockHeight(block.getHeader.getHeight.intValue, Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits, block.getHeader.getTimestamp)
-    
-     Daos.blkHelper.synchronized({
+    //    updateBlockHeight(block.getHeader.getHeight.intValue, Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits, block.getHeader.getTimestamp)
+
+    Daos.blkHelper.synchronized({
       cur_vnode.setCurBlockRecvTime(System.currentTimeMillis())
       cur_vnode.setCurBlockMakeTime(block.getHeader.getTimestamp)
       cur_vnode.setCurBlock(block.getHeader.getHeight.intValue);
@@ -104,10 +106,10 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
       cur_vnode.setBeaconHash(block.getMiner.getTerm);
       cur_vnode.setVrfRandseeds(block.getMiner.getBits);
       cur_vnode.setCurBlockMinerCoaddr(Daos.enc.bytesToHexStr(block.getMiner.getAddress.toByteArray()))
-      
+
       syncToDB()
     })
-    
+
   }
 
   def startup() = {
@@ -123,7 +125,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
-
+  val banMinerByUID: Map[String, (Int, Long)] = Map.empty[String, (Int, Long)];
   def curVN(): VNode.Builder = instance.cur_vnode
 
   def haveEnoughToken(nodeAddress: String) = {
@@ -141,17 +143,17 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     }
     false
   }
-  
+
   def addCoMiner(node: VNode) = {
     coMinerByUID.synchronized({
-      val lastnode=coMinerByUID.getOrElse(node.getBcuid,null)
-      if(lastnode==null){
-        coMinerByUID.put(node.getBcuid,node.toBuilder().setLastBeginMinerTime(System.currentTimeMillis()).build)
-      }else{
-        coMinerByUID.put(node.getBcuid,node.toBuilder().setLastBeginMinerTime(lastnode.getLastBeginMinerTime).build);
+      val lastnode = coMinerByUID.getOrElse(node.getBcuid, null)
+      if (lastnode == null) {
+        coMinerByUID.put(node.getBcuid, node.toBuilder().setLastBeginMinerTime(System.currentTimeMillis()).build)
+      } else {
+        coMinerByUID.put(node.getBcuid, node.toBuilder().setLastBeginMinerTime(lastnode.getLastBeginMinerTime).build);
       }
       var cobits = BigInteger.ZERO;
-      coMinerByUID.map(f => if(f._2.getBitIdx>0) cobits=cobits.setBit(f._2.getBitIdx));
+      coMinerByUID.map(f => if (f._2.getBitIdx > 0) cobits = cobits.setBit(f._2.getBitIdx));
       instance.cur_vnode.setCominers(hexToMapping(cobits))
     })
   }
@@ -160,7 +162,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       val existnode = coMinerByUID.remove(bcuid);
       if (existnode != null) {
         var cobits = BigInteger.ZERO;
-        coMinerByUID.map(f => cobits=cobits.setBit(f._2.getBitIdx));
+        coMinerByUID.map(f => cobits = cobits.setBit(f._2.getBitIdx));
         instance.cur_vnode.setCominers(hexToMapping(cobits))
       }
     })
@@ -211,7 +213,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     if (bestblks.length == 1) {
       log.info("bestblks=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk
-    } else if (bestblks.length > 1) { 
+    } else if (bestblks.length > 1) {
       // 判断是否是beaconhash中更高优先级的块
       // 循环所有相同高度的块，排序sleepMS
       val priorityBlk = bestblks.toList.map(p => {
@@ -222,7 +224,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
 
       log.info("bestblks=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
       priorityBlk
-    }else{
+    } else {
       blk;
     }
   }
@@ -276,6 +278,14 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
         log.error("blk not found in AccountDB:" + block);
         null;
       }
+    }
+  }
+  def isBanforMiner(blockHeight: Int,bcuid:String = VCtrl.curVN().getBcuid): Boolean = {
+    if (blockHeight > VConfig.BLOCK_DISTANCE_COMINE + 2) {
+      val memrec = VCtrl.banMinerByUID.get(bcuid).getOrElse((0, 0l))
+      blockHeight - memrec._1 < VConfig.BLOCK_DISTANCE_COMINE && System.currentTimeMillis() - memrec._2 < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 2
+    } else {
+      false
     }
   }
 }

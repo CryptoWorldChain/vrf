@@ -86,19 +86,39 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       val curtime = System.currentTimeMillis();
 
       VCtrl.coMinerByUID.foreach(f => {
-        log.info("check:" + f._2.getBcuid + ":" + f._2.getCominers + "==>" + cn.getCominers + ",result=" +
-          mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits) + ",height=" + f._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock);
+        
+        val islock_block = VCtrl.isBanforMiner(cn.getCurBlock + 1, f._2.getBcuid);;//.get(f._2.getBcuid).getOrElse(0);
+        
+        log.info("minecheck:" + f._2.getBcuid + ":bits="
+            + (VCtrl.network().node_bits().testBit(f._2.getBitIdx)) + ",time="
+            + ((curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS) 
+            +",stat="+f._2.getState
+            +",height="+f._2.getCurBlock
+            +",curheighcheck="+ (f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
+            +",lockblock="+ VCtrl.banMinerByUID.get(f._2.getBcuid).getOrElse((0,0L))
+            +",islock_block="+islock_block
+            + ",result=" + "==>" + VCtrl.curVN().getCurBlock);
 
         if ( //other nodes
         VCtrl.network().node_bits().testBit(f._2.getBitIdx) &&
           (curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS &&
           (f._2.getState == VNodeState.VN_DUTY_BLOCKMAKERS || f._2.getState == VNodeState.VN_DUTY_NOTARY
-            || f._2.getState == VNodeState.VN_SYNC_BLOCK) &&
+            || f._2.getState == VNodeState.VN_DUTY_SYNC) &&
             f._2.getCurBlock > VConfig.BLOCK_DISTANCE_NETBITS &&
             f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
-            //          && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
+//             && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
             || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
-          newNetBits = newNetBits.setBit(f._2.getBitIdx);
+          if(VCtrl.banMinerByUID.contains(f._2.getBcuid)){
+            if(islock_block){
+              log.info("minecheck: remove miner for banMiner:"+VCtrl.banMinerByUID.get(f._2.getBcuid) );
+            }else{
+              VCtrl.banMinerByUID.remove(f._2.getBcuid)
+              newNetBits = newNetBits.setBit(f._2.getBitIdx);
+            }
+          }else{
+            newNetBits = newNetBits.setBit(f._2.getBitIdx);
+          }
+          
         }
       })
       //}
@@ -109,7 +129,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
 
-      log.error("MPRealCreateBlock:start confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
+      log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
       val (newblk, txs) = newBlockFromAccount(
         VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,

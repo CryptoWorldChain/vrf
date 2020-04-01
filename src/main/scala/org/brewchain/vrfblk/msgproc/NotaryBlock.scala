@@ -13,6 +13,8 @@ import scala.collection.JavaConverters._
 import org.brewchain.p22p.core.Votes.Converge
 import org.brewchain.p22p.core.Votes.NotConverge
 import org.brewchain.bcrand.model.Bcrand.VNode
+import org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus
+import org.brewchain.vrfblk.utils.VConfig
 
 case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -27,6 +29,14 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       bb.setCurBlockHash(pbo.getBlockEntry.getBlockhash);
       VCtrl.addCoMiner(bb.build());
     }
+    if (pbo.getApplyStatus == ApplyStatus.APPLY_NOT_CONTINUE) {
+      VCtrl.banMinerByUID.put(pbo.getBcuid,(pbo.getBlockHeight,System.currentTimeMillis()))
+    }
+    if (pbo.getApplyStatus == ApplyStatus.APPLY_OK_LOW_MEMORY) {
+      log.error("remote node system is low memory: bcuid="+pbo.getBcuid);
+      VCtrl.banMinerByUID.put(pbo.getBcuid,( pbo.getBlockHeight,System.currentTimeMillis()))
+    }
+    
     //log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
     //  + ",MN=" + VCtrl.coMinerByUID.size
     //  + ",from=" + pbo.getBcuid

@@ -88,6 +88,8 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       super.offerMessage(t)
     }
   }
+  
+  
 
   def runBatch(items: List[BlockMessage]): Unit = {
     MDCSetBCUID(VCtrl.network())
@@ -96,7 +98,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
       //should wait
       m match {
         case blkInfo: MPCreateBlock =>
-          val startupMS= System.currentTimeMillis();
+          val startupMS = System.currentTimeMillis();
           var sleepMS = blkInfo.sleepMs.longValue();
           var isFirstMaker = false;
           if (sleepMS <= VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
@@ -111,34 +113,37 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                 //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                 Thread.sleep(Math.min(100, sleepMS));
                 sleepMS = sleepMS - 100;
-                if ( isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
+                if (isFirstMaker && Daos.txHelper.getTmConfirmQueue.size() > VConfig.WAIT_BLOCK_MIN_TXN) {
                   sleepMS = 0;
                 }
-                checkcc = checkcc+1;
-                if (!isFirstMaker && sleepMS > 1000 && ( lastCominercc !=  VCtrl.coMinerByUID.size || checkcc%100 == 0)) {
+                checkcc = checkcc + 1;
+                if (!isFirstMaker && sleepMS > 1000 && (lastCominercc != VCtrl.coMinerByUID.size || checkcc % 100 == 0)) {
                   lastCominercc = VCtrl.coMinerByUID.size
                   val ranInt: Int = new BigInteger(blkInfo.beaconHash, 16).intValue().abs;
                   var newBits = BigInteger.ZERO;
-                  VCtrl.coMinerByUID.map(f=>{
-                    newBits = newBits.setBit(f._2.getBitIdx)
+                  VCtrl.coMinerByUID.map(f => {
+                    if (!VCtrl.isBanforMiner(blkInfo.needHeight,f._1)) {
+                      newBits = newBits.setBit(f._2.getBitIdx)
+                    }
                   })
                   newBits = newBits.and(blkInfo.netBits);
                   val (state, newblockbits, natarybits, realSleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newBits, VCtrl.curVN().getBitIdx);
-                  if (System.currentTimeMillis() - startupMS >  realSleepMs + 500) {
-                    log.info("waitup for realSleepMs should waitup,realSleepMs="+realSleepMs+",newBits="+newBits.toString(2)+",netBits="+blkInfo.netBits.toString(2));
+                  if (System.currentTimeMillis() - startupMS > realSleepMs + 500) {
+                    log.info("waitup for realSleepMs should waitup,realSleepMs=" + realSleepMs + ",newBits=" + newBits.toString(2) + ",netBits=" + blkInfo.netBits.toString(2));
                     sleepMS = 0;
-                  }else{
+                  } else {
                     sleepMS = realSleepMs.longValue() - (System.currentTimeMillis() - startupMS) - 100;
                   }
 
                 }
-              } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash));
+              } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) && !VCtrl.isBanforMiner(blkInfo.needHeight));
 
-              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash)) {
+              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) && !VCtrl.isBanforMiner(blkInfo.needHeight)) {
                 //              log.error("MPRealCreateBlock:start");
                 BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
               } else {
-                log.warn("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS);
+                log.warn("cancel create block:" + blkInfo.beaconHash + ",sleep still:" + sleepMS
+                    +",ban="+VCtrl.banMinerByUID.get(VCtrl.curVN().getBcuid).getOrElse((0,0l)));
               }
             }
           })
@@ -157,10 +162,11 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           blk.proc();
         case blk: MPRealCreateBlock =>
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
-            && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
+            && blk.needHeight == (VCtrl.curVN().getCurBlock + 1) && !VCtrl.isBanforMiner(blk.needHeight)) {
             blk.proc();
           } else {
-            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash + " blk.needHeight=" + blk.needHeight + " curblock=" + VCtrl.curVN().getCurBlock);
+            log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash + " blk.needHeight=" + blk.needHeight + " curblock=" + VCtrl.curVN().getCurBlock
+                +",ban="+ VCtrl.banMinerByUID.get(VCtrl.curVN().getBcuid).getOrElse((0,0l)));
           }
         case n @ _ =>
           log.warn("unknow info:" + n);
