@@ -281,9 +281,9 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     }
   }
   def isBanforMiner(blockHeight: Int,bcuid:String = VCtrl.curVN().getBcuid): Boolean = {
-    if (blockHeight > VConfig.BLOCK_DISTANCE_COMINE + 2) {
+    if (blockHeight > VConfig.BAN_BLOCKS_FOR_NOT_APPLY + 2) {
       val memrec = VCtrl.banMinerByUID.get(bcuid).getOrElse((0, 0l))
-      blockHeight - memrec._1 < VConfig.BLOCK_DISTANCE_COMINE && System.currentTimeMillis() - memrec._2 < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 2
+      blockHeight - memrec._1 < VConfig.BAN_BLOCKS_FOR_NOT_APPLY && System.currentTimeMillis() - memrec._2 < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 2
     } else {
       false
     }

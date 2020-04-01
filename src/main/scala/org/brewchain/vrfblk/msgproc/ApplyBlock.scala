@@ -100,7 +100,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     } else if (VCtrl.instance.lowMemoryCounter.get > 1) {
       VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
-    log.info("current free memory.MB = "+ (Runtime.getRuntime.freeMemory()/ 1024 / 1024));
+    log.info("current free memory.MB = "+ (Runtime.getRuntime.freeMemory()/ 1024 / 1024)+",counter="+VCtrl.instance.lowMemoryCounter.get);
     val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
     val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
     acceptHeight match {

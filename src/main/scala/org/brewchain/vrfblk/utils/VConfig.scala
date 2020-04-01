@@ -205,12 +205,13 @@ object VConfig {
   val MAX_CONTINUE_BLOCK = prop.get(PROP_DOMAIN + "max.continue.block", 6); 
   
   val MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY = prop.get(PROP_DOMAIN + "max.waitms.when.last.block.not.apply", 5000);
-  
+  val BAN_BLOCKS_FOR_NOT_APPLY =  prop.get(PROP_DOMAIN + "ban.blocks.for.not.apply", 10);
   //最小可以使用的内存
   val METRIC_COMINER_MIN_FREE_MEMEORY_MB = prop.get(PROP_DOMAIN + "metric.cominer.min.free.memory.mb",512);
   
   //超过10次内存不足的警告，就不能做矿机了
   val METRIC_COMINER_LOW_MEMORY_COUNT = prop.get(PROP_DOMAIN + "metric.cominer.low.memory.count",10);
+  
   
 }
 
