@@ -19,6 +19,7 @@ import org.brewchain.vrfblk.tasks.VCtrl
 import org.brewchain.vrfblk.utils.TxCache
 
 import scala.collection.JavaConverters._
+import org.brewchain.p22p.utils.PacketIMHelper._
 
 @Instantiate
 @NActorProvider
@@ -34,7 +35,7 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
     val ret = PRetGetTransaction.newBuilder()
     if (VCtrl.isReady()) {
       try {
-        val from = pack.getExtProp(PackHeader.PACK_FROM)
+        val from = pack.getFrom()
         var i = 0
         for (wantedHash: String <- pbo.getTxHashList.asScala) {
           val transactionX = TxCache.getTx(wantedHash) match {
