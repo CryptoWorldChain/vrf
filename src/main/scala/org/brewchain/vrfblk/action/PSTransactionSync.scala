@@ -205,7 +205,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
     if (!VCtrl.isReady()) {
       ret.setRetCode(-1).setRetMessage("DPoS Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    } else {
+    } else if (Runtime.getRuntime.freeMemory()/1024/1024<VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB){
+      ret.setRetCode(-2).setRetMessage("memory low")
+      log.error("drop synctx for low memory");
+      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+    }else {
       try {
         MDCSetBCUID(VCtrl.network());
         MDCSetMessageID(pbo.getMessageid);

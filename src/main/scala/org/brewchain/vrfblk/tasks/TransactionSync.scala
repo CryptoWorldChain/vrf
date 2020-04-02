@@ -64,7 +64,7 @@ object TxSync extends LogHelper {
 //          }
 //        })
         
-          var bits = BigInteger.ZERO
+         var bits = BigInteger.ZERO
       VCtrl.coMinerByUID.foreach(f => {
         if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
           bits = bits.setBit(f._2.getBitIdx);

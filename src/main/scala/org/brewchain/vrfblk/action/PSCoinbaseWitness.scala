@@ -25,6 +25,10 @@ import org.brewchain.vrfblk.msgproc.NotaryBlock
 import org.brewchain.vrfblk.tasks.Initialize
 import org.brewchain.vrfblk.tasks.NodeStateSwitcher
 import org.brewchain.vrfblk.utils.VConfig
+import org.fc.zippo.dispatcher.QueueOverflowException
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import org.brewchain.vrfblk.tasks.CoinbaseWitnessProcessor
 
 @NActorProvider
 @Instantiate
@@ -36,6 +40,10 @@ class PSCoinbaseW extends PSMVRFNet[PSCoinbase] {
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
 object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
+  
+  val witnessByBCUID = new ConcurrentHashMap[String,AtomicInteger]()
+  //defer put!
+  
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     if (!VCtrl.isReady()) {
@@ -43,9 +51,14 @@ object PSCoinbaseWitness extends LogHelper with PBUtils with LService[PSCoinbase
       //     ! NodeStateSwitcher.offerMessage(new Initialize());
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else {
-//      if (VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) {
-        BlockProcessor.offerMessage(new NotaryBlock(pbo));
-//      }
+      //      if (VCtrl.curVN().getCurBlock + VConfig.MAX_SYNC_BLOCKS > pbo.getBlockHeight) {
+      try {
+        CoinbaseWitnessProcessor.offerMessage(new NotaryBlock(pbo));
+      } catch {
+        case qe: QueueOverflowException =>
+          
+      }
+      //      }
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }

@@ -100,7 +100,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     } else if (VCtrl.instance.lowMemoryCounter.get > 1) {
       VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
-    log.info("current free memory.MB = "+ (Runtime.getRuntime.freeMemory()/ 1024 / 1024)+",counter="+VCtrl.instance.lowMemoryCounter.get);
+    log.info("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
     val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
     val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
     acceptHeight match {
@@ -119,43 +119,43 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           + ",BEMS=" + VConfig.BLK_EPOCH_MS);
 
         // && BlockProcessor.getQueue.size() < 2
-//        if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
-//          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
-//          log.info("cannot apply block, do gossip");
-          BeaconGossip.tryGossip();
-//        } else {
+        //        if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
+        //          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+        //          log.info("cannot apply block, do gossip");
+        BeaconGossip.tryGossip();
+        //        } else {
 
-          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
-          //      newhash, prevhash, mapToBigInt(netbits).bigInteger
-          val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
-          val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
-          val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
-          if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
-            log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
-            val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
-            Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
-              def run() {
-                do {
-                  //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
-                  Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
-                } while (sleepMS > System.currentTimeMillis() && VCtrl.curVN().getCurBlock < pbo.getBlockHeight);
-                if (VCtrl.curVN().getCurBlock < pbo.getBlockHeight) {
-                  //              log.error("MPRealCreateBlock:start");
-                  val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).clearBlockEntry().setApplyStatus(ApplyStatus.APPLY_NOT_CONTINUE);
-                  log.info("ban for create block from="+pbo.getBlockHeight);
-                  VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight,System.currentTimeMillis()))
-                  VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
-                } else {
-                  log.info("still try to  create block");
-                  BeaconGossip.tryGossip();
-                }
+        val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
+        //      newhash, prevhash, mapToBigInt(netbits).bigInteger
+        val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
+        val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
+        val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
+        if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
+          log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
+          val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
+          Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
+            def run() {
+              do {
+                //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
+                Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
+              } while (sleepMS > System.currentTimeMillis() && VCtrl.curVN().getCurBlock < pbo.getBlockHeight);
+              if (VCtrl.curVN().getCurBlock < pbo.getBlockHeight) {
+                //              log.error("MPRealCreateBlock:start");
+                val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).clearBlockEntry().setApplyStatus(ApplyStatus.APPLY_NOT_CONTINUE);
+                log.info("ban for create block from=" + pbo.getBlockHeight);
+                VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
+                VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+              } else {
+                log.info("still try to  create block");
+                BeaconGossip.tryGossip();
               }
-            })
-          }else{
-            log.info("cannot apply block, do gossip");
-            BeaconGossip.tryGossip();
-          }
-//        }
+            }
+          })
+        } else {
+          log.info("cannot apply block, do gossip");
+          BeaconGossip.tryGossip();
+        }
+      //        }
 
       //          在这里启动监听线程，如果每法apply，则放弃打快
       case n if n > 0 =>
@@ -181,7 +181,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           log.error("ban for miner. low memory counter too large " + VCtrl.instance.lowMemoryCounter.get + "==>max=" + VConfig.METRIC_COMINER_LOW_MEMORY_COUNT);
           wallmsg.setApplyStatus(ApplyStatus.APPLY_OK_LOW_MEMORY);
         }
-        VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+        if ((cn.getState == VNodeState.VN_DUTY_SYNC || cn.getState == VNodeState.VN_DUTY_BLOCKMAKERS || cn.getState == VNodeState.VN_DUTY_NOTARY)
+          && cn.getCurBlock + VConfig.BLOCK_DISTANCE_COMINE * 3 >= VCtrl.instance.heightBlkSeen.get) {
+          VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+        }
         //}
         if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
           log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");

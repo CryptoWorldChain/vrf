@@ -24,6 +24,7 @@ import org.brewchain.vrfblk.tasks.TransactionSync
 import org.brewchain.mcore.tools.url.URLHelper
 import org.brewchain.vrfblk.tasks.ChainKeySync
 import org.brewchain.vrfblk.tasks.ChainKeySyncHelper
+import org.brewchain.vrfblk.tasks.CoinbaseWitnessProcessor
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -74,7 +75,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
       + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
 
     VCtrl.instance = VRFController(vrfnet);
-    Array(BeaconGossip, BlockProcessor, NodeStateSwitcher, BlockSync).map(f => {
+    Array(BeaconGossip, BlockProcessor, NodeStateSwitcher, BlockSync,CoinbaseWitnessProcessor).map(f => {
       f.startup(Daos.ddc.getExecutorService("vrf"));
     })
 
