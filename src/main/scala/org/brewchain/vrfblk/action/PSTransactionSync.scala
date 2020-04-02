@@ -207,7 +207,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else if (Runtime.getRuntime.freeMemory()/1024/1024<VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB){
       ret.setRetCode(-2).setRetMessage("memory low")
-      log.error("drop synctx for low memory");
+      log.debug("drop synctx for low memory");
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     }else {
       try {
