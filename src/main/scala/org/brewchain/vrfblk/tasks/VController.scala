@@ -34,10 +34,13 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
   var cur_vnode: VNode.Builder = VNode.newBuilder()
   var isStop: Boolean = false;
 
+  var waitCreateBlockBeacon: String = ""
+
   val heightBlkSeen = new AtomicInteger(0);
 
   val lowMemoryCounter = new AtomicInteger(0);
 
+  
   def loadNodeFromDB() = {
     val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY.getBytes).get
     val root_node = network.root();
@@ -217,13 +220,13 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       // 判断是否是beaconhash中更高优先级的块
       // 循环所有相同高度的块，排序sleepMS
       val priorityBlk = bestblks.toList.map(p => {
-//        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
-//        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
-        log.info("get soft fork block:height="+p.getHeader.getHeight+",miner="+p.getMiner.getNid+",hash="+Daos.enc.bytesToHexStr(p.getHeader.getHash.toByteArray()));
+        //        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
+        //        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
+        log.info("get soft fork block:height=" + p.getHeader.getHeight + ",miner=" + p.getMiner.getNid + ",hash=" + Daos.enc.bytesToHexStr(p.getHeader.getHash.toByteArray()));
         p
       }).sortBy(_.getHeader.getTimestamp).get(0)
       log.info("bestblks.size=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray())
-         +",minerfrom="+priorityBlk.getMiner.getNid)
+        + ",minerfrom=" + priorityBlk.getMiner.getNid)
       priorityBlk
     } else {
       blk;
@@ -281,7 +284,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       }
     }
   }
-  def isBanforMiner(blockHeight: Int,bcuid:String = VCtrl.curVN().getBcuid): Boolean = {
+  def isBanforMiner(blockHeight: Int, bcuid: String = VCtrl.curVN().getBcuid): Boolean = {
     if (blockHeight > VConfig.BAN_BLOCKS_FOR_NOT_APPLY + 2) {
       val memrec = VCtrl.banMinerByUID.get(bcuid).getOrElse((0, 0l))
       blockHeight - memrec._1 < VConfig.BAN_BLOCKS_FOR_NOT_APPLY && System.currentTimeMillis() - memrec._2 < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 2
