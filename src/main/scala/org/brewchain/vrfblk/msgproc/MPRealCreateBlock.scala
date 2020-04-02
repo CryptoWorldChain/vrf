@@ -86,18 +86,18 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       val curtime = System.currentTimeMillis();
 
       VCtrl.coMinerByUID.foreach(f => {
-        
-        val islock_block = VCtrl.isBanforMiner(cn.getCurBlock + 1, f._2.getBcuid);;//.get(f._2.getBcuid).getOrElse(0);
-        
+
+        val islock_block = VCtrl.isBanforMiner(cn.getCurBlock + 1, f._2.getBcuid); ; //.get(f._2.getBcuid).getOrElse(0);
+
         log.info("minecheck:" + f._2.getBcuid + ":bits="
-            + (VCtrl.network().node_bits().testBit(f._2.getBitIdx)) + ",time="
-            + ((curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS) 
-            +",stat="+f._2.getState
-            +",height="+f._2.getCurBlock
-            +",curheighcheck="+ (f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
-            +",lockblock="+ VCtrl.banMinerByUID.get(f._2.getBcuid).getOrElse((0,0L))
-            +",islock_block="+islock_block
-            + ",result=" + "==>" + VCtrl.curVN().getCurBlock);
+          + (VCtrl.network().node_bits().testBit(f._2.getBitIdx)) + ",time="
+          + ((curtime - f._2.getLastBeginMinerTime) > VConfig.BLOCK_DISTANCE_WAITMS)
+          + ",stat=" + f._2.getState
+          + ",height=" + f._2.getCurBlock
+          + ",curheighcheck=" + (f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS)
+          + ",lockblock=" + VCtrl.banMinerByUID.get(f._2.getBcuid).getOrElse((0, 0L))
+          + ",islock_block=" + islock_block
+          + ",result=" + "==>" + VCtrl.curVN().getCurBlock);
 
         if ( //other nodes
         VCtrl.network().node_bits().testBit(f._2.getBitIdx) &&
@@ -106,19 +106,19 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             || f._2.getState == VNodeState.VN_DUTY_SYNC) &&
             f._2.getCurBlock > VConfig.BLOCK_DISTANCE_NETBITS &&
             f._2.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_NETBITS
-//             && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
+            //             && mapToBigInt(f._2.getCominers).bigInteger.and(existCominerBits).equals(existCominerBits)
             || f._2.getBcuid.equals(VCtrl.curVN().getBcuid)) {
-          if(VCtrl.banMinerByUID.contains(f._2.getBcuid)){
-            if(islock_block){
-              log.info("minecheck: remove miner for banMiner:"+VCtrl.banMinerByUID.get(f._2.getBcuid) );
-            }else{
+          if (VCtrl.banMinerByUID.contains(f._2.getBcuid)) {
+            if (islock_block) {
+              log.info("minecheck: remove miner for banMiner:" + VCtrl.banMinerByUID.get(f._2.getBcuid));
+            } else {
               VCtrl.banMinerByUID.remove(f._2.getBcuid)
               newNetBits = newNetBits.setBit(f._2.getBitIdx);
             }
-          }else{
+          } else {
             newNetBits = newNetBits.setBit(f._2.getBitIdx);
           }
-          
+
         }
       })
       //}
@@ -220,7 +220,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             }
           }
           if (dn != null && dn != VCtrl.network().noneNode) {
-            if (!sentkeyset.contains(dn.loc_id)  && dn.loc_gwuris.contains(dn.uri)) {
+            if (!sentkeyset.contains(dn.loc_id) && dn.loc_gwuris.contains(dn.uri)) {
               log.info("send to loc mainer:" + pn.getBcuid + ",nextblock=" + (newblk.getHeader.getHeight + 1));
               VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, pn.getBcuid, '9')
               sentbcuid.add(pn.getBcuid)
@@ -252,6 +252,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         VCtrl.coMinerByUID.map(f => {
           if (!sentbcuid.contains(f._1)) {
             bits = bits.setBit(f._2.getBitIdx);
+          }
+          if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
+            bits = bits.clearBit(f._2.getBitIdx)
           }
         })
         log.info("bits-nodes.counts=" + bits.bitCount() + ",cominer=" + VCtrl.coMinerByUID.size);

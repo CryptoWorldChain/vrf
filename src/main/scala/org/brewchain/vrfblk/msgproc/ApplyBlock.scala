@@ -186,7 +186,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
         }
         //}
-        if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS) {
+        if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS && cn.getState != VNodeState.VN_SYNC_BLOCK) {
           log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
           BeaconGossip.tryGossip();
         }

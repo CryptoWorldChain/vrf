@@ -209,7 +209,7 @@ object VConfig {
   //最小可以使用的内存
   val METRIC_COMINER_MIN_FREE_MEMEORY_MB = prop.get(PROP_DOMAIN + "metric.cominer.min.free.memory.mb",512);
   val METRIC_SYNCTX_FREE_MEMEORY_MB = prop.get(PROP_DOMAIN + "metric.synctx.free.memory.mb",512);
-  
+  val MAX_COINBASE_QUEUE_SIZE = prop.get(PROP_DOMAIN + "max.coinbase.queue.size",100);
   //超过10次内存不足的警告，就不能做矿机了
   val METRIC_COMINER_LOW_MEMORY_COUNT = prop.get(PROP_DOMAIN + "metric.cominer.low.memory.count",10);
   

@@ -20,6 +20,7 @@ import org.brewchain.vrfblk.utils.TxCache
 
 import scala.collection.JavaConverters._
 import org.brewchain.p22p.utils.PacketIMHelper._
+import org.brewchain.vrfblk.utils.VConfig
 
 @Instantiate
 @NActorProvider
@@ -33,7 +34,11 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
 
   override def onPBPacket(pack: FramePacket, pbo: PSGetTransaction, handler: CompleteHandler): Unit = {
     val ret = PRetGetTransaction.newBuilder()
-    if (VCtrl.isReady()) {
+    if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
+      ret.setRetCode(-2).setRetMessage("memory low")
+      log.debug("ban sync block for low memory");
+      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+    } else if (VCtrl.isReady()) {
       try {
         val from = pack.getFrom()
         var i = 0
@@ -42,8 +47,7 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
             case t if t != null => t
             case _ => {
               val t = Daos.txHelper.getTransaction(Daos.enc.hexStrToBytes(wantedHash))
-              if(t!=null)
-              {
+              if (t != null) {
                 TxCache.recentBlkTx.put(wantedHash, t)
               }
               t

@@ -90,6 +90,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个
           val randn = VCtrl.ensureNode(syncInfo.fromBuid);
           val start = System.currentTimeMillis();
+          
+          
 
           log.info("reqbody=" + reqbody.toString().replaceAll("\n", ",") + " randn=" + randn);
           // 请求一组block，执行applyBlock方法

@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.brewchain.mcore.model.Block.BlockInfo
 import java.util.Arrays.ArrayList
 import java.util.ArrayList
+import org.brewchain.p22p.utils.PacketIMHelper._
+
 
 @NActorProvider
 @Instantiate
@@ -122,6 +124,10 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
       log.debug("VCtrl not ready");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     } else 
+      if(queue.size() > VConfig.MAX_COINBASE_QUEUE_SIZE)
+      {
+        log.info("drop coinbase for queuesize too large:"+queue.size()+",height="+pbo.getBlockHeight+",from="+pack.getFrom());
+      }else
      {
 //      pendingBlockCache.put(pbo.getBlockHeight, pbo.getBcuid)
       //update load
