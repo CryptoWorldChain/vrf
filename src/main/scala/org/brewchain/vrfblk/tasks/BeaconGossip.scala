@@ -318,7 +318,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     incomingInfos.clear();
     // log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
-    var startBlock = suggestGossipBlock - tryRollBackCounter.incrementAndGet() % 10;
+    var startBlock = suggestGossipBlock - tryRollBackCounter.incrementAndGet() / 3;
     if(tryRollBackCounter.get>=30){
       tryRollBackCounter.set(0);
     }

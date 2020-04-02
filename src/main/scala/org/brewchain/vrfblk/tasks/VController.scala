@@ -211,18 +211,19 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     // 如果相同高度的区块只有1个，返回true
     val bestblks = Daos.chainHelper.listConnectBlocksByHeight(blk.getHeader.getHeight);
     if (bestblks.length == 1) {
-      log.info("bestblks=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
+      log.info("bestblks.size=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk
     } else if (bestblks.length > 1) {
       // 判断是否是beaconhash中更高优先级的块
       // 循环所有相同高度的块，排序sleepMS
       val priorityBlk = bestblks.toList.map(p => {
-        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
-        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
+//        val prevBlock = Daos.chainHelper.getBlockByHash(blk.getHeader.getParentHash.toByteArray());
+//        val blknode = instance.network.nodeByBcuid(prevBlock.getMiner.getNid);
+        log.info("get soft fork block:height="+p.getHeader.getHeight+",miner="+p.getMiner.getNid+",hash="+Daos.enc.bytesToHexStr(p.getHeader.getHash.toByteArray()));
         p
       }).sortBy(_.getHeader.getTimestamp).get(0)
-
-      log.info("bestblks=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray()))
+      log.info("bestblks.size=" + bestblks.size + ",ready to update blk=" + priorityBlk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(priorityBlk.getHeader.getHash.toByteArray())
+         +",minerfrom="+priorityBlk.getMiner.getNid)
       priorityBlk
     } else {
       blk;
