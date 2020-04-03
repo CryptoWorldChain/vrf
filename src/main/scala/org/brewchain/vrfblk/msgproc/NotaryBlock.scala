@@ -33,7 +33,7 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       VCtrl.banMinerByUID.put(pbo.getBcuid,(pbo.getBlockHeight,System.currentTimeMillis()))
     }
     if (pbo.getApplyStatus == ApplyStatus.APPLY_OK_LOW_MEMORY) {
-      log.error("remote node system is low memory: bcuid="+pbo.getBcuid);
+      log.debug("remote node system is low memory: bcuid="+pbo.getBcuid);
       VCtrl.banMinerByUID.put(pbo.getBcuid,( pbo.getBlockHeight,System.currentTimeMillis()))
     }
     
