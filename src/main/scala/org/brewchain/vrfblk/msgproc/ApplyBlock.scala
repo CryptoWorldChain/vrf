@@ -26,6 +26,7 @@ import scala.collection.mutable.Buffer
 import org.brewchain.bcrand.model.Bcrand.PSCoinbase.ApplyStatus
 import org.brewchain.bcrand.model.Bcrand.VNodeState
 import onight.tfw.otransio.api.PacketHelper
+import org.brewchain.mcore.model.Block.BlockInfo
 
 case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -241,34 +242,16 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     // val miner = BlockEntity.parseFrom(block.getBlockHeader)
     val network = VCtrl.network()
 
-    var vNetwork = network.directNodeByBcuid.get(miner.getMiner.getNid)
-    if (vNetwork.isEmpty) {
-      log.info("not find miner in network")
-
-      val cn = network.directNodeByBcuid.getOrElse(VCtrl.instance.cur_vnode.getBcuid, network.noneNode);
-      val localminers = VCtrl.coMinerByUID.filter(n => {
-
-        val dn = network.directNodeByBcuid.getOrElse(n._1, network.noneNode);
-        dn.loc_id.equals(cn.loc_id) &&
-          !n._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid)
-      })
-        .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
-      if (localminers.isDefined) {
-        vNetwork = network.directNodeByBcuid.get(localminers.get._1)
-      } else {
-        val himiners = VCtrl.coMinerByUID.filter(n => {
-          !n._2.getBcuid.equalsIgnoreCase(VCtrl.instance.cur_vnode.getBcuid)
-        })
-          .find(p => p._2.getCurBlock > VCtrl.curVN().getCurBlock)
-        if (himiners.isDefined) {
-          vNetwork = network.directNodeByBcuid.get(himiners.get._1)
-        } else {
-
-          val randomNode = randomNodeInNetwork(network)
-          vNetwork = randomNode
-        }
+    var fastFromBcuid = miner.getMiner.getNid;
+    
+    VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
+      val bcuid = f._1;
+      val vnode = f._2;
+      if (StringUtils.equals(VCtrl.network().nodeByBcuid(miner.getMiner.getNid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+        fastFromBcuid = bcuid;
       }
-    }
+    })
+    var vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
     log.debug("pick node=" + vNetwork)
 
     var sleepw = sleepMs;
@@ -303,7 +286,15 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     while (cdl.getCount > 0 && counter < 6 && notSuccess) {
       try {
         if (counter > 3) {
-          vNetwork = randomNodeInNetwork(network)
+//          vNetwork = randomNodeInNetwork(network)
+            VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
+              val bcuid = f._1;
+              val vnode = f._2;
+              if (StringUtils.equals(VCtrl.network().nodeByBcuid(miner.getMiner.getNid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+                fastFromBcuid = bcuid;
+              }
+            })
+            vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
         }
         network.asendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
           override def onSuccess(v: FramePacket): Unit = {
@@ -347,7 +338,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         }, '9')
 
         counter += 1
-        cdl.await(10, TimeUnit.SECONDS)
+        cdl.await(20, TimeUnit.SECONDS)
       } catch {
         case t: Throwable => log.error("get Transaction failed:", t)
       }

@@ -11,6 +11,8 @@ object VConfig {
   val GOSSIP_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "gossip.timeout.sec", 60); //2 seconds each block
 
   val BLOCK_MAKE_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.timeout.sec", 60); //2 seconds each block
+  
+  val BLOCK_NOTARY_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.notary.timeout.sec", 180); //2 seconds each block
 
   val SLICE_ID = prop.get(PROP_DOMAIN + "slice.id", 0); //2 seconds each block
 

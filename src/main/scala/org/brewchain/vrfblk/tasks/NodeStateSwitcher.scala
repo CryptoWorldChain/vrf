@@ -95,7 +95,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
           if (VCtrl.curVN().getBeaconHash.equals(notaryCheckHash)) {
             //decide to make block
             log.info("nortary block need gossip block");
-            BeaconGossip.gossipBlocks();
+            BeaconGossip.gossipBlocks();//重新发起投票!!
+            
           }
         }
       })

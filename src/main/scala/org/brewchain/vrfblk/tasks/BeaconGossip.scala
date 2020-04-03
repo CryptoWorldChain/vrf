@@ -144,13 +144,12 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val endId = Math.min(maxHeight, startID + VConfig.MAX_SYNC_BLOCKS);
     incomingInfos.clear();
     var fastFromBcuid = frombcuid;
-    VCtrl.coMinerByUID.map(f => {
+    VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= endId)).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
-      if (vnode.getCurBlock >= endId && StringUtils.equals(VCtrl.network().nodeByBcuid(frombcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+      if (StringUtils.equals(VCtrl.network().nodeByBcuid(frombcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
         fastFromBcuid = bcuid;
       }
-  
     })
 
     VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
