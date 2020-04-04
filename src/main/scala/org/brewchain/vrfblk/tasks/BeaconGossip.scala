@@ -113,7 +113,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId + ",gossipBlock=" + gossipBlock)
 
     var bits = BigInteger.ZERO
-    VCtrl.network().directNodes.filter(f => !VCtrl.banMinerByUID.contains(f.bcuid)).foreach(f => {
+    VCtrl.network().directNodes.filter(f => VCtrl.coMinerByUID.contains(f.bcuid)).foreach(f => {
       if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f.v_address)) {
         bits = bits.setBit(f.node_idx);
       }

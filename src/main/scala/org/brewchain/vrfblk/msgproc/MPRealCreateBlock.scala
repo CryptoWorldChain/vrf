@@ -266,6 +266,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
             bits = bits.clearBit(f._2.getBitIdx)
           }
+          if (newblockheight - f._2.getCurBlock > VConfig.BLOCK_DISTANCE_COMINE && VCtrl.banMinerByUID.contains(f._1)) {
+            bits = bits.clearBit(f._2.getBitIdx)
+          }
         })
         log.info("bits-nodes.counts=" + bits.bitCount() + ",cominer=" + VCtrl.coMinerByUID.size);
         VCtrl.network().bwallMessage("CBNVRF", Left(newCoinbase.build()), bits, newCoinbase.getMessageId, '9')
