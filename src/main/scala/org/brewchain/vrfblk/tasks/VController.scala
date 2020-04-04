@@ -40,7 +40,6 @@ case class VRFController(network: Network) extends PMNodeHelper with LogHelper w
 
   val lowMemoryCounter = new AtomicInteger(0);
 
-  
   def loadNodeFromDB() = {
     val ov = Daos.vrfpropdb.get(VRF_NODE_DB_KEY.getBytes).get
     val root_node = network.root();
@@ -291,5 +290,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     } else {
       false
     }
+  }
+  def isSafeForMine(): Boolean = {
+    VCtrl.instance.lowMemoryCounter.get < VConfig.METRIC_COMINER_LOW_MEMORY_COUNT
   }
 }

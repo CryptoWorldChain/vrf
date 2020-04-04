@@ -149,6 +149,18 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
     }
   }
 
+  def getNormalNodesBits(): BigInteger = {
+    val nodes = VCtrl.network().directNodes.++:(VCtrl.network().pendingNodes)
+    var bits = BigInteger.ZERO;
+    nodes.filter(f=> !VCtrl.banMinerByUID.containsKey(f.bcuid) ).foreach(f => {
+      if (f.node_idx >= 0) {
+        bits = bits.setBit(f.node_idx);
+      } else if (f.try_node_idx >= 0) {
+        bits = bits.setBit(f.try_node_idx);
+      }
+    })
+    bits;
+  }
   case class WalloutRunner(id: Int) extends Runnable {
     override def run() {
       running.set(true);
@@ -173,7 +185,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
             }
             if (syncTransaction.getTxHashCount > 0) {
-              VCtrl.instance.network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+              VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),getNormalNodesBits, msgid)
             }
           }
         } catch {
@@ -205,11 +217,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
     if (!VCtrl.isReady()) {
       ret.setRetCode(-1).setRetMessage("DPoS Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    } else if (Runtime.getRuntime.freeMemory()/1024/1024<VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB){
+    } else if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
       ret.setRetCode(-2).setRetMessage("memory low")
       log.debug("drop synctx for low memory");
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    }else {
+    } else {
       try {
         MDCSetBCUID(VCtrl.network());
         MDCSetMessageID(pbo.getMessageid);

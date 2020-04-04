@@ -44,7 +44,6 @@ import java.util.Arrays.ArrayList
 import java.util.ArrayList
 import org.brewchain.p22p.utils.PacketIMHelper._
 
-
 @NActorProvider
 @Instantiate
 @Provides(specifications = Array(classOf[ActorService], classOf[IActor], classOf[CMDService]))
@@ -55,8 +54,7 @@ class PSCoinbaseNew extends PSMVRFNet[PSCoinbase] {
 //
 // http://localhost:8000/fbs/xdn/pbget.do?bd=
 object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinbase] with PMNodeHelper {
-  
-  
+
   val running = new AtomicBoolean(true);
   val queue = new LinkedBlockingQueue[PSCoinbase]
   val pendingBlockCache: Cache[Int, String] = CacheBuilder.newBuilder().expireAfterWrite(40, TimeUnit.SECONDS)
@@ -95,7 +93,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
           if (h == null && waitApplyList.size > 0 || waitApplyList.size > VConfig.SYNC_SAFE_BLOCK_COUNT / 2 + 1) {
             queue.drainTo(waitApplyList);
             waitApplyList.sort((p1, p2) => p1.getBlockHeight - p2.getBlockHeight)
-            waitApplyList.forEach( backh => { 
+            waitApplyList.forEach(backh => {
               lastApplyBlockID.set(backh.getBlockHeight);
               bgApplyBlock(backh);
             })
@@ -119,25 +117,14 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
   new Thread(ApplyRunner).start();
 
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
-    log.info("Mine Block blk::" + pbo.getBlockHeight+",from="+pbo.getBcuid)
+    log.info("Mine Block blk::" + pbo.getBlockHeight + ",from=" + pbo.getBcuid)
     if (!VCtrl.isReady()) {
       log.debug("VCtrl not ready");
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
-    } else 
-      if(queue.size() > VConfig.MAX_COINBASE_QUEUE_SIZE)
-      {
-        log.info("drop coinbase for queuesize too large:"+queue.size()+",height="+pbo.getBlockHeight+",from="+pack.getFrom());
-      }else
-     {
-//      pendingBlockCache.put(pbo.getBlockHeight, pbo.getBcuid)
-      //update load
-//      val cominern = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, null);
-//      if (cominern != null && cominern == VCtrl.network().noneNode) {
-//        VCtrl.addCoMiner(bb.build());
-//        VCtrl.coMinerByUID.put(pbo.getBcuid, cominern.toBuilder().setCurBlock(pbo.getBlockHeight).build());
-//      }
+    } else if (queue.size() > VConfig.MAX_COINBASE_QUEUE_SIZE) {
+      log.info("drop coinbase for queuesize too large:" + queue.size() + ",height=" + pbo.getBlockHeight + ",from=" + pack.getFrom());
+    } else {
       queue.offer(pbo);
-
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }
@@ -145,16 +132,15 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     //    log.debug("Mine Block From::" + pack.getFrom())
     val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
     if (VConfig.AUTH_NODE_FILTER && !VCtrl.haveEnoughToken(Daos.enc.bytesToHexStr(block.getMiner.getAddress.toByteArray()))) {
-            // TODO 判断是否有足够余额，只发给有足够余额的节点
-            log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
-    }
-    else {
+      // TODO 判断是否有足够余额，只发给有足够余额的节点
+      log.error("unauthorization " + block.getMiner.getAddress + " " + pbo.getBlockEntry.getBlockhash);
+    } else {
       MDCSetBCUID(VCtrl.network())
       MDCSetMessageID(pbo.getMessageId)
-//      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
+      //      log.debug("Get New Block:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
       // 校验beaconHash和区块hash是否匹配，排除异常区块
       val parentBlock = Daos.chainHelper.getBlockByHash(block.getHeader.getParentHash.toByteArray());
-      if (VCtrl.coMinerByUID.contains(pbo.getBcuid) ) {
+      if (VCtrl.coMinerByUID.contains(pbo.getBcuid)) {
         val bb = VCtrl.coMinerByUID.getOrElse(pbo.getBcuid, VNode.newBuilder().build()).toBuilder();
         bb.setCurBlock(block.getHeader.getHeight.intValue());
         bb.setCurBlockHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()));
@@ -170,7 +156,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
           log.info("Drop newBlock:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
         }
       } else {
-//        val nodebits = parentBlock.getMiner.getBits;
+        //        val nodebits = parentBlock.getMiner.getBits;
         val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, parentBlock.getMiner.getBits);
         if (hash.equals(block.getMiner.getTerm) || block.getHeader.getHeight == 1) {
           BlockProcessor.offerMessage(new ApplyBlock(pbo));

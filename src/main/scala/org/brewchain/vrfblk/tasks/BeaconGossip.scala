@@ -27,6 +27,7 @@ import org.brewchain.mcore.tools.time.JodaTimeHelper
 import org.brewchain.vrfblk.msgproc.RollbackBlock
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicInteger
+import java.math.BigInteger
 
 //投票决定当前的节点
 case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
@@ -60,7 +61,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
   }
 
   def gossipBlocks() {
-    this.synchronized{
+    this.synchronized {
       try {
         currentBR = new BRDetect(UUIDGenerator.generate(), 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
         //log.debug("put gossip::" + VCtrl.curVN());
@@ -71,7 +72,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       }
     }
   }
-  def clearGossipInfo():Unit = {
+  def clearGossipInfo(): Unit = {
     currentBR = new BRDetect("", 0, VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
   }
   def runBatch(items: List[PSNodeInfoOrBuilder]): Unit = {
@@ -102,28 +103,35 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
   def tryGossip() {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) { //|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
-//      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
+      //      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
       gossipBeaconInfo();
     }
   }
 
   def gossipBeaconInfo(gossipBlock: Int = -1) {
     val messageId = UUIDGenerator.generate();
-    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId+",gossipBlock="+gossipBlock)
+    log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId + ",gossipBlock=" + gossipBlock)
 
-    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
+    var bits = BigInteger.ZERO
+    VCtrl.network().directNodes.filter(f => !VCtrl.banMinerByUID.contains(f.bcuid)).foreach(f => {
+      if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f.v_address)) {
+        bits = bits.setBit(f.node_idx);
+      }
+    })
+    
+    currentBR = new BRDetect(messageId, System.currentTimeMillis(), bits.bitCount(), VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
     val removeList = ListBuffer.empty[String]
     VCtrl.coMinerByUID.map(m => {
       body.addMurs(GossipMiner.newBuilder().setBcuid(m._2.getBcuid).setCurBlock(m._2.getCurBlock).setCurBlockHash(m._2.getCurBlockHash))
-      
-      if(VCtrl.curVN().getCurBlock - m._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT  ){
-          log.info("remove cominer for block distance too large:"+m._2.getCurBlock+"==>"+VCtrl.curVN().getCurBlock)
-          removeList.append(m._2.getBcuid)
+
+      if (VCtrl.curVN().getCurBlock - m._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
+        log.info("remove cominer for block distance too large:" + m._2.getCurBlock + "==>" + VCtrl.curVN().getCurBlock)
+        removeList.append(m._2.getBcuid)
       }
     })
-    removeList.map(n=>VCtrl.removeCoMiner(n))
+    removeList.map(n => VCtrl.removeCoMiner(n))
     //get all vote block
     incomingInfos.clear();
     MDCSetMessageID(messageId);
@@ -132,7 +140,10 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     }
     //log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
     //  + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
-    VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
+
+    
+
+    VCtrl.network().bwallMessage("INFVRF", Left(body.build()), bits, messageId);
   }
 
   def syncBlock(maxHeight: Int, suggestStartIdx: Int, frombcuid: String) {
@@ -144,7 +155,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val endId = Math.min(maxHeight, startID + VConfig.MAX_SYNC_BLOCKS);
     incomingInfos.clear();
     var fastFromBcuid = frombcuid;
-    VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= endId)).map(f => {
+    VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= endId)).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
       if (StringUtils.equals(VCtrl.network().nodeByBcuid(frombcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
@@ -224,7 +235,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       //Node State Vote 查看自己是不是2/3中的一员
       Votes.vote(checkList).PBFTVote(n => {
         Some((n._1, n._2, n._3, n._4))
-      }, Math.min(VConfig.MAX_BLOCK_MAKER,currentBR.votebase)) match {
+      }, Math.min(VConfig.MAX_BLOCK_MAKER, currentBR.votebase)) match {
         case Converge((height: Int, blockHash: String, hash: String, randseed: String)) =>
           tryRollBackCounter.set(0);
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
@@ -292,7 +303,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             //sync first
             clearGossipInfo();
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
-            
+
             incomingInfos.clear();
           } else if (size >= currentBR.votebase * 4 / 5) {
             log.info("try rollback");
@@ -306,8 +317,8 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       };
     } else {
       log.info("need more results size=" + size + " vb=" + currentBR.votebase + ",msgid=" + currentBR.messageId)
-      
-      size==0
+
+      size == 0
     }
   }
 
@@ -318,7 +329,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     // log.info("rollback  --> need to , beacon not merge!:curblock = " + VCtrl.curVN().getCurBlock + ",suggestGossipBlock=" + suggestGossipBlock);
     //            BlockProcessor.offerMessage(new RollbackBlock(VCtrl.curVN().getCurBlock - 1))
     var startBlock = suggestGossipBlock - tryRollBackCounter.incrementAndGet() / 3;
-    if(tryRollBackCounter.get>=30){
+    if (tryRollBackCounter.get >= 30) {
       tryRollBackCounter.set(0);
     }
     while (startBlock > VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT && startBlock > 0) {

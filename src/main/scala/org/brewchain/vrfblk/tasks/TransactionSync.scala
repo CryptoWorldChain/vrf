@@ -13,7 +13,7 @@ import org.brewchain.vrfblk.utils.VConfig
 import org.brewchain.vrfblk.Daos
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction;
 import org.brewchain.bcrand.model.Bcrand.PSSyncTransaction.SyncType;
- 
+
 import onight.tfw.outils.serialize.UUIDGenerator
 
 case class TransactionSync(network: Network) extends SRunner with PMNodeHelper with LogHelper {
@@ -30,7 +30,11 @@ object TxSync extends LogHelper {
   val lastSyncCount = new AtomicInteger(0);
 
   def isLimitSyncSpeed(curTime: Long): Boolean = {
-    val tps = lastSyncCount.get * 1000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
+    val tps = if(VCtrl.isSafeForMine){
+      lastSyncCount.get * 1000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
+    }else{
+      lastSyncCount.get * 10000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
+    }
     if (tps > VConfig.SYNC_TX_TPS_LIMIT) {
       log.warn("speed limit :curTps=" + tps + ",timepass=" + (curTime - lastSyncTime.get) + ",lastSyncCount=" + lastSyncCount);
       true
@@ -42,7 +46,12 @@ object TxSync extends LogHelper {
   def trySyncTx(network: Network): Unit = {
     val startTime = System.currentTimeMillis();
     if (!isLimitSyncSpeed(startTime)) {
-      val res = Daos.txHelper.getWaitSendTx(VConfig.MAX_TNX_EACH_BROADCAST)
+      val wallspeed = if(VCtrl.isSafeForMine){
+         VConfig.MAX_TNX_EACH_BROADCAST 
+      }else{
+        VConfig.MIN_TNX_EACH_BROADCAST
+      }
+      val res = Daos.txHelper.getWaitSendTx(wallspeed)
       if (res.getTxHashCount > 0) {
         val msgid = UUIDGenerator.generate();
         val syncTransaction = PSSyncTransaction.newBuilder();
@@ -57,20 +66,20 @@ object TxSync extends LogHelper {
           syncTransaction.addTxDatas(x)
         }
 
-       // TODO 判断是否有足够余额，只发给有足够余额的节点
-//        VCtrl.coMinerByUID.foreach(f => {
-//          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-//            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
-//          }
-//        })
-        
-         var bits = BigInteger.ZERO
-      VCtrl.coMinerByUID.foreach(f => {
-        if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-          bits = bits.setBit(f._2.getBitIdx);
-        }
-      })
-      VCtrl.network().bwallMessage("BRTVRF", Left(syncTransaction.build()), bits,msgid, '9')
+        // TODO 判断是否有足够余额，只发给有足够余额的节点
+        //        VCtrl.coMinerByUID.foreach(f => {
+        //          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+        //            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
+        //          }
+        //        })
+
+        var bits = BigInteger.ZERO
+        VCtrl.coMinerByUID.filter(f => !VCtrl.banMinerByUID.containsKey(f._2.getBcuid)).foreach(f => {
+          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+            bits = bits.setBit(f._2.getBitIdx);
+          }
+        })
+        VCtrl.network().bwallMessage("BRTVRF", Left(syncTransaction.build()), bits, msgid, '9')
 
         // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
         lastSyncTime.set(startTime)

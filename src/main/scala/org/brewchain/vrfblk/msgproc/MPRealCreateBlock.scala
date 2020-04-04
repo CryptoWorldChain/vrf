@@ -55,6 +55,15 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       }).start();
     }
     cdl.await();
+    //load  more tx when tx broadcast is failed
+    if (txs.size() < VConfig.MIN_TNX_EACH_BLOCK) {
+      val tx = Daos.txHelper.getWaitBlockTx(
+        VConfig.MIN_TNX_EACH_BLOCK - txs.size, //只是打块！其中某些成功广播的tx，默认是80%
+        1);
+      if (tx != null && tx.size() > 0) {
+        txs.addAll(tx);
+      }
+    }
     //奖励节点
     val excitationAddress: ListBuffer[String] = new ListBuffer()
     if (witnessNode.getBeaconHash.equals(beaconHash)) {
@@ -79,12 +88,12 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     MDCSetBCUID(VCtrl.network())
     try {
       //需要广播的节点数量
-      val wallAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
+      val cominerAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
 
       var newNetBits = BigInteger.ZERO
       val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
       val curtime = System.currentTimeMillis();
-
+      var banMinerCount = VCtrl.banMinerByUID.size;
       VCtrl.coMinerByUID.foreach(f => {
 
         val islock_block = VCtrl.isBanforMiner(cn.getCurBlock + 1, f._2.getBcuid); ; //.get(f._2.getBcuid).getOrElse(0);
@@ -112,6 +121,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             if (islock_block) {
               log.info("minecheck: remove miner for banMiner:" + VCtrl.banMinerByUID.get(f._2.getBcuid));
             } else {
+              banMinerCount = banMinerCount - 1;
               VCtrl.banMinerByUID.remove(f._2.getBcuid)
               newNetBits = newNetBits.setBit(f._2.getBitIdx);
             }
@@ -128,7 +138,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       }
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
-
+      val wallAccount = Math.max(1, cominerAccount - banMinerCount)
       log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
       val (newblk, txs) = newBlockFromAccount(
