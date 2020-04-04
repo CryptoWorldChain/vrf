@@ -97,11 +97,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     //    if (StringUtils.equals(pbo.getCoAddress, cn.getCoAddress) || pbo.getBlockHeight > cn.getCurBlock) {
     if (Runtime.getRuntime.freeMemory() < VConfig.METRIC_COMINER_MIN_FREE_MEMEORY_MB * 1024 * 1024) {
       VCtrl.instance.lowMemoryCounter.incrementAndGet();
-      log.error("local system is low memory:counter=" + VCtrl.instance.lowMemoryCounter.get());
+      log.info("local system is low memory:counter=" + VCtrl.instance.lowMemoryCounter.get());
     } else if (VCtrl.instance.lowMemoryCounter.get > 1) {
       VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
-    log.info("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
+    log.debug("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
     
     if (pbo.getBlockHeight < cn.getCurBlock) {
         log.error("cannot apply lower block:height="+pbo.getBlockHeight+",local="+cn.getCurBlock+",from="+pbo.getCoAddress);
