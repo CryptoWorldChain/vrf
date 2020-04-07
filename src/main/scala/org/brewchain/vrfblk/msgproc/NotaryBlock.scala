@@ -28,15 +28,31 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       bb.setCurBlock(pbo.getBlockHeight);
       bb.setCurBlockHash(pbo.getBlockEntry.getBlockhash);
       VCtrl.addCoMiner(bb.build());
+
+      if (pbo.getApplyStatus == ApplyStatus.APPLY_NOT_CONTINUE) {
+        VCtrl.banMinerByUID.put(pbo.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
+      } else if (pbo.getApplyStatus == ApplyStatus.APPLY_OK_LOW_MEMORY) {
+        log.debug("remote node system is low memory: bcuid=" + pbo.getBcuid);
+        VCtrl.banMinerByUID.put(pbo.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
+      } else {
+        VCtrl.banMinerByUID.get(pbo.getBcuid) match {
+          case Some((h, t)) =>
+            if (System.currentTimeMillis() - t > VConfig.BLOCK_DISTANCE_WAITMS) {
+              VCtrl.coMinerByUID.get(pbo.getBcuid) match {
+                case Some(n) =>
+                  if (n.getCurBlock >= VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE) {
+                    VCtrl.banMinerByUID.remove(pbo.getBcuid)
+                    VCtrl.syncMinerErrorByBCUID.remove(pbo.getBcuid);
+                  }
+                case _ =>
+              }
+            }
+
+          case _ =>
+        }
+      }
     }
-    if (pbo.getApplyStatus == ApplyStatus.APPLY_NOT_CONTINUE) {
-      VCtrl.banMinerByUID.put(pbo.getBcuid,(pbo.getBlockHeight,System.currentTimeMillis()))
-    }
-    if (pbo.getApplyStatus == ApplyStatus.APPLY_OK_LOW_MEMORY) {
-      log.debug("remote node system is low memory: bcuid="+pbo.getBcuid);
-      VCtrl.banMinerByUID.put(pbo.getBcuid,( pbo.getBlockHeight,System.currentTimeMillis()))
-    }
-    
+
     //log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
     //  + ",MN=" + VCtrl.coMinerByUID.size
     //  + ",from=" + pbo.getBcuid

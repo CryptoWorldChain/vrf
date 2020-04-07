@@ -113,13 +113,22 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     log.info("start gossipBeaconInfo, infos=" + incomingInfos.size + " msgid=" + messageId + ",gossipBlock=" + gossipBlock)
 
     var bits = BigInteger.ZERO
-    VCtrl.network().directNodes.filter(f => VCtrl.coMinerByUID.contains(f.bcuid)).foreach(f => {
+    VCtrl.network().directNodes.foreach(f => {
       if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f.v_address)) {
         bits = bits.setBit(f.node_idx);
       }
+      VCtrl.banMinerByUID.get(f.bcuid) match {
+        case Some(v) =>
+          if (v._1 < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+            bits = bits.clearBit(f.node_idx);
+          }
+        case _ =>
+      }
+
     })
-    
+
     currentBR = new BRDetect(messageId, System.currentTimeMillis(), bits.bitCount(), VCtrl.curVN().getBeaconHash);
+    //    currentBR = new BRDetect(messageId, System.currentTimeMillis(), VCtrl.network().directNodes.size, VCtrl.curVN().getBeaconHash);
 
     val body = PSNodeInfo.newBuilder().setMessageId(messageId).setVn(VCtrl.curVN()).setIsQuery(true);
     val removeList = ListBuffer.empty[String]
@@ -138,11 +147,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     if (gossipBlock > 0) {
       body.setGossipBlockInfo(gossipBlock);
     }
-    //log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
-    //  + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
-
-    
-
+    log.info("gen a new gossipinfo,vcounts=" + currentBR.votebase + ",DN=" + currentBR.votebase
+      + ",BH=" + currentBR.beaconHash + ",gossipBlock=" + gossipBlock);
+    //    VCtrl.network().dwallMessage("INFVRF", Left(body.build()), messageId);
     VCtrl.network().bwallMessage("INFVRF", Left(body.build()), bits, messageId);
   }
 
@@ -154,14 +161,24 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val startID = Math.min(dbHeight, suggestStartIdx)
     val endId = Math.min(maxHeight, startID + VConfig.MAX_SYNC_BLOCKS);
     incomingInfos.clear();
-    var fastFromBcuid = frombcuid;
+    var fastFromBcuid: String = null;
     VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= endId)).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
-      if (StringUtils.equals(VCtrl.network().nodeByBcuid(frombcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
-        fastFromBcuid = bcuid;
+      val locktime = VCtrl.syncMinerErrorByBCUID.get(bcuid).getOrElse(0L)
+      if (System.currentTimeMillis() - locktime > VConfig.BLOCK_DISTANCE_WAITMS) {
+        if (StringUtils.isBlank(bcuid) || StringUtils.equals(bcuid, VCtrl.curVN().getBcuid)) {
+          fastFromBcuid = bcuid;
+        }
+        if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+          fastFromBcuid = bcuid;
+        }
       }
     })
+
+    if (StringUtils.isBlank(fastFromBcuid)) {
+      fastFromBcuid = frombcuid;
+    }
 
     VCtrl.curVN().setState(VNodeState.VN_DUTY_SYNC)
     //从AccountDB中读取丢失高度，防止回滚时当前节点错误块过高或缺失导致起始位置错误
@@ -170,7 +187,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
       .setMaxHeight(maxHeight)
       .setEndId(endId).setNeedBody(true).setMessageId(messageId).build()
 
-    //log.info("start sync block::" + sync);
+    log.info("syncblock  maxHeight=" + maxHeight + ",startid=" + startID + ",frombcuid=" + frombcuid + ",fastFromBcuid=" + fastFromBcuid)
     BlockSync.offerMessage(new SyncBlock(fastFromBcuid, sync))
   }
 
@@ -240,14 +257,14 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           tryRollBackCounter.set(0);
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
             + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock
-            + ",msgid=" + currentBR.messageId + " maxHeight=" + maxHeight);
+            + ",msgid=" + currentBR.messageId + " maxHeight=" + maxHeight + ",frombcuid=" + frombcuid);
           incomingInfos.clear();
           clearGossipInfo();
           if (maxHeight > VCtrl.curVN().getCurBlock &&
             (!rollbackBlock || maxHeightSeenCount >= checkList.size / 3)) {
             //sync first
             // 投出来的最大高度
-            log.info("syncblock height=" + height + " maxHeight=" + maxHeight + ",maxHeightSeenCount=" + maxHeightSeenCount + " suggestStartIdx=" + suggestStartIdx.intValue)
+
             syncBlock(maxHeight, suggestStartIdx, frombcuid);
           } else {
             if (rollbackBlock) {

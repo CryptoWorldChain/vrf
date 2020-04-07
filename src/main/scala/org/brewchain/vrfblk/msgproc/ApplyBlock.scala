@@ -247,7 +247,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
-      if (StringUtils.equals(VCtrl.network().nodeByBcuid(miner.getMiner.getNid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+      if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
         fastFromBcuid = bcuid;
       }
     })
@@ -290,7 +290,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
               val bcuid = f._1;
               val vnode = f._2;
-              if (StringUtils.equals(VCtrl.network().nodeByBcuid(miner.getMiner.getNid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+              if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
                 fastFromBcuid = bcuid;
               }
             })

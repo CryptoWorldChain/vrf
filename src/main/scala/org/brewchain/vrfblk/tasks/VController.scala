@@ -128,6 +128,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
   val banMinerByUID: Map[String, (Int, Long)] = Map.empty[String, (Int, Long)];
+  val syncMinerErrorByBCUID:Map[String,Long] =  Map.empty[String, Long];
+  
   def curVN(): VNode.Builder = instance.cur_vnode
 
   def haveEnoughToken(nodeAddress: String) = {
