@@ -28,6 +28,7 @@ import org.brewchain.vrfblk.msgproc.RollbackBlock
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicInteger
 import java.math.BigInteger
+import scala.collection.mutable.Buffer
 
 //投票决定当前的节点
 case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
@@ -162,21 +163,30 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     val endId = Math.min(maxHeight, startID + VConfig.MAX_SYNC_BLOCKS);
     incomingInfos.clear();
     var fastFromBcuid: String = null;
+    val randList = Buffer.empty[String]
+    val randSameLocList = Buffer.empty[String]
+
     VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= endId)).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
       val locktime = VCtrl.syncMinerErrorByBCUID.get(bcuid).getOrElse(0L)
       if (System.currentTimeMillis() - locktime > VConfig.BLOCK_DISTANCE_WAITMS) {
-        if (StringUtils.isBlank(bcuid) || StringUtils.equals(bcuid, VCtrl.curVN().getBcuid)) {
-          fastFromBcuid = bcuid;
-        }
+        //        if (StringUtils.isBlank(bcuid) || StringUtils.equals(bcuid, VCtrl.curVN().getBcuid)) {
+        //          fastFromBcuid = bcuid;
+        //        }
         if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
-          fastFromBcuid = bcuid;
+          //          fastFromBcuid = bcuid;
+          randSameLocList.append(bcuid)
+        } else {
+          randList.append(bcuid);
         }
       }
     })
-
-    if (StringUtils.isBlank(fastFromBcuid)) {
+    if (randSameLocList.size > 0) {
+      fastFromBcuid = randSameLocList(Math.abs(messageId.hashCode()) % randSameLocList.size);
+    } else if (randList.size > 0) {
+      fastFromBcuid = randList(Math.abs(messageId.hashCode()) % randList.size)
+    } else {
       fastFromBcuid = frombcuid;
     }
 
@@ -323,10 +333,10 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
             incomingInfos.clear();
           } else if (size >= currentBR.votebase * 4 / 5) {
-            log.info("try rollback");
+            //            log.info("try rollback");
             clearGossipInfo();
             incomingInfos.clear();
-            tryRollbackBlock();
+            //            tryRollbackBlock();
           } else {
             log.info("wait more results");
           }

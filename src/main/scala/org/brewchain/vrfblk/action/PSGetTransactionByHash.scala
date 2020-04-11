@@ -34,11 +34,12 @@ object PSGetTransactionService extends LService[PSGetTransaction] with PBUtils w
 
   override def onPBPacket(pack: FramePacket, pbo: PSGetTransaction, handler: CompleteHandler): Unit = {
     val ret = PRetGetTransaction.newBuilder()
-    if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
-      ret.setRetCode(-2).setRetMessage("memory low")
-      log.debug("ban sync block for low memory");
-      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
-    } else if (VCtrl.isReady()) {
+//    if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
+//      ret.setRetCode(-2).setRetMessage("memory low")
+//      log.debug("ban sync block for low memory");
+//      handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
+//    } else 
+      if (VCtrl.isReady()) {
       try {
         val from = pack.getFrom()
         var i = 0

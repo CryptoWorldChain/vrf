@@ -239,7 +239,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       null
     } else {
       val blks = Daos.chainHelper.listBlockByHeight(block);
-      if (blks != null) {
+      if (blks != null&&blks.size>0) {
         blks.filter(f => if (block == 0 ||
           block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
           //创世块安全块允许直接广播

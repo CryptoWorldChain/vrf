@@ -102,9 +102,9 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
     log.debug("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
-    
+
     if (pbo.getBlockHeight < cn.getCurBlock) {
-        log.error("cannot apply lower block:height="+pbo.getBlockHeight+",local="+cn.getCurBlock+",from="+pbo.getCoAddress);
+      log.error("cannot apply lower block:height=" + pbo.getBlockHeight + ",local=" + cn.getCurBlock + ",from=" + pbo.getCoAddress);
     } else {
       val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
       val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
@@ -140,6 +140,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
             Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
               def run() {
+                BeaconGossip.tryGossip();
                 do {
                   //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                   Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
@@ -243,8 +244,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     val network = VCtrl.network()
 
     var fastFromBcuid = miner.getMiner.getNid;
-    
-    VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
+
+    VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1))).map(f => {
       val bcuid = f._1;
       val vnode = f._2;
       if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
@@ -278,24 +279,38 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     val cdl = new CountDownLatch(1)
     var notSuccess = true
     var counter = 0
-    val start = System.currentTimeMillis()
+
     var trySaveRes: (Int, Int, String) = (res.getCurrentHeight.intValue(), res.getWantHeight.intValue(), "")
 
     log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
 
     while (cdl.getCount > 0 && counter < 6 && notSuccess) {
       try {
-        if (counter > 3) {
-//          vNetwork = randomNodeInNetwork(network)
-            VCtrl.coMinerByUID.filter(f=> (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1)) ).map(f => {
-              val bcuid = f._1;
-              val vnode = f._2;
-              if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
-                fastFromBcuid = bcuid;
-              }
-            })
-            vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
+        //        if (counter > 3) {
+        //          vNetwork = randomNodeInNetwork(network)
+        val randList = Buffer.empty[String]
+        val randSameLocList = Buffer.empty[String]
+        VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1))).map(f => {
+          val bcuid = f._1;
+          val vnode = f._2;
+          val locktime = VCtrl.syncMinerErrorByBCUID.get(bcuid).getOrElse(0L)
+          if (System.currentTimeMillis() - locktime > VConfig.BLOCK_DISTANCE_WAITMS) {
+            if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
+              //                fastFromBcuid = bcuid;
+              randSameLocList.append(bcuid)
+            } else {
+              randList.append(bcuid);
+            }
+          }
+        })
+        if (randSameLocList.size > 0) {
+          fastFromBcuid = randSameLocList(counter % randSameLocList.size);
+        } else if (randList.size > 0) {
+          fastFromBcuid = randList(counter % randList.size)
         }
+        vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
+        //        }
+        val start = System.currentTimeMillis()
         network.asendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
           override def onSuccess(v: FramePacket): Unit = {
             try {
@@ -322,19 +337,27 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                   }
                   cdl.countDown()
 
+                } else if (rspTx != null && rspTx.getRetCode == -2) {
+                  log.error(s"SRTVRF low memory warning find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getNid}, " +
+                    s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
+                  VCtrl.syncMinerErrorByBCUID.put(vNetwork.get.bcuid, System.currentTimeMillis());
                 } else {
                   log.error(s"SRTVRF no transaction find from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getNid}, " +
                     s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
+
                 }
               }
             } catch {
               case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
+            } finally {
+              cdl.countDown()
             }
           }
 
           override def onFailed(e: Exception, v: FramePacket): Unit =
             log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
               s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
+          cdl.countDown()
         }, '9')
 
         counter += 1
