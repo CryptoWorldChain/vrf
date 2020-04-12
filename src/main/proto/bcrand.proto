@@ -223,8 +223,10 @@ message PRetSyncBlocks{
 	int32 ret_code = 1;
 	string ret_message = 2;
 	repeated PBlockEntry block_headers = 3;
-	string message_id = 30;
 	string 		bcuid = 10;		//节点Id
+	int32	cur_blockheight = 11;//当前节点的高度
+
+	string 		message_id = 30;
 }
 
 message PSSyncTransaction {

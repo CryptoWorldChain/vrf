@@ -161,6 +161,14 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       instance.cur_vnode.setCominers(hexToMapping(cobits))
     })
   }
+  def changeCoMinerHeight(bcuid:String,height:Int) = {
+    coMinerByUID.synchronized({
+      val lastnode = coMinerByUID.getOrElse(bcuid, null)
+      if (lastnode != null) {
+        coMinerByUID.put(bcuid, lastnode.toBuilder().setCurBlock(height).build);
+      }
+    })
+  }
   def removeCoMiner(bcuid: String) = {
     coMinerByUID.synchronized({
       val existnode = coMinerByUID.remove(bcuid);

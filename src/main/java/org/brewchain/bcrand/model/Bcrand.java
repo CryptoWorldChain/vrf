@@ -19184,16 +19184,6 @@ public final class Bcrand {
         int index);
 
     /**
-     * <code>string message_id = 30;</code>
-     */
-    java.lang.String getMessageId();
-    /**
-     * <code>string message_id = 30;</code>
-     */
-    com.google.protobuf.ByteString
-        getMessageIdBytes();
-
-    /**
      * <pre>
      *节点Id
      * </pre>
@@ -19210,6 +19200,25 @@ public final class Bcrand {
      */
     com.google.protobuf.ByteString
         getBcuidBytes();
+
+    /**
+     * <pre>
+     *当前节点的高度
+     * </pre>
+     *
+     * <code>int32 cur_blockheight = 11;</code>
+     */
+    int getCurBlockheight();
+
+    /**
+     * <code>string message_id = 30;</code>
+     */
+    java.lang.String getMessageId();
+    /**
+     * <code>string message_id = 30;</code>
+     */
+    com.google.protobuf.ByteString
+        getMessageIdBytes();
   }
   /**
    * Protobuf type {@code org.brewchain.bcrand.model.PRetSyncBlocks}
@@ -19227,8 +19236,9 @@ public final class Bcrand {
       retCode_ = 0;
       retMessage_ = "";
       blockHeaders_ = java.util.Collections.emptyList();
-      messageId_ = "";
       bcuid_ = "";
+      curBlockheight_ = 0;
+      messageId_ = "";
     }
 
     @java.lang.Override
@@ -19279,6 +19289,11 @@ public final class Bcrand {
               java.lang.String s = input.readStringRequireUtf8();
 
               bcuid_ = s;
+              break;
+            }
+            case 88: {
+
+              curBlockheight_ = input.readInt32();
               break;
             }
             case 242: {
@@ -19401,40 +19416,6 @@ public final class Bcrand {
       return blockHeaders_.get(index);
     }
 
-    public static final int MESSAGE_ID_FIELD_NUMBER = 30;
-    private volatile java.lang.Object messageId_;
-    /**
-     * <code>string message_id = 30;</code>
-     */
-    public java.lang.String getMessageId() {
-      java.lang.Object ref = messageId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        messageId_ = s;
-        return s;
-      }
-    }
-    /**
-     * <code>string message_id = 30;</code>
-     */
-    public com.google.protobuf.ByteString
-        getMessageIdBytes() {
-      java.lang.Object ref = messageId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        messageId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
     public static final int BCUID_FIELD_NUMBER = 10;
     private volatile java.lang.Object bcuid_;
     /**
@@ -19477,6 +19458,53 @@ public final class Bcrand {
       }
     }
 
+    public static final int CUR_BLOCKHEIGHT_FIELD_NUMBER = 11;
+    private int curBlockheight_;
+    /**
+     * <pre>
+     *当前节点的高度
+     * </pre>
+     *
+     * <code>int32 cur_blockheight = 11;</code>
+     */
+    public int getCurBlockheight() {
+      return curBlockheight_;
+    }
+
+    public static final int MESSAGE_ID_FIELD_NUMBER = 30;
+    private volatile java.lang.Object messageId_;
+    /**
+     * <code>string message_id = 30;</code>
+     */
+    public java.lang.String getMessageId() {
+      java.lang.Object ref = messageId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        messageId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string message_id = 30;</code>
+     */
+    public com.google.protobuf.ByteString
+        getMessageIdBytes() {
+      java.lang.Object ref = messageId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        messageId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -19502,6 +19530,9 @@ public final class Bcrand {
       }
       if (!getBcuidBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 10, bcuid_);
+      }
+      if (curBlockheight_ != 0) {
+        output.writeInt32(11, curBlockheight_);
       }
       if (!getMessageIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 30, messageId_);
@@ -19529,6 +19560,10 @@ public final class Bcrand {
       if (!getBcuidBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(10, bcuid_);
       }
+      if (curBlockheight_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(11, curBlockheight_);
+      }
       if (!getMessageIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(30, messageId_);
       }
@@ -19554,10 +19589,12 @@ public final class Bcrand {
           .equals(other.getRetMessage());
       result = result && getBlockHeadersList()
           .equals(other.getBlockHeadersList());
-      result = result && getMessageId()
-          .equals(other.getMessageId());
       result = result && getBcuid()
           .equals(other.getBcuid());
+      result = result && (getCurBlockheight()
+          == other.getCurBlockheight());
+      result = result && getMessageId()
+          .equals(other.getMessageId());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -19577,10 +19614,12 @@ public final class Bcrand {
         hash = (37 * hash) + BLOCK_HEADERS_FIELD_NUMBER;
         hash = (53 * hash) + getBlockHeadersList().hashCode();
       }
-      hash = (37 * hash) + MESSAGE_ID_FIELD_NUMBER;
-      hash = (53 * hash) + getMessageId().hashCode();
       hash = (37 * hash) + BCUID_FIELD_NUMBER;
       hash = (53 * hash) + getBcuid().hashCode();
+      hash = (37 * hash) + CUR_BLOCKHEIGHT_FIELD_NUMBER;
+      hash = (53 * hash) + getCurBlockheight();
+      hash = (37 * hash) + MESSAGE_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getMessageId().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -19725,9 +19764,11 @@ public final class Bcrand {
         } else {
           blockHeadersBuilder_.clear();
         }
-        messageId_ = "";
-
         bcuid_ = "";
+
+        curBlockheight_ = 0;
+
+        messageId_ = "";
 
         return this;
       }
@@ -19768,8 +19809,9 @@ public final class Bcrand {
         } else {
           result.blockHeaders_ = blockHeadersBuilder_.build();
         }
-        result.messageId_ = messageId_;
         result.bcuid_ = bcuid_;
+        result.curBlockheight_ = curBlockheight_;
+        result.messageId_ = messageId_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -19852,12 +19894,15 @@ public final class Bcrand {
             }
           }
         }
-        if (!other.getMessageId().isEmpty()) {
-          messageId_ = other.messageId_;
-          onChanged();
-        }
         if (!other.getBcuid().isEmpty()) {
           bcuid_ = other.bcuid_;
+          onChanged();
+        }
+        if (other.getCurBlockheight() != 0) {
+          setCurBlockheight(other.getCurBlockheight());
+        }
+        if (!other.getMessageId().isEmpty()) {
+          messageId_ = other.messageId_;
           onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
@@ -20225,75 +20270,6 @@ public final class Bcrand {
         return blockHeadersBuilder_;
       }
 
-      private java.lang.Object messageId_ = "";
-      /**
-       * <code>string message_id = 30;</code>
-       */
-      public java.lang.String getMessageId() {
-        java.lang.Object ref = messageId_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          messageId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>string message_id = 30;</code>
-       */
-      public com.google.protobuf.ByteString
-          getMessageIdBytes() {
-        java.lang.Object ref = messageId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          messageId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>string message_id = 30;</code>
-       */
-      public Builder setMessageId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  
-        messageId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string message_id = 30;</code>
-       */
-      public Builder clearMessageId() {
-        
-        messageId_ = getDefaultInstance().getMessageId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>string message_id = 30;</code>
-       */
-      public Builder setMessageIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        messageId_ = value;
-        onChanged();
-        return this;
-      }
-
       private java.lang.Object bcuid_ = "";
       /**
        * <pre>
@@ -20379,6 +20355,113 @@ public final class Bcrand {
   checkByteStringIsUtf8(value);
         
         bcuid_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int curBlockheight_ ;
+      /**
+       * <pre>
+       *当前节点的高度
+       * </pre>
+       *
+       * <code>int32 cur_blockheight = 11;</code>
+       */
+      public int getCurBlockheight() {
+        return curBlockheight_;
+      }
+      /**
+       * <pre>
+       *当前节点的高度
+       * </pre>
+       *
+       * <code>int32 cur_blockheight = 11;</code>
+       */
+      public Builder setCurBlockheight(int value) {
+        
+        curBlockheight_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       *当前节点的高度
+       * </pre>
+       *
+       * <code>int32 cur_blockheight = 11;</code>
+       */
+      public Builder clearCurBlockheight() {
+        
+        curBlockheight_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object messageId_ = "";
+      /**
+       * <code>string message_id = 30;</code>
+       */
+      public java.lang.String getMessageId() {
+        java.lang.Object ref = messageId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          messageId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string message_id = 30;</code>
+       */
+      public com.google.protobuf.ByteString
+          getMessageIdBytes() {
+        java.lang.Object ref = messageId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          messageId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string message_id = 30;</code>
+       */
+      public Builder setMessageId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        messageId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message_id = 30;</code>
+       */
+      public Builder clearMessageId() {
+        
+        messageId_ = getDefaultInstance().getMessageId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string message_id = 30;</code>
+       */
+      public Builder setMessageIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        messageId_ = value;
         onChanged();
         return this;
       }
@@ -28662,44 +28745,45 @@ public final class Bcrand {
       "yncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002 " +
       "\001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(\005" +
       "\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmax_height\030\006 \001(\005\022" +
-      "\022\n\nmessage_id\030\036 \001(\t\"\232\001\n\016PRetSyncBlocks\022\020" +
+      "\022\n\nmessage_id\030\036 \001(\t\"\263\001\n\016PRetSyncBlocks\022\020" +
       "\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n" +
       "\rblock_headers\030\003 \003(\0132\'.org.brewchain.bcr" +
-      "and.model.PBlockEntry\022\022\n\nmessage_id\030\036 \001(" +
-      "\t\022\r\n\005bcuid\030\n \001(\t\"\375\001\n\021PSSyncTransaction\022\016" +
-      "\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessa" +
-      "geid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org.brewc" +
-      "hain.bcrand.model.PSSyncTransaction.Sync" +
-      "Type\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfirm_bcui" +
-      "d\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020\000\022\023\n\017S" +
-      "T_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRet" +
-      "SyncTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret" +
-      "_message\030\002 \001(\t\"\"\n\020PSGetTransaction\022\016\n\006tx" +
-      "Hash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020\n\010ret_" +
-      "code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n\ttxCon" +
-      "tent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinfo\030\001 \001(" +
-      "\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013" +
-      "ret_message\030\002 \001(\t\022\023\n\013blockheight\030\003 \001(\003\022\016" +
-      "\n\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 \001(\003\022\032\n" +
-      "\022maxblockheightseen\030\006 \001(\003\022\026\n\016maxtermidse" +
-      "edn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006coaddr\030\n" +
-      " \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepasslastblk\030" +
-      "\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beacon_hash" +
-      "\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_code\030\001" +
-      " \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_node\030\003 \001" +
-      "(\0132!.org.brewchain.bcrand.model.VNode\022\024\n" +
-      "\014pending_node\030\r \001(\t\022\023\n\013direct_node\030\016 \001(\t" +
-      "\0223\n\010coMiners\030\017 \003(\0132!.org.brewchain.bcran" +
-      "d.model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbs" +
-      "ave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005\022\017\n\007wa" +
-      "ll_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n\010PComm" +
-      "and\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022" +
-      "\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003S" +
-      "RT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!" +
-      "*\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_" +
-      "BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_BLOCKM" +
-      "AKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_DUTY_B" +
-      "EACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
+      "and.model.PBlockEntry\022\r\n\005bcuid\030\n \001(\t\022\027\n\017" +
+      "cur_blockheight\030\013 \001(\005\022\022\n\nmessage_id\030\036 \001(" +
+      "\t\"\375\001\n\021PSSyncTransaction\022\016\n\006txHash\030\001 \003(\014\022" +
+      "\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010s" +
+      "yncType\030\004 \001(\01626.org.brewchain.bcrand.mod" +
+      "el.PSSyncTransaction.SyncType\022\022\n\nfrom_bc" +
+      "uid\030\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n\010Sync" +
+      "Type\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020" +
+      "\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetSyncTransaction" +
+      "\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\"" +
+      "\"\n\020PSGetTransaction\022\016\n\006txHash\030\001 \003(\t\"N\n\022P" +
+      "RetGetTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013r" +
+      "et_message\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nP" +
+      "SRhrCheck\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrCh" +
+      "eck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001" +
+      "(\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022" +
+      "\025\n\rlastblocktime\030\005 \001(\003\022\032\n\022maxblockheight" +
+      "seen\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022\021\n\tbl" +
+      "ockhash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030" +
+      "\013 \001(\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nbanfor" +
+      "vote\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n\017PRet" +
+      "HealthCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_mes" +
+      "sage\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.brewch" +
+      "ain.bcrand.model.VNode\022\024\n\014pending_node\030\r" +
+      " \001(\t\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMiners\030\017 " +
+      "\003(\0132!.org.brewchain.bcrand.model.VNode\022\022" +
+      "\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n" +
+      "\014syncblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007" +
+      "PModule\022\007\n\003VRF\020\000*\177\n\010PCommand\022\007\n\003JIN\020\000\022\007\n" +
+      "\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN" +
+      "\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007" +
+      "\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!*\216\001\n\nVNodeState" +
+      "\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n\tVN_B" +
+      "AKCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n\016VN_D" +
+      "UTY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n\014VN_D" +
+      "UTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -28796,7 +28880,7 @@ public final class Bcrand {
     internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_org_brewchain_bcrand_model_PRetSyncBlocks_descriptor,
-        new java.lang.String[] { "RetCode", "RetMessage", "BlockHeaders", "MessageId", "Bcuid", });
+        new java.lang.String[] { "RetCode", "RetMessage", "BlockHeaders", "Bcuid", "CurBlockheight", "MessageId", });
     internal_static_org_brewchain_bcrand_model_PSSyncTransaction_descriptor =
       getDescriptor().getMessageTypes().get(14);
     internal_static_org_brewchain_bcrand_model_PSSyncTransaction_fieldAccessorTable = new

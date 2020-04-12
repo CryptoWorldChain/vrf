@@ -110,6 +110,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       val realmap = ret.getBlockHeadersList.asScala; //.filter { p => p.getBlockHeight >= syncInfo.reqBody.getStartId && p.getBlockHeight <= syncInfo.reqBody.getEndId }
                       //            if (realmap.size() == endIdx - startIdx + 1) {
                       log.info("sync realBlockCount=" + realmap.size + ",req=[" + reqbody.getStartId + "," + reqbody.getEndId + "]");
+                      VCtrl.changeCoMinerHeight(ret.getBcuid, ret.getCurBlockheight)
+                      var maxBlockHeight = 0L;
                       val blocks = realmap.map { b =>
                         //同步执行 apply 并验证返回结果
                         // applyblock
@@ -117,14 +119,22 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                         log.info("sync headertxs=" + block.getHeader.getTxHashsCount + " bodytxs=" + block.getBody().getTxsCount() + ",blockheight=" + block.getHeader.getHeight
                           + ",hash=" + Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()) + "," + BlockProcessor.getQueue.size())
                         syncBlockInQueue.incrementAndGet();
+                        if (maxBlockHeight < block.getHeader.getHeight) {
+                          maxBlockHeight = block.getHeader.getHeight
+                        }
                         block
+                      }
+                      if (maxBlockHeight.intValue() < reqbody.getEndId) {
+                        log.info("cannot get enough block. need to end="+reqbody.getEndId+",maxheight="+maxBlockHeight);
+                        VCtrl.syncMinerErrorByBCUID.put(randn.bcuid, System.currentTimeMillis());
                       }
                       blocks.map { block =>
                         BlockProcessor.offerSyncBlock(new SyncApplyBlock(block, syncInfo));
                       }
+
                     } else {
                       log.info("sync block error:return = " + ret.getRetCode + ",msg=" + ret.getRetMessage);
-                      VCtrl.syncMinerErrorByBCUID.put(randn.bcuid,System.currentTimeMillis());
+                      VCtrl.syncMinerErrorByBCUID.put(randn.bcuid, System.currentTimeMillis());
                     }
                   }
                 } catch {
@@ -139,8 +149,8 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 val end = System.currentTimeMillis();
                 MDCSetBCUID(VCtrl.network());
                 MDCSetMessageID(messageid)
-                VCtrl.syncMinerErrorByBCUID.put(randn.bcuid,System.currentTimeMillis())
-                log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start)  + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
+                VCtrl.syncMinerErrorByBCUID.put(randn.bcuid, System.currentTimeMillis())
+                log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
                 BeaconGossip.tryGossip();
               }
             })

@@ -79,11 +79,6 @@ object VConfig {
   //term进行xbft投票时的超时时间
   val DTV_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "dtv.timeout.sec", 60);
 
-  //每个term，打块的数量，Term出块范围=DTV_MUL_BLOCKS_EACH_TERM*conodes*DTV_BLOCKS_EACH_MINER
-  val DTV_MUL_BLOCKS_EACH_TERM = prop.get(PROP_DOMAIN + "dtv.mul.blocks.each.term", 8);
-  //每次打块节点出块的数量，Term出块范围=DTV_MUL_BLOCKS_EACH_TERM*conodes*DTV_BLOCKS_EACH_MINER
-  val DTV_BLOCKS_EACH_MINER = prop.get(PROP_DOMAIN + "dtv.blocks.each.miner", 3);
-
   //超级节点最多数量
   val DTV_MAX_SUPER_MINER = prop.get(PROP_DOMAIN + "dtv.max.super.miner", 19);
   //超级节点最少数量
