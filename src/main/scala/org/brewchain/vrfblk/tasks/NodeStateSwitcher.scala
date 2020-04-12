@@ -83,7 +83,7 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
       val blkInfo = new MPCreateBlock(netBits, newblockbits, natarybits, hash, preHash, sign, blockWitness.build, height + 1,sleepMs);
       BlockProcessor.offerMessage(blkInfo);
     } else if (natarybits.testBit(VCtrl.curVN().getBitIdx)) {
-      var timeOutMS = newblockbits.bitCount() * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000;
+      var timeOutMS = newblockbits.bitCount() * Daos.mcore.getBlockMineTimeoutMs();
       notaryCheckHash = VCtrl.curVN().getBeaconHash;
 
       Daos.ddc.executeNow(NotaryBlockFP, new Runnable() {

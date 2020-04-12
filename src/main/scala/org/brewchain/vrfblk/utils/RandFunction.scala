@@ -72,10 +72,10 @@ object RandFunction extends LogHelper with BitMap {
     if (nodeCounts <= 1) {
       if (netBits.testBit(curBitIdx)) {
         log.debug("chooseGroups.blockmaker.netBits=" + netBits.bitCount() + " notaryCount=" + nodeCounts + " blockMakerCount=" + blockMakerCount);
-        (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, BigInteger.ZERO, VConfig.BLK_EPOCH_MS, ranInt % nodeCounts)
+        (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, BigInteger.ZERO, Daos.mcore.getBlockEpochMS(), ranInt % nodeCounts)
       } else {
         log.debug("chooseGroups.sync.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-        (VNodeState.VN_DUTY_NOTARY, netBits, BigInteger.ZERO, VConfig.BLK_EPOCH_MS, ranInt % nodeCounts)
+        (VNodeState.VN_DUTY_NOTARY, netBits, BigInteger.ZERO, Daos.mcore.getBlockEpochMS(), ranInt % nodeCounts)
       }
     } else {
       val randInx = Math.abs(ranInt.abs) % nodeCounts;
@@ -112,79 +112,18 @@ object RandFunction extends LogHelper with BitMap {
       
 
       if ((randInx + indexInBits) % nodeCounts < blockMakerCount) {
-        val sleepms = ((indexInBits + randInx) % nodeCounts) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        val sleepms = ((indexInBits + randInx) % nodeCounts) * Daos.mcore.getBlockMineTimeoutMs() + Daos.mcore.getBlockEpochMS()
         log.info(s"chooseGroups=BLOCKMAKER,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       } else if ((randInx + indexInBits) % nodeCounts < blockMakerCount + notaryCount) {
-        val sleepms = ((indexInBits + randInx) % (blockMakerCount + notaryCount)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        val sleepms = ((indexInBits + randInx) % (blockMakerCount + notaryCount)) * Daos.mcore.getBlockMineTimeoutMs() + Daos.mcore.getBlockEpochMS()
         log.info(s"chooseGroups=NOTRAY,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_NOTARY, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       } else {
-        val sleepms = ((indexInBits + randInx) % (nodeCounts)) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
+        val sleepms = ((indexInBits + randInx) % (nodeCounts)) * Daos.mcore.getBlockMineTimeoutMs() * 1000 + Daos.mcore.getBlockEpochMS()
         log.info(s"chooseGroups=SYNC,sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${indexInBits}/${(indexInBits + randInx) % nodeCounts} ,blockbits.bitCount=${blockbits.bitCount()},ranInt=${ranInt}/${randInx}");
         (VNodeState.VN_DUTY_SYNC, blockbits, votebits, sleepms, firstBlockMakerBitIndex)
       }
     }
   }
-  //  def chooseGroups(beaconHexSeed: String, netBits: BigInteger, curIdx: Int): (VNodeState, BigInteger, BigInteger) = {
-  //    val netBitsCount = netBits.bitCount();
-  //    val blockMakerCount: Int = Math.max(1, netBitsCount / 2);
-  //    // val notaryCount: Int = Math.max(1, (netBits.bitCount() - blockMakerCount) / 3);
-  //    val notaryCount: Int = Math.max(1, netBitsCount / 3);
-  //
-  //    if (netBits.bitCount() < 3 && netBits.bitCount() > 0) {
-  //      if (netBits.testBit(curIdx)) {
-  //        log.debug("chooseGroups.blockmaker.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-  //        (VNodeState.VN_DUTY_BLOCKMAKERS, netBits, BigInteger.ZERO)
-  //      } else {
-  //        log.debug("chooseGroups.sync.netBits=" + netBits.bitCount() + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-  //        (VNodeState.VN_DUTY_NOTARY, netBits, BigInteger.ZERO)
-  //      }
-  //    } else {
-  //
-  //      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-  //      log.debug("chooseGroups.start originNetBits=" + netBits.bitCount() + ",netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount
-  //        + ",isblock=" + blockbits.testBit(curIdx) + ",isnotary=" + votebits.testBit(curIdx))
-  //
-  //      //      //      log.error("originNetBits=" + netBits.bitCount() + "netBits=" + netBitsCount + " notaryCount=" + notaryCount + " blockMakerCount=" + blockMakerCount);
-  //      //      val (blockbits, votebits) = reasonableRandInt(beaconHexSeed, netBits, blockMakerCount, notaryCount);
-  //      //      log.debug("chooseGroups.end blockbits=" + blockbits + " votebits=" + votebits)
-  //
-  //      // TODO 如果金额不足，不能成为BLOCKMAKER
-  //      if (blockbits.testBit(curIdx)) {
-  //        (VNodeState.VN_DUTY_BLOCKMAKERS, blockbits, votebits)
-  //      } else if (votebits.testBit(curIdx)) {
-  //        (VNodeState.VN_DUTY_NOTARY, blockbits, votebits)
-  //      } else {
-  //        (VNodeState.VN_DUTY_SYNC, blockbits, votebits)
-  //      }
-  //    }
-  //  }
-  //  def getRandMakeBlockSleep(beaconHash: String, blockbits: BigInteger, curIdx: Int): Long = {
-  //    var testBits = blockbits;
-  //    var indexInBits = 0;
-  //    var testcc = 0;
-  //
-  //    if (testBits.testBit(curIdx)) {
-  //      while (testcc < 1024000 && testBits.bitCount() > 0) {
-  //        if (blockbits.testBit(testcc)) {
-  //          testBits = testBits.clearBit(testcc);
-  //          if (curIdx == testcc) {
-  //            testBits = BigInteger.ZERO;
-  //          } else {
-  //            indexInBits = indexInBits + 1;
-  //          }
-  //        }
-  //        testcc = testcc + 1;
-  //      }
-  //      val ranInt = Math.abs(new BigInteger(beaconHash, 16).intValue());
-  //      //      val stepRange = ranInt.mod(BigInteger.valueOf(blockbits.bitCount())).intValue().abs;
-  //      val sleepms = ((indexInBits + ranInt) % (blockbits.bitCount())) * VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
-  //      //       log.info(s"getRandMakeBlockSleep:sleepms=${sleepms}:testcc=${testcc},indexInBits=${indexInBits},curIdx=${curIdx},blockbits.bitCount=${blockbits.bitCount()},stepRange=${stepRange},beaconHash=${beaconHash}");
-  //      sleepms;
-  //    } else {
-  //      VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000 + VConfig.BLK_EPOCH_MS
-  //    }
-  //    //
-  //  }
 }

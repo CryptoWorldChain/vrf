@@ -72,7 +72,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
     vrfnet.changeNodeVAddr(vrfnet.root().v_address);
     
     log.info("vrfnet.initOK:My Node=" + vrfnet.root() + ",CoAddr=" + vrfnet.root().v_address
-      + ",vctrl.tick=" + Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS)) // my node
+      + ",block epoch ms=" +Daos.mcore.getBlockEpochMS()) // my node
 
     VCtrl.instance = VRFController(vrfnet);
     Array(BeaconGossip, BlockProcessor, NodeStateSwitcher, BlockSync,CoinbaseWitnessProcessor).map(f => {
@@ -104,7 +104,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
     //    Scheduler.schedulerForDCtrl.scheduleWithFixedDelay(DCtrl.instance, DConfig.INITDELAY_DCTRL_SEC,
     //      Math.min(DConfig.TICK_DCTRL_MS, DConfig.BLK_EPOCH_MS), TimeUnit.MILLISECONDS)
     //    Daos.ddc.scheduleWithFixedDelay(VCtrl.instance, VConfig.INITDELAY_DCTRL_SEC,
-    //      Math.min(VConfig.TICK_DCTRL_MS, VConfig.BLK_EPOCH_MS),TimeUnit.MILLISECONDS)
+    //      Math.min(VConfig.TICK_DCTRL_MS, Daos.mcore.getBlockEpochMS()),TimeUnit.MILLISECONDS)
 
     //!!    TxSync.instance = TransactionSync(dposnet);
 

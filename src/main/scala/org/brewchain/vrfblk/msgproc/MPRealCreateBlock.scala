@@ -133,7 +133,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       })
       //}
 
-      if (lastMakeBlockCounter > VConfig.MAX_CONTINUE_BLOCK && newNetBits.bitCount() > 3) {
+      if (lastMakeBlockCounter > Daos.mcore.getBlockMineMaxContinue() && newNetBits.bitCount() > 3) {
         newNetBits = newNetBits.clearBit(cn.getBitIdx)
       }
       val strnetBits = hexToMapping(newNetBits);
@@ -272,21 +272,6 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         })
         log.info("bits-nodes.counts=" + bits.bitCount() + ",cominer=" + VCtrl.coMinerByUID.size);
         VCtrl.network().bwallMessage("CBNVRF", Left(newCoinbase.build()), bits, newCoinbase.getMessageId, '9')
-        //      VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, f._2.getBcuid, '9')
-        //      VCtrl.allNodes.foreach(f => {
-        //          val n = f._2;
-        //          if(Integer.parseInt(n.getAuthBalance()) >= VConfig.AUTH_TOKEN_MIN) {
-        ////            var sleepMS =   RandFunction.getRandMakeBlockSleep(newblk.getMiner.getTerm, newNetBits, cn.getBitIdx);
-        ////            if (sleepMS < VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
-        //              log.info("broadcast block " + newblockheight + " to :" + n.getBcuid + " address:" + n.getCoAddress);
-        //              VCtrl.network().postMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, n.getBcuid, '9')
-        //            //}
-        //          } else {
-        //            log.error("cannot broadcast block ");
-        //          }
-        //        })
-
-        //       VCtrl.network().dwallMessage("CBNVRF", Left(newCoinbase.build()), newCoinbase.getMessageId, '9')
 
       }
     } catch {

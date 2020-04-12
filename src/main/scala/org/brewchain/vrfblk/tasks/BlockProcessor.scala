@@ -99,7 +99,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           val startupMS = System.currentTimeMillis();
           var sleepMS = blkInfo.sleepMs.longValue();
           var isFirstMaker = false;
-          if (sleepMS <= VConfig.BLOCK_MAKE_TIMEOUT_SEC * 1000) {
+          if (sleepMS <= Daos.mcore.getBlockMineTimeoutMs()) {
             isFirstMaker = true;
           }
           log.error("make block sleep=" + sleepMS);

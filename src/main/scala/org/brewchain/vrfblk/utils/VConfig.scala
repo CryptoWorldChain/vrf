@@ -10,8 +10,6 @@ object VConfig {
 
   val GOSSIP_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "gossip.timeout.sec", 60); //2 seconds each block
 
-  val BLOCK_MAKE_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.timeout.sec", 60); //2 seconds each block
-  
   val BLOCK_NOTARY_TIMEOUT_SEC = prop.get(PROP_DOMAIN + "block.notary.timeout.sec", 180); //2 seconds each block
 
   val SLICE_ID = prop.get(PROP_DOMAIN + "slice.id", 0); //2 seconds each block
@@ -21,12 +19,6 @@ object VConfig {
 
   //gossip线程检查时间
   val TICK_GOSSIP_SEC = prop.get(PROP_DOMAIN + "tick.gossip.sec", 120);
-
-  //打块时间；按秒计算，（已经废弃，后面用毫秒取代）
-  val _DBLK_EPOCH_SEC = prop.get(PROP_DOMAIN + "blk.epoch.sec", 1); //2 seconds each block
-
-  //打块时间：按毫秒计算，
-  val BLK_EPOCH_MS = prop.get(PROP_DOMAIN + "blk.epoch.ms", 1000); //2 seconds each block
   //没有交易时候的最大打块时间
   val BLK_NOOP_EPOCH_MS = prop.get(PROP_DOMAIN + "blk.noop.epoch.ms", 1000); //2 seconds each block
 
@@ -88,7 +80,6 @@ object VConfig {
   val DTV_TIME_MS_EACH_BLOCK = prop.get(PROP_DOMAIN + "dtv.time.ms.each_block", 2000);
 
   //每次状态（出块，同步等）先成功循环等待时间，毫秒
-  val TICK_DCTRL_MS = prop.get(PROP_DOMAIN + "tick.dctrl.ms", BLK_EPOCH_MS);
   //交易同步线程的间隔查询时间
   val TICK_DCTRL_MS_TX = prop.get(PROP_DOMAIN + "tick.dctrl.ms.tx", TXS_EPOCH_MS);
 
@@ -199,8 +190,6 @@ object VConfig {
   // 最多有多少个验证节点
   val MAX_BLOCK_NOTARY = prop.get(PROP_DOMAIN + "max.block.notary", 13); //60%
 
-  val MAX_CONTINUE_BLOCK = prop.get(PROP_DOMAIN + "max.continue.block", 6); 
-  
   val MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY = prop.get(PROP_DOMAIN + "max.waitms.when.last.block.not.apply", 5000);
   val BAN_BLOCKS_FOR_NOT_APPLY =  prop.get(PROP_DOMAIN + "ban.blocks.for.not.apply", 10);
   //最小可以使用的内存

@@ -121,11 +121,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",CBH=" + VCtrl.curVN().getCurBlock
             + ",QS=" + BlockProcessor.getQueue.size()
             + ",C=" + (System.currentTimeMillis() - BeaconGossip.lastGossipTime)
-            + ",BEMS=" + VConfig.BLK_EPOCH_MS);
+            + ",BEMS=" + Daos.mcore.getBlockEpochMS());
 
           // && BlockProcessor.getQueue.size() < 2
           //        if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
-          //          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+          //          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= Daos.mcore.getBlockEpochMS()) {
           //          log.info("cannot apply block, do gossip");
           BeaconGossip.tryGossip();
           //        } else {
@@ -207,7 +207,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             + ",B=" + pbo.getBlockEntry.getSign
             + ",TX=" + pbo.getTxcount);
           if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
-            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= VConfig.BLK_EPOCH_MS) {
+            && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= Daos.mcore.getBlockEpochMS()) {
             log.info("cannot apply block, do gossip");
             BeaconGossip.tryGossip();
           }
