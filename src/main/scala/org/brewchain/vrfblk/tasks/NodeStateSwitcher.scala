@@ -97,6 +97,8 @@ object NodeStateSwitcher extends SingletonWorkShop[StateMessage] with PMNodeHelp
             log.info("nortary block need gossip block");
             BeaconGossip.gossipBlocks();//重新发起投票!!
             
+          }else{
+            //新的块来了，要验证是否正确
           }
         }
       })

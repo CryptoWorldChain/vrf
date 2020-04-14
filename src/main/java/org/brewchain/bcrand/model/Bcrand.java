@@ -12227,17 +12227,21 @@ public final class Bcrand {
        */
       APPLY_OK(0),
       /**
-       * <code>APPLY_OK_LOW_MEMORY = 1;</code>
+       * <code>APPLY_NOTARY_OK = 1;</code>
        */
-      APPLY_OK_LOW_MEMORY(1),
+      APPLY_NOTARY_OK(1),
       /**
-       * <code>APPLY_NOT_CONTINUE = 2;</code>
+       * <code>APPLY_OK_LOW_MEMORY = 2;</code>
        */
-      APPLY_NOT_CONTINUE(2),
+      APPLY_OK_LOW_MEMORY(2),
       /**
-       * <code>APPLY_REJECT = 3;</code>
+       * <code>APPLY_NOT_CONTINUE = 3;</code>
        */
-      APPLY_REJECT(3),
+      APPLY_NOT_CONTINUE(3),
+      /**
+       * <code>APPLY_REJECT = 4;</code>
+       */
+      APPLY_REJECT(4),
       UNRECOGNIZED(-1),
       ;
 
@@ -12246,17 +12250,21 @@ public final class Bcrand {
        */
       public static final int APPLY_OK_VALUE = 0;
       /**
-       * <code>APPLY_OK_LOW_MEMORY = 1;</code>
+       * <code>APPLY_NOTARY_OK = 1;</code>
        */
-      public static final int APPLY_OK_LOW_MEMORY_VALUE = 1;
+      public static final int APPLY_NOTARY_OK_VALUE = 1;
       /**
-       * <code>APPLY_NOT_CONTINUE = 2;</code>
+       * <code>APPLY_OK_LOW_MEMORY = 2;</code>
        */
-      public static final int APPLY_NOT_CONTINUE_VALUE = 2;
+      public static final int APPLY_OK_LOW_MEMORY_VALUE = 2;
       /**
-       * <code>APPLY_REJECT = 3;</code>
+       * <code>APPLY_NOT_CONTINUE = 3;</code>
        */
-      public static final int APPLY_REJECT_VALUE = 3;
+      public static final int APPLY_NOT_CONTINUE_VALUE = 3;
+      /**
+       * <code>APPLY_REJECT = 4;</code>
+       */
+      public static final int APPLY_REJECT_VALUE = 4;
 
 
       public final int getNumber() {
@@ -12278,9 +12286,10 @@ public final class Bcrand {
       public static ApplyStatus forNumber(int value) {
         switch (value) {
           case 0: return APPLY_OK;
-          case 1: return APPLY_OK_LOW_MEMORY;
-          case 2: return APPLY_NOT_CONTINUE;
-          case 3: return APPLY_REJECT;
+          case 1: return APPLY_NOTARY_OK;
+          case 2: return APPLY_OK_LOW_MEMORY;
+          case 3: return APPLY_NOT_CONTINUE;
+          case 4: return APPLY_REJECT;
           default: return null;
         }
       }
@@ -28715,7 +28724,7 @@ public final class Bcrand {
       "\003\022\022\n\nqueue_wall\030\006 \001(\003\022\017\n\007extinfo\030\007 \001(\t\0225" +
       "\n\004murs\030\010 \003(\0132\'.org.brewchain.bcrand.mode" +
       "l.GossipMiner\022\022\n\nmessage_id\030\036 \001(\t\022\014\n\004sig" +
-      "n\030d \001(\t\"\373\004\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 " +
+      "n\030d \001(\t\"\220\005\n\nPSCoinbase\022\023\n\013beacon_hash\030\001 " +
       "\001(\t\022\023\n\013beacon_sign\030\002 \001(\t\022\030\n\020prev_beacon_" +
       "hash\030\003 \001(\t\022\023\n\013block_seeds\030\004 \001(\014\022\030\n\020prev_" +
       "block_seeds\030\005 \001(\014\022\021\n\tvrf_codes\030\006 \001(\014\022\022\n\n" +
@@ -28728,62 +28737,62 @@ public final class Bcrand {
       "rg.brewchain.bcrand.model.PBlockEntry\022\020\n" +
       "\010txbodies\030\023 \003(\014\022H\n\014apply_status\030\024 \001(\01622." +
       "org.brewchain.bcrand.model.PSCoinbase.Ap" +
-      "plyStatus\022\022\n\nmessage_id\030\036 \001(\t\"^\n\013ApplySt" +
-      "atus\022\014\n\010APPLY_OK\020\000\022\027\n\023APPLY_OK_LOW_MEMOR" +
-      "Y\020\001\022\026\n\022APPLY_NOT_CONTINUE\020\002\022\020\n\014APPLY_REJ" +
-      "ECT\020\003\"\301\001\n\010PSNotary\022\024\n\014block_height\030\001 \001(\005" +
-      "\022\022\n\nblock_hash\030\002 \001(\003\022\023\n\013beacon_sign\030\003 \001(" +
-      "\t\022H\n\016blk_voteresult\030\004 \001(\01620.org.brewchai" +
-      "n.bcrand.model.PSNotary.PVoteResult\",\n\013P" +
-      "VoteResult\022\016\n\nVR_CONFIRM\020\000\022\r\n\tVR_REJECT\020" +
-      "\001\"I\n\010PQNotary\022\024\n\014block_height\030\001 \001(\005\022\022\n\nb" +
-      "lock_hash\030\002 \001(\t\022\023\n\013beacon_sign\030\003 \001(\t\"\231\001\n" +
-      "\013PBlockEntry\022\024\n\014block_height\030\001 \001(\005\022\026\n\016co" +
-      "inbase_bcuid\030\002 \001(\t\022\020\n\010slice_id\030\003 \001(\005\022\021\n\t" +
-      "blockhash\030\004 \001(\t\022\024\n\014block_header\030\n \001(\014\022\023\n" +
-      "\013block_miner\030\013 \001(\014\022\014\n\004sign\0302 \001(\t\"\220\001\n\014PSS" +
-      "yncBlocks\022\020\n\010start_id\030\001 \001(\005\022\016\n\006end_id\030\002 " +
-      "\001(\005\022\020\n\010needBody\030\003 \001(\010\022\021\n\tblock_idx\030\004 \003(\005" +
-      "\022\021\n\tsignature\030\005 \001(\t\022\022\n\nmax_height\030\006 \001(\005\022" +
-      "\022\n\nmessage_id\030\036 \001(\t\"\263\001\n\016PRetSyncBlocks\022\020" +
-      "\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022>\n" +
-      "\rblock_headers\030\003 \003(\0132\'.org.brewchain.bcr" +
-      "and.model.PBlockEntry\022\r\n\005bcuid\030\n \001(\t\022\027\n\017" +
-      "cur_blockheight\030\013 \001(\005\022\022\n\nmessage_id\030\036 \001(" +
-      "\t\"\375\001\n\021PSSyncTransaction\022\016\n\006txHash\030\001 \003(\014\022" +
-      "\017\n\007txDatas\030\002 \003(\014\022\021\n\tmessageid\030\003 \001(\t\022H\n\010s" +
-      "yncType\030\004 \001(\01626.org.brewchain.bcrand.mod" +
-      "el.PSSyncTransaction.SyncType\022\022\n\nfrom_bc" +
-      "uid\030\005 \001(\t\022\025\n\rconfirm_bcuid\030\006 \001(\t\"?\n\010Sync" +
-      "Type\022\016\n\nST_WALLOUT\020\000\022\023\n\017ST_CONFIRM_RECV\020" +
-      "\001\022\016\n\nST_INBLOCK\020\002\"<\n\023PRetSyncTransaction" +
-      "\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\"" +
-      "\"\n\020PSGetTransaction\022\016\n\006txHash\030\001 \003(\t\"N\n\022P" +
-      "RetGetTransaction\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013r" +
-      "et_message\030\002 \001(\t\022\021\n\ttxContent\030\003 \003(\014\"\035\n\nP" +
-      "SRhrCheck\022\017\n\007reqinfo\030\001 \001(\t\"\232\002\n\014PRetRhrCh" +
-      "eck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001" +
-      "(\t\022\023\n\013blockheight\030\003 \001(\003\022\016\n\006termid\030\004 \001(\003\022" +
-      "\025\n\rlastblocktime\030\005 \001(\003\022\032\n\022maxblockheight" +
-      "seen\030\006 \001(\003\022\026\n\016maxtermidseedn\030\007 \001(\003\022\021\n\tbl" +
-      "ockhash\030\t \001(\t\022\016\n\006coaddr\030\n \001(\t\022\016\n\006status\030" +
-      "\013 \001(\t\022\027\n\017timepasslastblk\030\014 \001(\003\022\022\n\nbanfor" +
-      "vote\030\r \001(\005\022\023\n\013beacon_hash\030\016 \001(\t\"\232\002\n\017PRet" +
-      "HealthCheck\022\020\n\010ret_code\030\001 \001(\005\022\023\n\013ret_mes" +
-      "sage\030\002 \001(\t\0222\n\007cn_node\030\003 \001(\0132!.org.brewch" +
-      "ain.bcrand.model.VNode\022\024\n\014pending_node\030\r" +
-      " \001(\t\022\023\n\013direct_node\030\016 \001(\t\0223\n\010coMiners\030\017 " +
-      "\003(\0132!.org.brewchain.bcrand.model.VNode\022\022" +
-      "\n\nconfirm_tx\030\021 \001(\005\022\021\n\tdbsave_tx\030\022 \001(\005\022\024\n" +
-      "\014syncblock_tx\030\023 \001(\005\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007" +
-      "PModule\022\007\n\003VRF\020\000*\177\n\010PCommand\022\007\n\003JIN\020\000\022\007\n" +
-      "\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN" +
-      "\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007" +
-      "\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n\003SCK\020!*\216\001\n\nVNodeState" +
-      "\022\013\n\007VN_INIT\020\000\022\021\n\rVN_SYNC_BLOCK\020\001\022\r\n\tVN_B" +
-      "AKCUP\020\002\022\027\n\023VN_DUTY_BLOCKMAKERS\020\004\022\022\n\016VN_D" +
-      "UTY_NOTARY\020\005\022\022\n\016VN_DUTY_BEACON\020\006\022\020\n\014VN_D" +
-      "UTY_SYNC\020\007b\006proto3"
+      "plyStatus\022\022\n\nmessage_id\030\036 \001(\t\"s\n\013ApplySt" +
+      "atus\022\014\n\010APPLY_OK\020\000\022\023\n\017APPLY_NOTARY_OK\020\001\022" +
+      "\027\n\023APPLY_OK_LOW_MEMORY\020\002\022\026\n\022APPLY_NOT_CO" +
+      "NTINUE\020\003\022\020\n\014APPLY_REJECT\020\004\"\301\001\n\010PSNotary\022" +
+      "\024\n\014block_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(" +
+      "\003\022\023\n\013beacon_sign\030\003 \001(\t\022H\n\016blk_voteresult" +
+      "\030\004 \001(\01620.org.brewchain.bcrand.model.PSNo" +
+      "tary.PVoteResult\",\n\013PVoteResult\022\016\n\nVR_CO" +
+      "NFIRM\020\000\022\r\n\tVR_REJECT\020\001\"I\n\010PQNotary\022\024\n\014bl" +
+      "ock_height\030\001 \001(\005\022\022\n\nblock_hash\030\002 \001(\t\022\023\n\013" +
+      "beacon_sign\030\003 \001(\t\"\231\001\n\013PBlockEntry\022\024\n\014blo" +
+      "ck_height\030\001 \001(\005\022\026\n\016coinbase_bcuid\030\002 \001(\t\022" +
+      "\020\n\010slice_id\030\003 \001(\005\022\021\n\tblockhash\030\004 \001(\t\022\024\n\014" +
+      "block_header\030\n \001(\014\022\023\n\013block_miner\030\013 \001(\014\022" +
+      "\014\n\004sign\0302 \001(\t\"\220\001\n\014PSSyncBlocks\022\020\n\010start_" +
+      "id\030\001 \001(\005\022\016\n\006end_id\030\002 \001(\005\022\020\n\010needBody\030\003 \001" +
+      "(\010\022\021\n\tblock_idx\030\004 \003(\005\022\021\n\tsignature\030\005 \001(\t" +
+      "\022\022\n\nmax_height\030\006 \001(\005\022\022\n\nmessage_id\030\036 \001(\t" +
+      "\"\263\001\n\016PRetSyncBlocks\022\020\n\010ret_code\030\001 \001(\005\022\023\n" +
+      "\013ret_message\030\002 \001(\t\022>\n\rblock_headers\030\003 \003(" +
+      "\0132\'.org.brewchain.bcrand.model.PBlockEnt" +
+      "ry\022\r\n\005bcuid\030\n \001(\t\022\027\n\017cur_blockheight\030\013 \001" +
+      "(\005\022\022\n\nmessage_id\030\036 \001(\t\"\375\001\n\021PSSyncTransac" +
+      "tion\022\016\n\006txHash\030\001 \003(\014\022\017\n\007txDatas\030\002 \003(\014\022\021\n" +
+      "\tmessageid\030\003 \001(\t\022H\n\010syncType\030\004 \001(\01626.org" +
+      ".brewchain.bcrand.model.PSSyncTransactio" +
+      "n.SyncType\022\022\n\nfrom_bcuid\030\005 \001(\t\022\025\n\rconfir" +
+      "m_bcuid\030\006 \001(\t\"?\n\010SyncType\022\016\n\nST_WALLOUT\020" +
+      "\000\022\023\n\017ST_CONFIRM_RECV\020\001\022\016\n\nST_INBLOCK\020\002\"<" +
+      "\n\023PRetSyncTransaction\022\020\n\010ret_code\030\001 \001(\005\022" +
+      "\023\n\013ret_message\030\002 \001(\t\"\"\n\020PSGetTransaction" +
+      "\022\016\n\006txHash\030\001 \003(\t\"N\n\022PRetGetTransaction\022\020" +
+      "\n\010ret_code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\022\021\n" +
+      "\ttxContent\030\003 \003(\014\"\035\n\nPSRhrCheck\022\017\n\007reqinf" +
+      "o\030\001 \001(\t\"\232\002\n\014PRetRhrCheck\022\020\n\010ret_code\030\001 \001" +
+      "(\005\022\023\n\013ret_message\030\002 \001(\t\022\023\n\013blockheight\030\003" +
+      " \001(\003\022\016\n\006termid\030\004 \001(\003\022\025\n\rlastblocktime\030\005 " +
+      "\001(\003\022\032\n\022maxblockheightseen\030\006 \001(\003\022\026\n\016maxte" +
+      "rmidseedn\030\007 \001(\003\022\021\n\tblockhash\030\t \001(\t\022\016\n\006co" +
+      "addr\030\n \001(\t\022\016\n\006status\030\013 \001(\t\022\027\n\017timepassla" +
+      "stblk\030\014 \001(\003\022\022\n\nbanforvote\030\r \001(\005\022\023\n\013beaco" +
+      "n_hash\030\016 \001(\t\"\232\002\n\017PRetHealthCheck\022\020\n\010ret_" +
+      "code\030\001 \001(\005\022\023\n\013ret_message\030\002 \001(\t\0222\n\007cn_no" +
+      "de\030\003 \001(\0132!.org.brewchain.bcrand.model.VN" +
+      "ode\022\024\n\014pending_node\030\r \001(\t\022\023\n\013direct_node" +
+      "\030\016 \001(\t\0223\n\010coMiners\030\017 \003(\0132!.org.brewchain" +
+      ".bcrand.model.VNode\022\022\n\nconfirm_tx\030\021 \001(\005\022" +
+      "\021\n\tdbsave_tx\030\022 \001(\005\022\024\n\014syncblock_tx\030\023 \001(\005" +
+      "\022\017\n\007wall_tx\030\024 \001(\005*\022\n\007PModule\022\007\n\003VRF\020\000*\177\n" +
+      "\010PCommand\022\007\n\003JIN\020\000\022\007\n\003INF\020\001\022\007\n\003CBN\020\002\022\007\n\003" +
+      "CBW\020\003\022\007\n\003CBR\020\004\022\007\n\003SYN\020\005\022\007\n\003VFY\020\006\022\007\n\003BRT\020" +
+      "\010\022\007\n\003SRT\020\t\022\007\n\003SOS\020\n\022\007\n\003RHR\020\037\022\007\n\003VNI\020 \022\007\n" +
+      "\003SCK\020!*\216\001\n\nVNodeState\022\013\n\007VN_INIT\020\000\022\021\n\rVN" +
+      "_SYNC_BLOCK\020\001\022\r\n\tVN_BAKCUP\020\002\022\027\n\023VN_DUTY_" +
+      "BLOCKMAKERS\020\004\022\022\n\016VN_DUTY_NOTARY\020\005\022\022\n\016VN_" +
+      "DUTY_BEACON\020\006\022\020\n\014VN_DUTY_SYNC\020\007b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

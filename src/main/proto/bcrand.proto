@@ -150,9 +150,10 @@ message  PSCoinbase{
 	repeated bytes txbodies = 19; //交易体
 	enum	ApplyStatus{
 		APPLY_OK = 0;
-		APPLY_OK_LOW_MEMORY = 1;
-		APPLY_NOT_CONTINUE = 2;
-		APPLY_REJECT = 3;
+		APPLY_NOTARY_OK = 1;
+		APPLY_OK_LOW_MEMORY = 2;
+		APPLY_NOT_CONTINUE = 3;
+		APPLY_REJECT = 4;
 
 	}
 	ApplyStatus	apply_status = 20;//区块apply的返回状态

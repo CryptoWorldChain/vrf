@@ -101,12 +101,36 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
     } else if (VCtrl.instance.lowMemoryCounter.get > 1) {
       VCtrl.instance.lowMemoryCounter.decrementAndGet();
     }
-    log.debug("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
-
+    //    log.debug("current free memory.MB = " + (Runtime.getRuntime.freeMemory() / 1024 / 1024) + ",counter=" + VCtrl.instance.lowMemoryCounter.get);
     if (pbo.getBlockHeight < cn.getCurBlock) {
       log.error("cannot apply lower block:height=" + pbo.getBlockHeight + ",local=" + cn.getCurBlock + ",from=" + pbo.getCoAddress);
     } else {
       val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);
+
+      val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
+      //      newhash, prevhash, mapToBigInt(netbits).bigInteger
+      val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
+      val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
+      val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
+      val reject =
+        if (state == VNodeState.VN_DUTY_NOTARY) {
+          // i m a notary.
+          val blks = Daos.chainHelper.listBlockByHeight(pbo.getBlockHeight);
+          if (blks != null && blks.size >= 1) {
+            log.info("get soft fork block. reject this:" + pbo.getBlockHeight + ",from=" + pbo.getCoAddress);
+            //            val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).setApplyStatus(ApplyStatus.APPLY_REJECT).clearBlockEntry();
+            //            VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+
+            true;
+          } else {
+            false
+          }
+          //
+        } else {
+          false
+        }
+      //      if (!reject) {
+
       val (acceptHeight, blockWant, nodebit) = saveBlock(block, block.hasBody());
       acceptHeight match {
         case n if n > 0 && n < pbo.getBlockHeight =>
@@ -130,11 +154,11 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           BeaconGossip.tryGossip();
           //        } else {
 
-          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm,block.getMiner.getBits);
-          //      newhash, prevhash, mapToBigInt(netbits).bigInteger
-          val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
-          val newNetBits = mapToBigInt(pbo.getBeaconBits).bigInteger;
-          val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
+          //          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
+          //          //      newhash, prevhash, mapToBigInt(netbits).bigInteger
+          //          val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
+          //          val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
+          //          val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
           if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
             log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
             val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
@@ -189,7 +213,17 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           }
           if ((cn.getState == VNodeState.VN_DUTY_SYNC || cn.getState == VNodeState.VN_DUTY_BLOCKMAKERS || cn.getState == VNodeState.VN_DUTY_NOTARY)
             && cn.getCurBlock + VConfig.BLOCK_DISTANCE_COMINE * 3 >= VCtrl.instance.heightBlkSeen.get) {
-            VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+
+            if (state == VNodeState.VN_DUTY_NOTARY) {
+              if (reject) {
+                VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.setApplyStatus(ApplyStatus.APPLY_REJECT).build()), pbo.getMessageId)
+              }else{
+                VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.setApplyStatus(ApplyStatus.APPLY_NOTARY_OK).build()), pbo.getMessageId)
+              }
+            } else {
+              VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+            }
+
           }
           //}
           if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS && cn.getState != VNodeState.VN_SYNC_BLOCK) {
@@ -197,7 +231,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             BeaconGossip.tryGossip();
           }
 
-          tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, pbo.getBeaconBits);
+          tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, VCtrl.curVN().getVrfRandseeds);
         //          tryNotifyState(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getHeader.getHeight.intValue, block.getMiner.getTerm, nodebit);
         case n @ _ =>
           log.error("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
@@ -214,7 +248,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
       }
       //更新PZP节点信息，用于区块浏览器查看块高
       VCtrl.network().root().counter.blocks.set(VCtrl.curVN().getCurBlock)
-      //    }
+      //      }
     }
 
   }

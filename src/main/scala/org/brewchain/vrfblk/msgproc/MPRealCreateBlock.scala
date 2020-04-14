@@ -28,15 +28,16 @@ import scala.collection.mutable.Buffer
 import java.util.HashSet
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
-
+  
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockInfo, java.util.List[TransactionInfo]) = {
     val starttx = System.currentTimeMillis();
 
     val LOAD_THREADS = 10;
     val cdl = new CountDownLatch(LOAD_THREADS);
     val txs = new ArrayList[TransactionInfo];
+//    (task)
     for (i <- 1 to LOAD_THREADS) {
-      new Thread(new Runnable() {
+      Daos.ddc.getExecutorService("blockproc").submit(new Runnable() {
         def run() = {
           try {
             val tx = Daos.txHelper.getWaitBlockTx(
@@ -52,7 +53,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
             cdl.countDown();
           }
         }
-      }).start();
+      })
     }
     cdl.await();
     //load  more tx when tx broadcast is failed
@@ -142,8 +143,8 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
       val (newblk, txs) = newBlockFromAccount(
-        VConfig.MAX_TNX_EACH_BLOCK, wallAccount, preBeaconHash,
-        hexToMapping(netBits));
+        VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
+        strnetBits);
 
       if (newblk == null) {
         log.debug("mining error: ch=" + cn.getCurBlock);
@@ -169,10 +170,10 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           .setMessageId(UUIDGenerator.generate())
           .setBcuid(cn.getBcuid)
           .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
+            .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
             //          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-          .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
-          .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
+            .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
+            .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
           .setSliceId(VConfig.SLICE_ID)
           .setTxcount(txs.size())
           .setBeaconBits(strnetBits)
@@ -204,7 +205,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         } else {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - start)
         }
-        val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, strnetBits);
+        val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
         //      newhash, prevhash, mapToBigInt(netbits).bigInteger
         val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
         val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
