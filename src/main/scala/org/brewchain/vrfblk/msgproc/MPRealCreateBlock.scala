@@ -142,8 +142,8 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
 
       val (newblk, txs) = newBlockFromAccount(
-        VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
-        strnetBits);
+        VConfig.MAX_TNX_EACH_BLOCK, wallAccount, preBeaconHash,
+        hexToMapping(netBits));
 
       if (newblk == null) {
         log.debug("mining error: ch=" + cn.getCurBlock);
@@ -169,10 +169,10 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           .setMessageId(UUIDGenerator.generate())
           .setBcuid(cn.getBcuid)
           .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-            .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
+          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
             //          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-            .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
-            .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
+          .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
+          .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
           .setSliceId(VConfig.SLICE_ID)
           .setTxcount(txs.size())
           .setBeaconBits(strnetBits)
@@ -204,7 +204,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
         } else {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - start)
         }
-        val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, newblk.getMiner.getBits);
+        val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()), newblk.getMiner.getTerm, strnetBits);
         //      newhash, prevhash, mapToBigInt(netbits).bigInteger
         val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
         val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);

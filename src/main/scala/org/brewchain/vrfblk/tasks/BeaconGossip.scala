@@ -247,6 +247,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           }
         } else {
           log.info("no data for cur block");
+          checkList.+=((p.getVn.getCurBlock, p.getVn.getCurBlockHash, p.getVn.getBeaconHash, p.getVn.getVrfRandseeds))
         }
       })
       suggestStartIdx = Math.max(suggestStartIdx, VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT);

@@ -82,9 +82,9 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
             //            syncInfo.reqBody.toBuilder().setStartId(VCtrl.curVN().getCurBlock + 1).setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build();
             //          } else
             if (lastSyncBlockHeight > 0) {
-              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).setStartId(lastSyncBlockHeight).build();
+              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.miner_account_address)).setStartId(lastSyncBlockHeight).build();
             } else {
-              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.coinbase_account_address)).build()
+              syncInfo.reqBody.toBuilder().setSignature(Daos.enc.bytesToHexStr(Daos.chainHelper.getChainConfig.miner_account_address)).build()
             }
           val messageid = UUIDGenerator.generate();
           // 尝试根据bcuid确认一个节点，如果节点不存在，从网络中随机取一个

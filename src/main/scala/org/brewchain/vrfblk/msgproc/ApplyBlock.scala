@@ -130,10 +130,10 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           BeaconGossip.tryGossip();
           //        } else {
 
-          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
+          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm,block.getMiner.getBits);
           //      newhash, prevhash, mapToBigInt(netbits).bigInteger
           val ranInt: Int = new BigInteger(newhash, 16).intValue().abs;
-          val newNetBits = mapToBigInt(block.getMiner.getBits).bigInteger;
+          val newNetBits = mapToBigInt(pbo.getBeaconBits).bigInteger;
           val (state, newblockbits, natarybits, sleepMs, firstBlockMakerBitIndex) = RandFunction.chooseGroups(ranInt, newNetBits, cn.getBitIdx);
           if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
             log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
@@ -197,7 +197,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             BeaconGossip.tryGossip();
           }
 
-          tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, nodebit);
+          tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, pbo.getBeaconBits);
         //          tryNotifyState(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getHeader.getHeight.intValue, block.getMiner.getTerm, nodebit);
         case n @ _ =>
           log.error("applyblock:NO,H=" + pbo.getBlockHeight + ",DB=" + n + ":coadr=" + pbo.getCoAddress
