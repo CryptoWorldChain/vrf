@@ -107,6 +107,7 @@ object PSBlockSyncService extends LogHelper with PBUtils with LService[PSSyncBlo
         case e: FBSException => {
           ret.clear()
           ret.setRetCode(-2).setRetMessage(e.getMessage)
+          log.error("get FBSException:"+e.getMessage,e);
         }
         case t: Throwable => {
           log.error("error:", t);

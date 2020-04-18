@@ -25,6 +25,7 @@ import java.math.BigInteger
 import org.brewchain.mcore.concurrent.AccountInfoWrapper
 import org.brewchain.mcore.actuators.tokencontracts20.TokensContract20.TokenRC20Value
 import org.brewchain.mcore.tools.bytes.BytesHelper
+import org.brewchain.p22p.exception.FBSException
 
 //投票决定当前的节点
 case class VRFController(network: Network) extends PMNodeHelper with LogHelper with BitMap {
@@ -280,6 +281,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
                   val tx = Daos.txHelper.getTransaction(txHash.toByteArray());
                   if (tx != null) {
                     txlist.add(tx);
+                  }else{
+                    throw new FBSException("tx not found:"+Daos.enc.bytesToHexStr(txHash.toByteArray));
                   }
                 })
                 txbodys.addAllTxs(txlist);
