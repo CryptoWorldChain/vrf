@@ -57,9 +57,10 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       log.info("get notaryblock,H=" + pbo.getBlockHeight + ":coadr=" + pbo.getCoAddress + ",DN=" + VCtrl.network().directNodeByIdx.size + ",PN=" + VCtrl.network().pendingNodeByBcuid.size
         + ",MN=" + VCtrl.coMinerByUID.size
         + ",from=" + pbo.getBcuid
+        +",hash="+pbo.getBlockEntry.getBlockhash
         + ",NB=" + new String(pbo.getVrfCodes.toByteArray())
         + ",VB=" + pbo.getWitnessBits
-        + ",VBC=" + mapToHex(pbo.getWitnessBits).bitCount
+        + ",VBC=" + mapToBigInt(pbo.getWitnessBits).bitCount
         + ",B=" + pbo.getBlockEntry.getSign
         + ",TX=" + pbo.getTxcount);
 
@@ -73,10 +74,11 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
       val votelist = vs.get.values().asScala.map(f => Daos.enc.bytesToHexStr(f))
       Votes.vote(votelist.toList).PBFTVote(n => {
         Some(n)
-      }, mapToHex(pbo.getWitnessBits).bitCount) match {
+      }, mapToBigInt(pbo.getWitnessBits).bitCount) match {
         case Converge(blockhash:String) =>
-          log.info("get stable blockhash :" + blockhash + ",height=" + pbo.getBlockHeight+",count="+votelist.size+",notabtis="+mapToHex(pbo.getWitnessBits).bitCount);
+          log.info("get stable blockhash :" + blockhash + ",height=" + pbo.getBlockHeight+",count="+votelist.size+",notabtis="+mapToBigInt(pbo.getWitnessBits).bitCount);
           val stableBlock = Daos.chainHelper.getBlockByHash(Daos.enc.hexStrToBytes(blockhash));
+          Daos.vrfvotedb.put(("stable-"+pbo.getBlockHeight).getBytes,Daos.enc.hexStrToBytes(blockhash));
           Daos.chainHelper.tryStableBlock(stableBlock);
         case n: NotConverge =>
         //log.info("cannot get converge for pbft vote:" + vs.get.size);

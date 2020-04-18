@@ -136,14 +136,15 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
                   }
 
                 }
-              } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) && !VCtrl.isBanforMiner(blkInfo.needHeight)
+              } while (sleepMS > 100 && VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) 
                   &&StringUtils.equals(blkInfo.beaconHash, VCtrl.instance.waitCreateBlockBeacon));
 
-              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) && !VCtrl.isBanforMiner(blkInfo.needHeight) && StringUtils.equals(blkInfo.beaconHash, VCtrl.instance.waitCreateBlockBeacon)) {
+              if (VCtrl.curVN().getBeaconHash.equals(blkInfo.beaconHash) && StringUtils.equals(blkInfo.beaconHash, VCtrl.instance.waitCreateBlockBeacon)) {
                 //              log.error("MPRealCreateBlock:start");
                 BlockProcessor.offerMessage(new MPRealCreateBlock(blkInfo.netBits, blkInfo.blockbits, blkInfo.notarybits, blkInfo.beaconHash, blkInfo.preBeaconHash, blkInfo.beaconSig, blkInfo.witnessNode, blkInfo.needHeight))
               } else {
-                log.warn("cancel create block:" + blkInfo.beaconHash +",waitbeacon="+VCtrl.instance.waitCreateBlockBeacon + ",sleep still:" + sleepMS
+                log.warn("cancel create block:" + blkInfo.beaconHash +",waitbeacon="+VCtrl.instance.waitCreateBlockBeacon
+                    +",curvn="+VCtrl.curVN().getBeaconHash+ ",sleep still:" + sleepMS
                   + ",ban=" + VCtrl.banMinerByUID.get(VCtrl.curVN().getBcuid).getOrElse((0, 0l))
                   );
               }
@@ -164,7 +165,7 @@ object BlockProcessor extends SingletonWorkShop[BlockMessage] with PMNodeHelper 
           blk.proc();
         case blk: MPRealCreateBlock =>
           if (VCtrl.curVN().getBeaconHash.equals(blk.beaconHash)
-            && blk.needHeight == (VCtrl.curVN().getCurBlock + 1) && !VCtrl.isBanforMiner(blk.needHeight)) {
+            && blk.needHeight == (VCtrl.curVN().getCurBlock + 1)) {
             blk.proc();
           } else {
             log.warn("cancel create block:" + blk.beaconHash + " current:" + VCtrl.curVN().getBeaconHash + " blk.needHeight=" + blk.needHeight + " curblock=" + VCtrl.curVN().getCurBlock

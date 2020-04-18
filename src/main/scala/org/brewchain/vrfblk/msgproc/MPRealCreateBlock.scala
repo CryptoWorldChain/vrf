@@ -137,6 +137,16 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       if (lastMakeBlockCounter > Daos.mcore.getBlockMineMaxContinue() && newNetBits.bitCount() > 3) {
         newNetBits = newNetBits.clearBit(cn.getBitIdx)
       }
+      if(newNetBits.bitCount()==0){
+//          newNetBits  =
+        VCtrl.coMinerByUID.foreach(f => {
+          newNetBits  = newNetBits.setBit(f._2.getBitIdx)
+        })
+      }
+      if(newNetBits.bitCount()==0){
+        newNetBits = newNetBits.setBit(cn.getBitIdx)
+      }
+      
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
       val wallAccount = Math.max(1, cominerAccount - banMinerCount)

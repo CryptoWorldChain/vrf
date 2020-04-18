@@ -154,6 +154,7 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
           BlockProcessor.offerBlock(new ApplyBlock(pbo)); //need to sync or gossip
         } else {
           log.info("Drop newBlock:H=" + pbo.getBlockEntry.getBlockHeight + " from=" + pbo.getBcuid + ",BH=" + pbo.getBlockEntry.getBlockhash + ",beacon=" + block.getMiner.getTerm);
+          BeaconGossip.tryGossip();
         }
       } else {
         //        val nodebits = parentBlock.getMiner.getBits;

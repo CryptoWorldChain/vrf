@@ -128,8 +128,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   def network(): Network = instance.network;
   val coMinerByUID: Map[String, VNode] = Map.empty[String, VNode];
   val banMinerByUID: Map[String, (Int, Long)] = Map.empty[String, (Int, Long)];
-  val syncMinerErrorByBCUID:Map[String,Long] =  Map.empty[String, Long];
-  
+  val syncMinerErrorByBCUID: Map[String, Long] = Map.empty[String, Long];
+
   def curVN(): VNode.Builder = instance.cur_vnode
 
   def haveEnoughToken(nodeAddress: String) = {
@@ -161,7 +161,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       instance.cur_vnode.setCominers(hexToMapping(cobits))
     })
   }
-  def changeCoMinerHeight(bcuid:String,height:Int) = {
+  def changeCoMinerHeight(bcuid: String, height: Int) = {
     coMinerByUID.synchronized({
       val lastnode = coMinerByUID.getOrElse(bcuid, null)
       if (lastnode != null) {
@@ -210,8 +210,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
       instance.cur_vnode.getStateValue > VNodeState.VN_INIT_VALUE
   }
 
-  val recentBlocks: Cache[Int, PBlockEntry.Builder] = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS)
-    .maximumSize(1000).build().asInstanceOf[Cache[Int, PBlockEntry.Builder]]
+  val recentBlocks: Cache[Int, Iterable[PBlockEntry.Builder]] = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS)
+    .maximumSize(1000).build().asInstanceOf[Cache[Int, Iterable[PBlockEntry.Builder]]]
 
   def loadFromBlock(block: Int): Iterable[PBlockEntry.Builder] = {
     loadFromBlock(block, false)
@@ -246,57 +246,68 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     if (block > curVN().getCurBlock) {
       null
     } else {
-      val blks = Daos.chainHelper.listBlockByHeight(block);
-      if (blks != null&&blks.size>0) {
-        blks.filter(f => if (block == 0 ||
-          block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
-          //创世块安全块允许直接广播
-          true
-        } else {
-          // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
-          log.error("height=" + f.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(f.getHeader.getHash.toByteArray()));
-          val parentBlock = Daos.chainHelper.getBlockByHash(f.getHeader.getParentHash.toByteArray());
-          val nodebits = if (f.getHeader.getHeight == 1) "" else parentBlock.getMiner.getBits;
-          val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(f.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);
-          if (hash.equals(f.getMiner.getTerm) || f.getHeader.getHeight == 1) {
+      val cacheblks = recentBlocks.getIfPresent(block);
+      if (cacheblks != null) {
+        cacheblks
+      } else {
+        val blks = Daos.chainHelper.listBlockByHeight(block);
+        if (blks != null && blks.size > 0) {
+          val recents = blks.filter(f => if (block == 0 ||
+            block < VConfig.SYNC_SAFE_BLOCK_COUNT || block < VCtrl.curVN().getCurBlock - VConfig.SYNC_SAFE_BLOCK_COUNT) {
+            //创世块安全块允许直接广播
             true
           } else {
-            true; //false,,直接通过吧，brew 20190507
+            // 本地block超出安全高度的是否能校验通过，只有通过的才广播??
+            //          log.error("height=" + f.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(f.getHeader.getHash.toByteArray()));
+            //          val parentBlock = Daos.chainHelper.getBlockByHash(f.getHeader.getParentHash.toByteArray());
+            //          val nodebits = if (f.getHeader.getHeight == 1) "" else parentBlock.getMiner.getBits;
+            //          val (hash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(f.getHeader.getParentHash.toByteArray()), parentBlock.getMiner.getTerm, nodebits);
+            //          if (hash.equals(f.getMiner.getTerm) || f.getHeader.getHeight == 1) {
+            //            true
+            //          } else {
+            //            true; //false,,直接通过吧，brew 20190507
+            //
+            //          }
+            true;
+          }).map(f => {
+            // 本地block是否能校验通过，只有通过的才广播
+            if (needBody) {
+              val txbodys = f.getBody.toBuilder();
+              //如果当前body里面有完整txList, 不再需要在重新构建tx, 否则会造成txBody重复
+              if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
+                val txlist = new ArrayList[TransactionInfo]();
+                f.getHeader.getTxHashsList.map(txHash => {
+                  val tx = Daos.txHelper.getTransaction(txHash.toByteArray());
+                  if (tx != null) {
+                    txlist.add(tx);
+                  }
+                })
+                txbodys.addAllTxs(txlist);
+              }
 
-          }
-        }).map(f => {
-          // 本地block是否能校验通过，只有通过的才广播
-          if (needBody) {
-            val txbodys = f.getBody.toBuilder();
-            //如果当前body里面有完整txList, 不再需要在重新构建tx, 否则会造成txBody重复
-            if (txbodys.getTxsCount == 0 && f.getHeader.getTxHashsCount > 0) {
-              val txlist = new ArrayList[TransactionInfo]();
-              f.getHeader.getTxHashsList.map(txHash => {
-                txlist.add(Daos.txHelper.getTransaction(txHash.toByteArray()));
-              })
-              txbodys.addAllTxs(txlist);
+              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
+              //            recentBlocks.put(block, b);
+              b
+            } else {
+              val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
+              //            recentBlocks.put(block, b);
+              b
             }
 
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().setBody(txbodys).build().toByteString()).setBlockHeight(block)
-            recentBlocks.put(block, b);
-            b
-          } else {
-            val b = PBlockEntry.newBuilder().setBlockHeader(f.toBuilder().clearBody().build().toByteString()).setBlockHeight(block)
-            recentBlocks.put(block, b);
-            b
-          }
-
-        })
-      } else {
-        log.error("blk not found in AccountDB:" + block);
-        null;
+          })
+          recentBlocks.put(block, recents);
+          recents
+        } else {
+          log.error("blk not found in AccountDB:" + block);
+          null;
+        }
       }
     }
   }
   def isBanforMiner(blockHeight: Int, bcuid: String = VCtrl.curVN().getBcuid): Boolean = {
     if (blockHeight > VConfig.BAN_BLOCKS_FOR_NOT_APPLY + 2) {
       val memrec = VCtrl.banMinerByUID.get(bcuid).getOrElse((0, 0l))
-      blockHeight - memrec._1 < VConfig.BAN_BLOCKS_FOR_NOT_APPLY && System.currentTimeMillis() - memrec._2 < Daos.mcore.getBlockMineTimeoutMs() * 2
+      VCtrl.coMinerByUID.size > 3 && blockHeight - memrec._1 < VConfig.BAN_BLOCKS_FOR_NOT_APPLY && System.currentTimeMillis() - memrec._2 < Daos.mcore.getBlockMineTimeoutMs() * 2
     } else {
       false
     }
