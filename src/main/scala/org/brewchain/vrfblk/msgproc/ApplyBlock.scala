@@ -166,7 +166,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             //        if (pbo.getBlockHeight >= (VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE)
             //          && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= Daos.mcore.getBlockEpochMS()) {
             //          log.info("cannot apply block, do gossip");
-            BeaconGossip.tryGossip();
             //        } else {
 
             //          val (newhash, sign) = RandFunction.genRandHash(Daos.enc.bytesToHexStr(block.getHeader.getHash.toByteArray()), block.getMiner.getTerm, block.getMiner.getBits);
@@ -179,7 +178,6 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
               val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
               Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
                 def run() {
-                  BeaconGossip.tryGossip();
                   do {
                     //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
                     Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
@@ -192,14 +190,14 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
                     VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
                   } else {
-                    log.info("still try to  create block");
-                    BeaconGossip.tryGossip();
+//                    log.info("still try to  create block");
+//                    BeaconGossip.tryGossip("");
                   }
                 }
               })
             } else {
               log.info("cannot apply block, do gossip");
-              BeaconGossip.tryGossip();
+              BeaconGossip.tryGossip("apply_uu,h="+pbo.getBlockHeight);
             }
           //        }
 
@@ -244,7 +242,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             //}
             if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS && cn.getState != VNodeState.VN_SYNC_BLOCK) {
               log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
-              BeaconGossip.tryGossip();
+//              BeaconGossip.tryGossip("block");
             }
 
             tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, VCtrl.curVN().getVrfRandseeds);
@@ -259,7 +257,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
               && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= Daos.mcore.getBlockEpochMS()) {
               log.info("cannot apply block, do gossip");
-              BeaconGossip.tryGossip();
+              BeaconGossip.tryGossip("apply_no,h="+pbo.getBlockHeight);
             }
         }
         //更新PZP节点信息，用于区块浏览器查看块高

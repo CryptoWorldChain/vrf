@@ -133,7 +133,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                       }
 
                     } else {
-                      log.info("sync block error:return = " + ret.getRetCode + ",msg=" + ret.getRetMessage);
+                      log.info("sync block error:return = " + ret.getRetCode + ",msg=" + ret.getRetMessage+",from="+randn);
                       VCtrl.syncMinerErrorByBCUID.put(randn.bcuid, System.currentTimeMillis());
                     }
                   }
@@ -142,7 +142,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                     log.warn("error In SyncBlock:" + t.getMessage, t);
                 } finally {
                   //try gossip againt
-                  BeaconGossip.tryGossip();
+//                  BeaconGossip.tryGossip("syncblock success");
                 }
               }
               def onFailed(e: java.lang.Exception, fp: FramePacket) {
@@ -151,7 +151,7 @@ object BlockSync extends SingletonWorkShop[SyncInfo] with PMNodeHelper with BitM
                 MDCSetMessageID(messageid)
                 VCtrl.syncMinerErrorByBCUID.put(randn.bcuid, System.currentTimeMillis())
                 log.error("send SYNVRF ERROR :to " + randn.bcuid + ",cost=" + (end - start) + ",uri=" + randn.uri + ",e=" + e.getMessage, e)
-                BeaconGossip.tryGossip();
+                BeaconGossip.tryGossip("syncblockerror");
               }
             })
         case n @ _ =>

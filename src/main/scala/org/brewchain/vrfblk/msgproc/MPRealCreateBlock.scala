@@ -274,9 +274,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           if (!sentbcuid.contains(f._1)) {
             bits = bits.setBit(f._2.getBitIdx);
           }
-          if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
-            bits = bits.clearBit(f._2.getBitIdx)
-          }
+//          if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
+//            bits = bits.clearBit(f._2.getBitIdx)
+//          }
           if (newblockheight - f._2.getCurBlock > VConfig.BLOCK_DISTANCE_COMINE && VCtrl.banMinerByUID.contains(f._1)) {
             bits = bits.clearBit(f._2.getBitIdx)
           }

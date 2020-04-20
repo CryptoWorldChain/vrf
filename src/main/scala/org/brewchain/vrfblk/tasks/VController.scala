@@ -282,7 +282,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
                   if (tx != null) {
                     txlist.add(tx);
                   }else{
-                    throw new FBSException("tx not found:"+Daos.enc.bytesToHexStr(txHash.toByteArray));
+                    throw new FBSException("tx not found:"+Daos.enc.bytesToHexStr(txHash.toByteArray)+",height="+block+",cur="+curVN().getCurBlock);
                   }
                 })
                 txbodys.addAllTxs(txlist);

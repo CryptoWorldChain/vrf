@@ -43,7 +43,7 @@ object BeaconTask extends SRunner {
       log.info("do try gossip past=" + JodaTimeHelper.secondFromNow(BeaconGossip.currentBR.checktime) + ",vn.hash=" + VCtrl.curVN().getBeaconHash + ",brhash=" + BeaconGossip.currentBR.beaconHash
         + ",past last block:" + JodaTimeHelper.secondFromNow(VCtrl.curVN().getCurBlockMakeTime));
 
-      BeaconGossip.tryGossip();
+      BeaconGossip.tryGossip("schedule_tick");
     }
   }
 }
@@ -98,13 +98,13 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     //log.info("beacongossip runbatch, infos=" + incomingInfos.size() + " items=" + isize);
 
     if (tryMerge()) {
-      tryGossip();
+      tryGossip("merge");
     }
   }
 
-  def tryGossip() {
+  def tryGossip(reason:String) {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) { //|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
-      //      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime);
+      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime+",reason="+reason);
       gossipBeaconInfo();
     }
   }
@@ -307,7 +307,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             lastSyncBlockCount = lastSyncBlockCount + 1;
           }
           incomingInfos.clear();
-          clearGossipInfo();
+//          clearGossipInfo();
 
           log.info("suggestStartIdx="
             + suggestStartIdx + " maxHeight=" + maxHeight + " curblk=" + VCtrl.curVN().getCurBlock + " lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight)
@@ -329,13 +329,13 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
-            clearGossipInfo();
+//            clearGossipInfo();
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
 
             incomingInfos.clear();
           } else if (size >= currentBR.votebase * 4 / 5) {
             //            log.info("try rollback");
-            clearGossipInfo();
+//            clearGossipInfo();
             incomingInfos.clear();
             //            tryRollbackBlock();
           } else {
