@@ -28,14 +28,14 @@ import scala.collection.mutable.Buffer
 import java.util.HashSet
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
-  
+
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockInfo, java.util.List[TransactionInfo]) = {
     val starttx = System.currentTimeMillis();
 
     val LOAD_THREADS = 10;
     val cdl = new CountDownLatch(LOAD_THREADS);
     val txs = new ArrayList[TransactionInfo];
-//    (task)
+    //    (task)
     for (i <- 1 to LOAD_THREADS) {
       Daos.ddc.getExecutorService("blockproc").submit(new Runnable() {
         def run() = {
@@ -89,7 +89,12 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     MDCSetBCUID(VCtrl.network())
     try {
       //需要广播的节点数量
-      val cominerAccount: Int = Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
+      val cominerAccount: Int =
+        if (VCtrl.coMinerByUID.size > 13) {
+          Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
+        } else {
+          VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+        }
 
       var newNetBits = BigInteger.ZERO
       val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
@@ -137,20 +142,21 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
       if (lastMakeBlockCounter > Daos.mcore.getBlockMineMaxContinue() && newNetBits.bitCount() > 3) {
         newNetBits = newNetBits.clearBit(cn.getBitIdx)
       }
-      if(newNetBits.bitCount()==0){
-//          newNetBits  =
+      if (newNetBits.bitCount() == 0) {
+        //          newNetBits  =
         VCtrl.coMinerByUID.foreach(f => {
-          newNetBits  = newNetBits.setBit(f._2.getBitIdx)
+          newNetBits = newNetBits.setBit(f._2.getBitIdx)
         })
       }
-      if(newNetBits.bitCount()==0){
+      if (newNetBits.bitCount() == 0) {
         newNetBits = newNetBits.setBit(cn.getBitIdx)
       }
-      
+
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
       val wallAccount = Math.max(1, cominerAccount - banMinerCount)
-      log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2));
+      log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2)
+        + ",banMinerCount=" + banMinerCount);
 
       val (newblk, txs) = newBlockFromAccount(
         VConfig.MAX_TNX_EACH_BLOCK, wallAccount, beaconHash,
@@ -274,9 +280,9 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           if (!sentbcuid.contains(f._1)) {
             bits = bits.setBit(f._2.getBitIdx);
           }
-//          if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
-//            bits = bits.clearBit(f._2.getBitIdx)
-//          }
+          //          if (newblockheight - f._2.getCurBlock > VConfig.SYNC_SAFE_BLOCK_COUNT) {
+          //            bits = bits.clearBit(f._2.getBitIdx)
+          //          }
           if (newblockheight - f._2.getCurBlock > VConfig.BLOCK_DISTANCE_COMINE && VCtrl.banMinerByUID.contains(f._1)) {
             bits = bits.clearBit(f._2.getBitIdx)
           }

@@ -190,14 +190,14 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
                     VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
                   } else {
-//                    log.info("still try to  create block");
-//                    BeaconGossip.tryGossip("");
+                    //                    log.info("still try to  create block");
+                    //                    BeaconGossip.tryGossip("");
                   }
                 }
               })
             } else {
               log.info("cannot apply block, do gossip");
-              BeaconGossip.tryGossip("apply_uu,h="+pbo.getBlockHeight);
+              BeaconGossip.tryGossip("apply_uu,h=" + pbo.getBlockHeight);
             }
           //        }
 
@@ -242,7 +242,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             //}
             if (pbo.getBlockHeight >= VCtrl.curVN().getCurBlock + VConfig.BLOCK_DISTANCE_NETBITS && cn.getState != VNodeState.VN_SYNC_BLOCK) {
               log.info(s"block to large,blockh=${pbo.getBlockHeight},curblock=${VCtrl.curVN().getCurBlock},saveoffset=${VConfig.BLOCK_DISTANCE_NETBITS} , need to gossip");
-//              BeaconGossip.tryGossip("block");
+              //              BeaconGossip.tryGossip("block");
             }
 
             tryNotifyState(VCtrl.curVN().getCurBlockHash, VCtrl.curVN().getCurBlock, VCtrl.curVN().getBeaconHash, VCtrl.curVN().getVrfRandseeds);
@@ -257,7 +257,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             if (pbo.getBlockHeight > VCtrl.curVN().getCurBlock - VConfig.BLOCK_DISTANCE_COMINE
               && (System.currentTimeMillis() - BeaconGossip.lastGossipTime) >= Daos.mcore.getBlockEpochMS()) {
               log.info("cannot apply block, do gossip");
-              BeaconGossip.tryGossip("apply_no,h="+pbo.getBlockHeight);
+              BeaconGossip.tryGossip("apply_no,h=" + pbo.getBlockHeight);
             }
         }
         //更新PZP节点信息，用于区块浏览器查看块高
@@ -293,15 +293,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     var fastFromBcuid = miner.getMiner.getNid;
 
-    VCtrl.coMinerByUID.filter(f => (!f._1.equals(VCtrl.curVN().getBcuid) && f._2.getCurBlock >= miner.getHeader.getHeight && !fastFromBcuid.equals(f._1))).map(f => {
-      val bcuid = f._1;
-      val vnode = f._2;
-      if (StringUtils.equals(VCtrl.network().nodeByBcuid(bcuid).loc_gwuris, VCtrl.network().root().loc_gwuris)) {
-        fastFromBcuid = bcuid;
-      }
-    })
     var vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
-    log.debug("pick node=" + vNetwork)
+    log.info("pick node=" + vNetwork)
 
     var sleepw = sleepMs;
     var lackList = res.getSyncTxHash.asScala
@@ -324,16 +317,14 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
 
     var rspTx = PRetGetTransaction.newBuilder()
 
-    val cdl = new CountDownLatch(1)
     var notSuccess = true
     var counter = 0
 
     var trySaveRes: (Int, Int, String) = (res.getCurrentHeight.intValue(), res.getWantHeight.intValue(), "")
 
-    log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri}")
-
-    while (cdl.getCount > 0 && counter < 6 && notSuccess) {
+    while (counter < 6 && notSuccess) {
       try {
+        val cdl = new CountDownLatch(1)
         //        if (counter > 3) {
         //          vNetwork = randomNodeInNetwork(network)
         val randList = Buffer.empty[String]
@@ -359,6 +350,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         vNetwork = network.directNodeByBcuid.get(fastFromBcuid)
         //        }
         val start = System.currentTimeMillis()
+        log.info(s"SRTVRF start sync transaction go=${vNetwork.get.uri},fastFromBcuid=" + fastFromBcuid + ",miner=" + miner.getMiner.getNid)
         network.asendMessage("SRTVRF", reqTx.build(), vNetwork.get, new CallBack[FramePacket] {
           override def onSuccess(v: FramePacket): Unit = {
             try {
@@ -374,13 +366,13 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                   val txList = rspTx.getTxContentList.asScala.map(TransactionInfo.newBuilder().mergeFrom(_).build()).toList
                   Daos.txHelper.syncTransactionBatch(txList.asJava, true, new BigInteger("0").setBit(vNetwork.get.node_idx))
                   notSuccess = false
-                  log.debug(s"SRTVRF success height:${miner.getHeader.getHeight} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave}")
+                  log.info(s"SRTVRF success height:${miner.getHeader.getHeight} total:${System.currentTimeMillis() - start} save:${System.currentTimeMillis() - startSave},from=" + fastFromBcuid)
 
                   if (txList.length == reqTx.getTxHashCount) {
                     log.info("sync tx complete =" + trySaveRes)
                     trySaveRes = saveBlock(miner, true)
                   } else {
-                    log.error("sync tx error =" + trySaveRes + ",")
+                    log.error("sync tx error =" + trySaveRes + ",reqTx.count=" + reqTx.getTxHashCount + ",txlist=" + txList.length)
 
                   }
                   cdl.countDown()
@@ -394,6 +386,8 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
                     s"SRTVRF back${v}, !!!cost:${System.currentTimeMillis() - start}")
 
                 }
+              } else {
+                log.info(s"success get tx from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getNid}, cost=" + (System.currentTimeMillis() - start));
               }
             } catch {
               case t: Throwable => log.warn(s"SRTVRF process failed cost:${System.currentTimeMillis() - start}:", t)
@@ -403,13 +397,18 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           }
 
           override def onFailed(e: Exception, v: FramePacket): Unit =
-            log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
-              s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
-          cdl.countDown()
+            {
+              log.error("apply block need sync transaction, sync transaction failed. error::cost=" +
+                s"${System.currentTimeMillis() - start}, targetNode=${vNetwork.get.bcuid}:uri=${vNetwork.get.uri}:", e)
+              cdl.countDown()
+            }
         }, '9')
 
         counter += 1
-        cdl.await(20, TimeUnit.SECONDS)
+        while (!cdl.await(20, TimeUnit.SECONDS) && (System.currentTimeMillis() - start) < 20 * 1000) {
+          log.info("still to wait sync result:post=" + (System.currentTimeMillis() - start));
+        }
+        log.info(s"finished get tx from ${vNetwork.get.bcuid}, blockMiner=${miner.getMiner.getNid}, cost=" + (System.currentTimeMillis() - start));
       } catch {
         case t: Throwable => log.error("get Transaction failed:", t)
       }
