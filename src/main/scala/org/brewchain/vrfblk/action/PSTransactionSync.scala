@@ -225,7 +225,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       try {
         MDCSetBCUID(VCtrl.network());
         MDCSetMessageID(pbo.getMessageid);
-        var bits = BigInteger.ZERO.setBit(VCtrl.instance.network.root().node_idx);
+        var bits = BigInteger.ZERO;//.setBit(VCtrl.instance.network.root().node_idx);
         val confirmNode =
           pbo.getSyncType match {
             case SyncType.ST_WALLOUT =>
@@ -259,7 +259,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 if (fromNode != VCtrl.instance.network.noneNode) {
                   bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
                 }
-                log.debug("" + pbo.getTxHashCount);
+//                log.debug("" + pbo.getTxHashCount);
                 val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
                 pbo.getTxHashList.map { txHash =>
                   tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))

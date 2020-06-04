@@ -89,12 +89,11 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
     MDCSetBCUID(VCtrl.network())
     try {
       //需要广播的节点数量
-      val cominerAccount: Int =
-        if (VCtrl.coMinerByUID.size > 13) {
-          Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
-        } else {
-          VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
-        }
+      val cominerAccount: Int = if (VCtrl.coMinerByUID.size > 21) {
+        Math.min(VConfig.MAX_BLOCK_MAKER * 2 / 3, VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100)
+      } else {
+        VCtrl.coMinerByUID.size * VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO / 100
+      }
 
       var newNetBits = BigInteger.ZERO
       val existCominerBits = mapToBigInt(cn.getCominers).bigInteger;
