@@ -144,6 +144,10 @@ object VConfig {
   //每次同步块，最大的请求范围，
   val MAX_SYNC_BLOCKS = prop.get(PROP_DOMAIN + "max.sync.blocks", 3000);
 
+    //每次同步块，最大的请求范围，
+  val PARALLEL_LOAD_TXS = prop.get(PROP_DOMAIN + "parallel.load.txs", Runtime.getRuntime.availableProcessors());
+
+  
   //同步安全块的范围
   val SYNC_SAFE_BLOCK_COUNT = prop.get(PROP_DOMAIN + "sync.safe.block.count", 10);
 

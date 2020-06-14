@@ -98,9 +98,22 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
           while (p != null) {
             //            Daos.txHelper.syncTransactionBatch(oMultiTransaction, bits)
             Daos.txHelper.syncTransactionBatch(p._1, true, p._2);
+            
+            if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
+              if (wallHashList.size() + p._1.size()< VConfig.TX_WALL_MAX_CACHE_SIZE) {
+                p._1.map {
+                  f => wallHashList.offer(f.getHash);
+                }
+              } else {
+                log.error("drop wallhash list for buffer overflow:mem=" + wallHashList.size() + ",cc=" + p._1.size() + ",config=" + VConfig.TX_WALL_MAX_CACHE_SIZE);
+              }
+            }
+            
             if (p._3 != null) {
               p._3.onFinished(null);
             }
+            
+            
             p._1.clear();
             p = poll();
           }
@@ -244,15 +257,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 dbBatchSaveList.addElement(txarr)
               }
-              if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
-                if (wallHashList.size() + pbo.getTxHashCount < VConfig.TX_WALL_MAX_CACHE_SIZE) {
-                  pbo.getTxHashList.map {
-                    f => wallHashList.offer(f);
-                  }
-                } else {
-                  log.error("drop wallhash list for buffer overflow:mem=" + wallHashList.size() + ",cc=" + pbo.getTxHashCount + ",config=" + VConfig.TX_WALL_MAX_CACHE_SIZE);
-                }
-              }
+              
             case _ =>
               if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
                 val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);

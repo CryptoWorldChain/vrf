@@ -32,7 +32,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
   def newBlockFromAccount(txc: Int, confirmTimes: Int, beaconHash: String, voteInfos: String): (BlockInfo, java.util.List[TransactionInfo]) = {
     val starttx = System.currentTimeMillis();
 
-    val LOAD_THREADS = 10;
+    val LOAD_THREADS = VConfig.PARALLEL_LOAD_TXS;
     val cdl = new CountDownLatch(LOAD_THREADS);
     val txs = new ArrayList[TransactionInfo];
     //    (task)
