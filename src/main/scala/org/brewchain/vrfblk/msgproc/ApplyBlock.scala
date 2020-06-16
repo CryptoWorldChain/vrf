@@ -176,25 +176,25 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
             if (state == VNodeState.VN_DUTY_BLOCKMAKERS) {
               log.warn("try to notify other nodes because not apply ok,waitms = " + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY);
               val sleepMS = System.currentTimeMillis() + VConfig.MAX_WAITMS_WHEN_LAST_BLOCK_NOT_APPLY;
-              Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
-                def run() {
-                  do {
-                    //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
-                    Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
-                  } while (sleepMS > System.currentTimeMillis() && VCtrl.curVN().getCurBlock < pbo.getBlockHeight);
-                  if (VCtrl.curVN().getCurBlock < pbo.getBlockHeight) {
-                    //              log.error("MPRealCreateBlock:start");
-
-                    val wallmsg = pbo.toBuilder().clearTxbodies().setBlockEntry(PBlockEntry.newBuilder().setBlockhash(pbo.getBlockEntry.getBlockhash)).setBcuid(cn.getBcuid).setApplyStatus(ApplyStatus.APPLY_NOT_CONTINUE);
-                    log.info("ban for create block from=" + pbo.getBlockHeight);
-                    VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
-                    VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
-                  } else {
-                    //                    log.info("still try to  create block");
-                    //                    BeaconGossip.tryGossip("");
-                  }
-                }
-              })
+//              Daos.ddc.executeNow(ApplyBlockFP, new Runnable() {
+//                def run() {
+//                  do {
+//                    //while (sleepMS > 0 && (Daos.chainHelper.getLastBlockNumber() == 0 || Daos.chainHelper.GetConnectBestBlock() == null || blkInfo.preBeaconHash.equals(Daos.chainHelper.GetConnectBestBlock().getMiner.getTermid))) {
+//                    Thread.sleep(Math.max(1, Math.min(100, sleepMS - System.currentTimeMillis())));
+//                  } while (sleepMS > System.currentTimeMillis() && VCtrl.curVN().getCurBlock < pbo.getBlockHeight);
+////                  if (VCtrl.curVN().getCurBlock < pbo.getBlockHeight) {
+////                    //              log.error("MPRealCreateBlock:start");
+////
+////                    val wallmsg = pbo.toBuilder().clearTxbodies().setBlockEntry(PBlockEntry.newBuilder().setBlockhash(pbo.getBlockEntry.getBlockhash)).setBcuid(cn.getBcuid).setApplyStatus(ApplyStatus.APPLY_NOT_CONTINUE);
+////                    log.info("ban for create block from=" + pbo.getBlockHeight);
+////                    VCtrl.banMinerByUID.put(cn.getBcuid, (pbo.getBlockHeight, System.currentTimeMillis()))
+////                    VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
+////                  } else {
+////                    //                    log.info("still try to  create block");
+////                    //                    BeaconGossip.tryGossip("");
+////                  }
+//                }
+//              })
             } else {
               log.info("cannot apply block, do gossip");
               BeaconGossip.tryGossip("apply_uu,h=" + pbo.getBlockHeight);

@@ -94,6 +94,8 @@ class VRFBGLoader() extends Runnable with LogHelper {
     })
 
     TxSync.instance = TransactionSync(VCtrl.network());
+    
+    
     Daos.ddc.scheduleWithFixedDelay(TxSync.instance, VConfig.INITDELAY_GOSSIP_SEC,
       Math.min(VConfig.TICK_DCTRL_MS_TX, VConfig.TXS_EPOCH_MS), TimeUnit.MILLISECONDS)
 

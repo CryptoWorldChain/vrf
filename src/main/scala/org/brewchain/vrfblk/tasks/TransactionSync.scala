@@ -30,13 +30,13 @@ object TxSync extends LogHelper {
   val lastSyncCount = new AtomicInteger(0);
 
   def isLimitSyncSpeed(curTime: Long): Boolean = {
-    val tps = if(VCtrl.isSafeForMine){
+    val tps = if (VCtrl.isSafeForMine) {
       lastSyncCount.get * 1000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
-    }else{
+    } else {
       lastSyncCount.get * 10000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
     }
     if (tps > VConfig.SYNC_TX_TPS_LIMIT) {
-      log.warn("speed limit :curTps=" + tps + ",timepass=" + (curTime - lastSyncTime.get) + ",lastSyncCount=" + lastSyncCount);
+      log.warn("speed limit :curTps=" + tps + ",timepass=" + (curTime - lastSyncTime.get) + ",lastSyncCount=" + lastSyncCount.get);
       true
     } else {
       false
@@ -44,47 +44,55 @@ object TxSync extends LogHelper {
 
   }
   def trySyncTx(network: Network): Unit = {
-    val startTime = System.currentTimeMillis();
-    if (!isLimitSyncSpeed(startTime)) {
-      val wallspeed = if(VCtrl.isSafeForMine){
-         VConfig.MAX_TNX_EACH_BROADCAST 
-      }else{
-        VConfig.MIN_TNX_EACH_BROADCAST
-      }
-      val res = Daos.txHelper.getWaitSendTx(wallspeed)
-      if (res.getTxHashCount > 0) {
-        val msgid = UUIDGenerator.generate();
-        val syncTransaction = PSSyncTransaction.newBuilder();
-        syncTransaction.setMessageid(msgid);
-        syncTransaction.setSyncType(SyncType.ST_WALLOUT);
-        syncTransaction.setFromBcuid(network.root().bcuid);
-        for (x <- res.getTxHashList) {
-          syncTransaction.addTxHash(x)
+    
+    var syncCount = VConfig.MAX_TNX_EACH_BROADCAST;
+    while (syncCount > VConfig.MIN_TNX_EACH_BROADCAST) {
+      val startTime = System.currentTimeMillis();
+      if (!isLimitSyncSpeed(startTime)) {
+        val wallspeed = if (VCtrl.isSafeForMine) {
+          VConfig.MAX_TNX_EACH_BROADCAST
+        } else {
+          VConfig.MIN_TNX_EACH_BROADCAST
         }
-
-        for (x <- res.getTxDatasList) {
-          syncTransaction.addTxDatas(x)
-        }
-
-        // TODO 判断是否有足够余额，只发给有足够余额的节点
-        //        VCtrl.coMinerByUID.foreach(f => {
-        //          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-        //            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
-        //          }
-        //        })
-
-        var bits = BigInteger.ZERO
-        VCtrl.coMinerByUID.filter(f => !VCtrl.banMinerByUID.containsKey(f._2.getBcuid)).foreach(f => {
-          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
-            bits = bits.setBit(f._2.getBitIdx);
+        val curbit = BigInteger.ZERO.setBit(VCtrl.instance.network.root().node_idx)
+        val res = Daos.txHelper.getWaitSendTx(wallspeed, curbit)
+        syncCount = res.getTxHashCount;
+        if (res.getTxHashCount > 0) {
+          val msgid = UUIDGenerator.generate();
+          val syncTransaction = PSSyncTransaction.newBuilder();
+          syncTransaction.setMessageid(msgid);
+          syncTransaction.setSyncType(SyncType.ST_WALLOUT);
+          syncTransaction.setFromBcuid(network.root().bcuid);
+          for (x <- res.getTxHashList) {
+            syncTransaction.addTxHash(x)
           }
-        })
-        VCtrl.network().bwallMessage("BRTVRF", Left(syncTransaction.build()), bits, msgid, '9')
 
-        // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
-        lastSyncTime.set(startTime)
-        lastSyncCount.set(res.getTxHashCount)
-      } else {
+          for (x <- res.getTxDatasList) {
+            syncTransaction.addTxDatas(x)
+          }
+
+          // TODO 判断是否有足够余额，只发给有足够余额的节点
+          //        VCtrl.coMinerByUID.foreach(f => {
+          //          if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+          //            VCtrl.network().postMessage("BRTVRF", Left(syncTransaction.build()), msgid, f._2.getBcuid, '9')
+          //          }
+          //        })
+
+          var bits = BigInteger.ZERO //filter(f => !VCtrl.banMinerByUID.containsKey(f._2.getBcuid)).
+          VCtrl.coMinerByUID.foreach(f => {
+            if (!VConfig.AUTH_NODE_FILTER || VCtrl.haveEnoughToken(f._2.getCoAddress)) {
+              bits = bits.setBit(f._2.getBitIdx);
+            }
+          })
+          VCtrl.network().bwallMessage("BRTVRF", Left(syncTransaction.build()), bits.clearBit(VCtrl.instance.network.root().node_idx), msgid, '9')
+
+          // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
+          lastSyncTime.set(startTime)
+          lastSyncCount.set(res.getTxHashCount)
+          Thread.sleep(10)
+        } else {
+          syncCount = 0;
+        }
       }
     }
   }

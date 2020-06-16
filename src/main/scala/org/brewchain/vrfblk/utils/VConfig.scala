@@ -16,6 +16,9 @@ object VConfig {
 
   //gossip线程初始化等待时间
   val INITDELAY_GOSSIP_SEC = prop.get(PROP_DOMAIN + "initdelay.gossip.sec", 60);
+  
+  
+  val COINBASE_WITH_TXBODY = prop.get(PROP_DOMAIN + "coinbase.with.txbody", 0);
 
   //gossip线程检查时间
   val TICK_GOSSIP_SEC = prop.get(PROP_DOMAIN + "tick.gossip.sec", 120);

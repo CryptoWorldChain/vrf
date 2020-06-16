@@ -165,7 +165,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   def getNormalNodesBits(): BigInteger = {
     val nodes = VCtrl.network().directNodes.++:(VCtrl.network().pendingNodes)
     var bits = BigInteger.ZERO;
-    nodes.filter(f=> !VCtrl.banMinerByUID.containsKey(f.bcuid) ).foreach(f => {
+    nodes.foreach(f => {
       if (f.node_idx >= 0) {
         bits = bits.setBit(f.node_idx);
       } else if (f.try_node_idx >= 0) {
@@ -198,7 +198,8 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
             }
             if (syncTransaction.getTxHashCount > 0) {
-              VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),getNormalNodesBits, msgid)
+              VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),
+                  getNormalNodesBits.clearBit(VCtrl.instance.network.root().node_idx), msgid)
             }
           }
         } catch {
@@ -228,7 +229,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   override def onPBPacket(pack: FramePacket, pbo: PSSyncTransaction, handler: CompleteHandler) = {
     var ret = PRetSyncTransaction.newBuilder();
     if (!VCtrl.isReady()) {
-      ret.setRetCode(-1).setRetMessage("DPoS Network Not READY")
+      ret.setRetCode(-1).setRetMessage(" Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
       ret.setRetCode(-2).setRetMessage("memory low")
@@ -254,12 +255,13 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             case SyncType.ST_WALLOUT =>
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
+                bits = bits.setBit(VCtrl.instance.network.root().node_idx);
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 dbBatchSaveList.addElement(txarr)
               }
               
             case _ =>
-              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
+//              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
                 val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);
                 if (fromNode != VCtrl.instance.network.noneNode) {
                   bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
@@ -270,7 +272,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                   tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
                 }
                 confirmHashList.addAll(tmpList)
-              }
+//              }
           }
 
         }

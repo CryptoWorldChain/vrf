@@ -26,6 +26,7 @@ import java.util.ArrayList
 import scala.collection.mutable.Seq
 import scala.collection.mutable.Buffer
 import java.util.HashSet
+import org.brewchain.mcore.model.Block.BlockBody
 
 case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notarybits: BigInteger, beaconHash: String, preBeaconHash: String, beaconSig: String, witnessNode: BlockWitnessInfo, needHeight: Int) extends BlockMessage with PMNodeHelper with BitMap with LogHelper {
 
@@ -153,7 +154,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
-      val wallAccount = Math.max(1, cominerAccount - banMinerCount)
+      val wallAccount = Math.max(1, newNetBits.bitCount());// - banMinerCount)
       log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2)
         + ",banMinerCount=" + banMinerCount);
 
@@ -184,11 +185,6 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           .setCoAddress(cn.getCoAddress)
           .setMessageId(UUIDGenerator.generate())
           .setBcuid(cn.getBcuid)
-          .setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-            .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
-            //          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-            .setBlockHeader(newblk.toByteString()) //.toBuilder().clearBody().build().toByteString())
-            .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
           .setSliceId(VConfig.SLICE_ID)
           .setTxcount(txs.size())
           .setBeaconBits(strnetBits)
@@ -200,6 +196,19 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           .setVrfCodes(ByteString.copyFrom(strnetBits.getBytes))
           .setWitnessBits(hexToMapping(notarybits))
 
+        val blockEntry = PBlockEntry.newBuilder().setBlockHeight(newblockheight)
+          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
+          //          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
+          .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()));
+
+        if (VConfig.COINBASE_WITH_TXBODY == 0 || VConfig.COINBASE_WITH_TXBODY == 1) {
+          //          txs.asScala.map(f => f.toByteString()));
+          blockEntry.setBlockHeader(newblk.toBuilder().setBody(BlockBody.newBuilder().addAllTxs(txs)).build().toByteString())
+        } else {
+          blockEntry.setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
+        }
+
+        newCoinbase.setBlockEntry(blockEntry)
         //        .setBeaconHash(Daos.enc.hexEnc(newblk.getHeader.getHash.toByteArray()))
 
         log.info("set beacon hash=" + newblk.getMiner.getTerm);
@@ -256,11 +265,10 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
           //        log.info("choose group state=" + state + " blockbits=" + blockbits + " notarybits=" + notarybits + " bcuid=" + pn.getBcuid)
         })
 
-        newCoinbase.setBlockEntry(PBlockEntry.newBuilder().setBlockHeight(newblockheight)
-          .setCoinbaseBcuid(cn.getBcuid).setBlockhash(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray()))
-          .setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
-          .setSign(Daos.enc.bytesToHexStr(newblk.getHeader.getHash.toByteArray())))
-
+        if (VConfig.COINBASE_WITH_TXBODY == 0) {
+          blockEntry.setBlockHeader(newblk.toBuilder().clearBody().build().toByteString())
+          newCoinbase.setBlockEntry(blockEntry)
+        }
         // TODO 判断是否有足够余额，只发给有足够余额的节点
         var bits = BigInteger.ZERO
 
