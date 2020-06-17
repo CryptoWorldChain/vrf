@@ -154,7 +154,7 @@ case class MPRealCreateBlock(netBits: BigInteger, blockbits: BigInteger, notaryb
 
       val strnetBits = hexToMapping(newNetBits);
       // BlkTxCalc.getBestBlockTxCount(VConfig.MAX_TNX_EACH_BLOCK)
-      val wallAccount = Math.max(1, newNetBits.bitCount());// - banMinerCount)
+      val wallAccount = Math.max(1, cominerAccount- banMinerCount)
       log.error("minecheck: miner,confirm=" + wallAccount + ",netcount=" + newNetBits.bitCount() + ",strnetBits=" + strnetBits + ",nodes.count=" + VCtrl.coMinerByUID.size + ",newNetBits=" + newNetBits.toString(2)
         + ",banMinerCount=" + banMinerCount);
 

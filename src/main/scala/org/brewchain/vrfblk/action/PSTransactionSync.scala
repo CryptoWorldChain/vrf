@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import scala.collection.JavaConversions._
 import org.brewchain.mcore.model.Transaction.TransactionInfo
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
 
 @NActorProvider
 @Instantiate
@@ -57,19 +59,24 @@ class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
   //(Array[Byte], BigInteger)
-  var dbBatchSaveList: PendingQueue = new PendingQueue("tx_confirm", 10000);
+  var dbBatchSaveList: PendingQueue = null;
 
-  val confirmHashList = new LinkedBlockingQueue[(String, BigInteger)]();
+  val confirmHashList = new LinkedBlockingQueue[(Array[Byte], BigInteger)]();
 
   val wallHashList = new LinkedBlockingQueue[ByteString]();
+
+  val totalRecvCount = new AtomicInteger(0);
+
+  val totalRecvCountFromBcuid = new ConcurrentHashMap[String, AtomicInteger]();
 
   val running = new AtomicBoolean(false);
   val prioritySave = new ReentrantReadWriteLock().writeLock();
 
   case class BatchRunner(id: Int) extends Runnable {
     def poll(): (ArrayList[TransactionInfo], BigInteger, CompleteHandler) = {
-      val op = dbBatchSaveList.pollFirst();
-      if (op != null) {
+      val _op = dbBatchSaveList.pollFirst();
+      if (_op != null) {
+        val op = _op.asInstanceOf[TxArrays];
         val pbo = PSSyncTransaction.newBuilder().mergeFrom(op.getData);
         val dbsaveList = new ArrayList[TransactionInfo]();
         for (x <- pbo.getTxDatasList) {
@@ -90,6 +97,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
       Thread.currentThread().setName("VRFTx-BatchRunner-" + id);
       while (dbBatchSaveList == null) {
         Thread.sleep(1000)
+        if (Daos.ddc != null) {
+          dbBatchSaveList = new PendingQueue("recv-txs", Daos.ddc);
+        }
       }
 
       while (running.get) {
@@ -98,9 +108,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
           while (p != null) {
             //            Daos.txHelper.syncTransactionBatch(oMultiTransaction, bits)
             Daos.txHelper.syncTransactionBatch(p._1, true, p._2);
-            
+
             if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
-              if (wallHashList.size() + p._1.size()< VConfig.TX_WALL_MAX_CACHE_SIZE) {
+              if (wallHashList.size() + p._1.size() < VConfig.TX_WALL_MAX_CACHE_SIZE) {
                 p._1.map {
                   f => wallHashList.offer(f.getHash);
                 }
@@ -108,12 +118,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 log.error("drop wallhash list for buffer overflow:mem=" + wallHashList.size() + ",cc=" + p._1.size() + ",config=" + VConfig.TX_WALL_MAX_CACHE_SIZE);
               }
             }
-            
+
             if (p._3 != null) {
               p._3.onFinished(null);
             }
-            
-            
+
             p._1.clear();
             p = poll();
           }
@@ -149,7 +158,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         try {
           var h = confirmHashList.poll(10, TimeUnit.SECONDS);
           while (h != null) {
-            Daos.txHelper.getTmConfirmQueue.increaseConfirm(Daos.enc.hexStrToBytes(h._1), h._2);
+            Daos.txHelper.getTmConfirmQueue.increaseConfirm(h._1, h._2);
             h = null;
             //should sleep when too many tx to confirm.
             h = confirmHashList.poll();
@@ -190,16 +199,15 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
             syncTransaction.setConfirmBcuid(VCtrl.instance.network.root().bcuid);
             while (h != null) {
               syncTransaction.addTxHash(h);
-              h = null;
-              if (syncTransaction.getTxHashCount < VConfig.MIN_TNX_EACH_BROADCAST) {
-                h = wallHashList.poll(10, TimeUnit.MILLISECONDS);
-              } else if (syncTransaction.getTxHashCount < VConfig.MAX_TNX_EACH_BROADCAST) {
+              if (syncTransaction.getTxHashCount < VConfig.MAX_TNX_EACH_BROADCAST) {
                 h = wallHashList.poll();
+              } else {
+                h = null;
               }
             }
             if (syncTransaction.getTxHashCount > 0) {
               VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),
-                  getNormalNodesBits.clearBit(VCtrl.instance.network.root().node_idx), msgid)
+                getNormalNodesBits.clearBit(VCtrl.instance.network.root().node_idx), msgid)
             }
           }
         } catch {
@@ -229,17 +237,18 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   override def onPBPacket(pack: FramePacket, pbo: PSSyncTransaction, handler: CompleteHandler) = {
     var ret = PRetSyncTransaction.newBuilder();
     if (!VCtrl.isReady()) {
+      log.error("drop synctx for Network Not READY");
       ret.setRetCode(-1).setRetMessage(" Network Not READY")
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else if (Runtime.getRuntime.freeMemory() / 1024 / 1024 < VConfig.METRIC_SYNCTX_FREE_MEMEORY_MB) {
       ret.setRetCode(-2).setRetMessage("memory low")
-      log.debug("drop synctx for low memory");
+      log.error("drop synctx for low memory");
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))
     } else {
       try {
         MDCSetBCUID(VCtrl.network());
         MDCSetMessageID(pbo.getMessageid);
-        var bits = BigInteger.ZERO;//.setBit(VCtrl.instance.network.root().node_idx);
+        var bits = BigInteger.ZERO; //.setBit(VCtrl.instance.network.root().node_idx);
         val confirmNode =
           pbo.getSyncType match {
             case SyncType.ST_WALLOUT =>
@@ -250,6 +259,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
 
         if (confirmNode != VCtrl.instance.network.noneNode) {
           bits = bits.or(BigInteger.ZERO.setBit(confirmNode.node_idx));
+          totalRecvCount.addAndGet(pbo.getTxHashCount);
 
           pbo.getSyncType match {
             case SyncType.ST_WALLOUT =>
@@ -259,26 +269,26 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 dbBatchSaveList.addElement(txarr)
               }
-              
+
             case _ =>
-//              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
-                val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);
-                if (fromNode != VCtrl.instance.network.noneNode) {
-                  bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
-                }
-//                log.debug("" + pbo.getTxHashCount);
-                val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
-                pbo.getTxHashList.map { txHash =>
-                  tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
-                }
-                confirmHashList.addAll(tmpList)
-//              }
+              //              if (confirmHashList.size() + pbo.getTxHashCount < VConfig.TX_CONFIRM_MAX_CACHE_SIZE) {
+              val fromNode = VCtrl.instance.network.nodeByBcuid(pbo.getFromBcuid);
+              if (fromNode != VCtrl.instance.network.noneNode) {
+                bits = bits.or(BigInteger.ZERO.setBit(fromNode.node_idx));
+              }
+              //                log.debug("" + pbo.getTxHashCount);
+              //                val tmpList = new ArrayList[(String, BigInteger)](pbo.getTxHashCount);
+              pbo.getTxHashList.map { txHash =>
+                //                  tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
+                confirmHashList.add((txHash.toByteArray(), bits));
+              }
+            //                confirmHashList.addAll(tmpList)
+            //              }
           }
 
+        } else {
+          log.error(" drop tx sync. cannot find bcuid from network:" + pbo.getConfirmBcuid + "," + pbo.getFromBcuid + ",synctype=" + pbo.getSyncType);
         }
-        // else {
-        //  log.debug("cannot find bcuid from network:" + pbo.getConfirmBcuid + "," + pbo.getFromBcuid + ",synctype=" + pbo.getSyncType);
-        // }
 
         ret.setRetCode(1)
       } catch {

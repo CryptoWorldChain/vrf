@@ -7,10 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.brewchain.mcore.model.Transaction.TransactionInfo;
+import org.brewchain.mcore.tools.queue.IStorable;
+
+import com.google.protobuf.ByteString;
 
 
 public class TxArrays implements Serializable, IStorable {
-	private static final long serialVersionUID = 5829951203336980749L;
+	private static final long serialVersionUID = 5829951203336980750L;
 
 	public List<TransactionInfo> tx = new ArrayList<>();
 	public byte[] data;
@@ -71,15 +74,18 @@ public class TxArrays implements Serializable, IStorable {
 
 	@Override
 	public long calcSize() {
-		return data.length + hexKey.length() * 3 + bits.bitLength() / 8;
+		byte[] keybb = hexKey.getBytes();
+		byte bitsbb[] = bits.toByteArray();
+
+		int totalSize = (4 + keybb.length) + (4 + data.length) + (4 + bitsbb.length);
+
+		return totalSize + 1024;
 	}
 
-	@Override
 	public String getHexKey() {
 		return this.hexKey;
 	}
 
-	@Override
 	public byte[] getData() {
 		return data;
 	}
@@ -88,9 +94,13 @@ public class TxArrays implements Serializable, IStorable {
 		this.data = data;
 	}
 
-	@Override
 	public BigInteger getBits() {
 		return bits;
+	}
+
+	@Override
+	public ByteString getStorableKey() {
+		return ByteString.copyFrom(hexKey.getBytes());
 	}
 	
 }

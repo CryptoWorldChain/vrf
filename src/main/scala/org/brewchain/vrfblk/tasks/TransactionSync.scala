@@ -28,6 +28,7 @@ object TxSync extends LogHelper {
   def dposNet(): Network = instance.network;
   val lastSyncTime = new AtomicLong(0);
   val lastSyncCount = new AtomicInteger(0);
+  val totalSentCount = new AtomicInteger(0);
 
   def isLimitSyncSpeed(curTime: Long): Boolean = {
     val tps = if (VCtrl.isSafeForMine) {
@@ -44,7 +45,7 @@ object TxSync extends LogHelper {
 
   }
   def trySyncTx(network: Network): Unit = {
-    
+
     var syncCount = VConfig.MAX_TNX_EACH_BROADCAST;
     while (syncCount > VConfig.MIN_TNX_EACH_BROADCAST) {
       val startTime = System.currentTimeMillis();
@@ -89,10 +90,14 @@ object TxSync extends LogHelper {
           // network.dwallMessage("BRTVRF", Left(syncTransaction.build()), msgid)
           lastSyncTime.set(startTime)
           lastSyncCount.set(res.getTxHashCount)
+          totalSentCount.addAndGet(res.getTxHashCount);
+//          log.info("total sent txcount=" + totalSentCount);
           Thread.sleep(10)
         } else {
           syncCount = 0;
         }
+      } else {
+        syncCount = 0;
       }
     }
   }
