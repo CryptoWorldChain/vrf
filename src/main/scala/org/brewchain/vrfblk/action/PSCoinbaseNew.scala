@@ -115,7 +115,9 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
 
   }
   new Thread(ApplyRunner).start();
-
+  
+  
+  
   override def onPBPacket(pack: FramePacket, pbo: PSCoinbase, handler: CompleteHandler) = {
     log.info("Mine Block blk::" + pbo.getBlockHeight + ",from=" + pbo.getBcuid)
     if (!VCtrl.isReady()) {
@@ -124,10 +126,14 @@ object PSCoinbaseNewService extends LogHelper with PBUtils with LService[PSCoinb
     } else if (queue.size() > VConfig.MAX_COINBASE_QUEUE_SIZE) {
       log.info("drop coinbase for queuesize too large:" + queue.size() + ",height=" + pbo.getBlockHeight + ",from=" + pack.getFrom());
     } else {
+      if(pbo.getBlockHeight>VCtrl.maxApplyWaitBlockHeight.get){
+        VCtrl.maxApplyWaitBlockHeight.set(pbo.getBlockHeight);
+      }
       queue.offer(pbo);
       handler.onFinished(PacketHelper.toPBReturn(pack, pbo))
     }
   }
+  
   def bgApplyBlock(pbo: PSCoinbase) = {
     //    log.debug("Mine Block From::" + pack.getFrom())
     val block = BlockInfo.newBuilder().mergeFrom(pbo.getBlockEntry.getBlockHeader);

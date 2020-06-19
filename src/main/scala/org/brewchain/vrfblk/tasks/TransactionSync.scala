@@ -37,7 +37,7 @@ object TxSync extends LogHelper {
       lastSyncCount.get * 10000 / (Math.abs((curTime - lastSyncTime.get)) + 1);
     }
     if (tps > VConfig.SYNC_TX_TPS_LIMIT) {
-      log.warn("speed limit :curTps=" + tps + ",timepass=" + (curTime - lastSyncTime.get) + ",lastSyncCount=" + lastSyncCount.get);
+      log.debug("speed limit :curTps=" + tps + ",timepass=" + (curTime - lastSyncTime.get) + ",lastSyncCount=" + lastSyncCount.get);
       true
     } else {
       false

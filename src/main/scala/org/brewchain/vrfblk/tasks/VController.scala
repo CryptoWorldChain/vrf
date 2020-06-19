@@ -131,6 +131,8 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
   val banMinerByUID: Map[String, (Int, Long)] = Map.empty[String, (Int, Long)];
   val syncMinerErrorByBCUID: Map[String, Long] = Map.empty[String, Long];
 
+  val maxApplyWaitBlockHeight = new AtomicInteger(0);
+  
   def curVN(): VNode.Builder = instance.cur_vnode
 
   def haveEnoughToken(nodeAddress: String) = {
@@ -223,6 +225,7 @@ object VCtrl extends LogHelper with BitMap with PMNodeHelper {
     // 如果已经有更高的高度了，直接返回最高块
     // 如果相同高度的区块只有1个，返回true
     val bestblks = Daos.chainHelper.listConnectBlocksByHeight(blk.getHeader.getHeight);
+    
     if (bestblks.length == 1) {
       log.info("bestblks.size=1,ready to update blk=" + blk.getHeader.getHeight + " hash=" + Daos.enc.bytesToHexStr(blk.getHeader.getHash.toByteArray()) + " beacon=" + blk.getMiner.getTerm)
       blk

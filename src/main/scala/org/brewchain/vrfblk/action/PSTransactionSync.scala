@@ -82,9 +82,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         for (x <- pbo.getTxDatasList) {
           var oMultiTransaction = TransactionInfo.newBuilder();
           oMultiTransaction.mergeFrom(x);
-          if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
+//          if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
             dbsaveList.add(oMultiTransaction.build())
-          }
+//          }
         }
         (dbsaveList, op.getBits(), null)
       } else {
@@ -266,6 +266,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
                 bits = bits.setBit(VCtrl.instance.network.root().node_idx);
+                log.info("recv_tx_count = "+pbo.getTxHashCount+",from="+pbo.getFromBcuid);
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 dbBatchSaveList.addElement(txarr)
               }

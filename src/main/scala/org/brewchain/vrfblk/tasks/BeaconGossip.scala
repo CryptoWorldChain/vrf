@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicInteger
 import java.math.BigInteger
 import scala.collection.mutable.Buffer
+import org.brewchain.vrfblk.action.PSCoinbaseNewService
 
 //投票决定当前的节点
 case class BRDetect(messageId: String, checktime: Long, votebase: Int, beaconHash: String);
@@ -102,9 +103,9 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
     }
   }
 
-  def tryGossip(reason:String) {
+  def tryGossip(reason: String) {
     if (System.currentTimeMillis() - currentBR.checktime > VConfig.GOSSIP_TIMEOUT_SEC * 1000) { //|| !StringUtils.equals(VCtrl.curVN().getBeaconHash, currentBR.beaconHash)) {
-      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime+",reason="+reason);
+      log.info("do gossipBeaconInfo, checktime=" + currentBR.checktime + ",reason=" + reason);
       gossipBeaconInfo();
     }
   }
@@ -268,15 +269,17 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
           tryRollBackCounter.set(0);
           log.info("get merge beacon bh = :" + blockHash + ",hash=" + hash + ",height=" + height + ",randseed=" + randseed + ",currentheight="
             + VCtrl.curVN().getCurBlock + ",suggestStartIdx=" + suggestStartIdx + ",rollbackBlock=" + rollbackBlock
-            + ",msgid=" + currentBR.messageId + " maxHeight=" + maxHeight + ",frombcuid=" + frombcuid);
+            + ",msgid=" + currentBR.messageId + " maxHeight=" + maxHeight + ",frombcuid=" + frombcuid
+            +",blockqsize="+PSCoinbaseNewService.queue.size());
           incomingInfos.clear();
           clearGossipInfo();
           if (maxHeight > VCtrl.curVN().getCurBlock &&
             (!rollbackBlock || maxHeightSeenCount >= checkList.size / 3)) {
             //sync first
             // 投出来的最大高度
-
-            syncBlock(maxHeight, suggestStartIdx, frombcuid);
+            if (VCtrl.curVN().getCurBlock + PSCoinbaseNewService.queue.size() * 2 < maxHeight) {
+              syncBlock(maxHeight, suggestStartIdx, frombcuid);
+            }
           } else {
             if (rollbackBlock) {
               rollbackGossipNetBits = randseed;
@@ -307,7 +310,7 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
             lastSyncBlockCount = lastSyncBlockCount + 1;
           }
           incomingInfos.clear();
-//          clearGossipInfo();
+          //          clearGossipInfo();
 
           log.info("suggestStartIdx="
             + suggestStartIdx + " maxHeight=" + maxHeight + " curblk=" + VCtrl.curVN().getCurBlock + " lastSyncBlockCount=" + lastSyncBlockCount + ",lastSyncBlockHeight=" + lastSyncBlockHeight)
@@ -329,13 +332,13 @@ object BeaconGossip extends SingletonWorkShop[PSNodeInfoOrBuilder] with PMNodeHe
 
           if (maxHeight > VCtrl.curVN().getCurBlock) {
             //sync first
-//            clearGossipInfo();
+            //            clearGossipInfo();
             syncBlock(maxHeight, suggestStartIdx.intValue, frombcuid);
 
             incomingInfos.clear();
           } else if (size >= currentBR.votebase * 4 / 5) {
             //            log.info("try rollback");
-//            clearGossipInfo();
+            //            clearGossipInfo();
             incomingInfos.clear();
             //            tryRollbackBlock();
           } else {

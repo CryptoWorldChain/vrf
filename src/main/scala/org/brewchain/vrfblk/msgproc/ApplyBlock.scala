@@ -58,7 +58,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         if (vres.getCurrentHeight.intValue() == block.getHeader.getHeight) {
           BlkTxCalc.adjustTx(System.currentTimeMillis() - startupApply)
         }
-        val lastBlock = Daos.chainHelper.getLastConnectedBlock
+        val lastBlock = Daos.chainHelper.getMaxConnectBlock
         // 如果lastconnectblock是beaconhash的第一个，就update
         // 如果不是第一个，判断当前是否已经记录了第一个，如果没有记录就update
 
@@ -122,11 +122,12 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
           // i m a notary.
           //          val blks = Daos.chainHelper.listBlockByHeight(pbo.getBlockHeight);
           if (blks != null && blks.size >= 1) {
-            log.info("get soft fork block. reject this:" + pbo.getBlockHeight + ",from=" + pbo.getCoAddress);
-            //            val wallmsg = pbo.toBuilder().clearTxbodies().setBcuid(cn.getBcuid).setApplyStatus(ApplyStatus.APPLY_REJECT).clearBlockEntry();
-            //            VCtrl.network().wallMessage("CBWVRF", Left(wallmsg.build()), pbo.getMessageId)
-
-            true;
+            if (pbo.getBlockEntry.getBlockhash.equalsIgnoreCase(Daos.enc.bytesToHexStr(blks(0).getHeader.getHash.toByteArray()))) {
+              false
+            } else {
+              log.info("get soft fork block. reject this:" + pbo.getBlockHeight+",dbsize="+blks.size + ",from=" + pbo.getCoAddress+",blockhash="+pbo.getBlockEntry.getBlockhash);
+              true;
+            }
           } else {
             false
           }
@@ -139,7 +140,7 @@ case class ApplyBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper wi
         if (stablehash != null &&
           !Daos.enc.bytesToHexStr(stablehash).equalsIgnoreCase(pbo.getBlockEntry.getBlockhash)) {
           log.error("cannot apply block for already stable block:" + pbo.getBlockHeight + ",stable-hash=" + Daos.enc.bytesToHexStr(stablehash)
-              +",block-hash="+pbo.getBlockEntry.getBlockhash);
+            + ",block-hash=" + pbo.getBlockEntry.getBlockhash);
           true
         } else {
           false
