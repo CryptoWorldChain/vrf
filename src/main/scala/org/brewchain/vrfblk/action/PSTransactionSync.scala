@@ -36,6 +36,7 @@ import scala.collection.JavaConversions._
 import org.brewchain.mcore.model.Transaction.TransactionInfo
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.ConcurrentHashMap
+import org.apache.felix.ipojo.annotations.Validate
 
 @NActorProvider
 @Instantiate
@@ -43,18 +44,6 @@ import java.util.concurrent.ConcurrentHashMap
 @Slf4j
 class PSTransactionSync extends PSMVRFNet[PSSyncTransaction] {
   override def service = PSTransactionSyncService
-
-  @ActorRequire(name = "BlocksPendingQueue", scope = "global")
-  var blocksPendingQ: PendingQueue = null;
-
-  def getBlocksPendingQ(): PendingQueue = {
-    return blocksPendingQ;
-  }
-
-  def setBlocksPendingQ(queue: PendingQueue) = {
-    //PSTransactionSyncService.dbBatchSaveList = ;
-  }
-
 }
 
 object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSSyncTransaction] with PMNodeHelper {
@@ -73,7 +62,7 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   val prioritySave = new ReentrantReadWriteLock().writeLock();
 
   case class BatchRunner(id: Int) extends Runnable {
-    def poll(): (ArrayList[TransactionInfo], BigInteger, CompleteHandler) = {
+    def poll(): (ArrayList[TransactionInfo], BigInteger) = {
       val _op = dbBatchSaveList.pollFirst();
       if (_op != null) {
         val op = _op.asInstanceOf[TxArrays];
@@ -82,33 +71,26 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         for (x <- pbo.getTxDatasList) {
           var oMultiTransaction = TransactionInfo.newBuilder();
           oMultiTransaction.mergeFrom(x);
-//          if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
-            dbsaveList.add(oMultiTransaction.build())
-//          }
+          //          if (!StringUtils.equals(VCtrl.curVN().getBcuid, oMultiTransaction.getNode().getNid)) {
+          dbsaveList.add(oMultiTransaction.build())
+          //          }
         }
-        (dbsaveList, op.getBits(), null)
+        (dbsaveList, op.getBits())
       } else {
         null
       }
     }
 
     override def run() {
-      running.set(true);
-      Thread.currentThread().setName("VRFTx-BatchRunner-" + id);
-      while (dbBatchSaveList == null) {
-        Thread.sleep(1000)
-        if (Daos.ddc != null) {
-          dbBatchSaveList = new PendingQueue("recv-txs", Daos.ddc);
-        }
-      }
 
-      while (running.get) {
-        try {
-          var p = poll();
-          while (p != null) {
-            //            Daos.txHelper.syncTransactionBatch(oMultiTransaction, bits)
+      var cc: Int = 0;
+
+      try {
+        var p = poll();
+        while (p != null || dbBatchSaveList.size() > 0) {
+          if (p != null) {
+            cc = cc + 1;
             Daos.txHelper.syncTransactionBatch(p._1, true, p._2);
-
             if (VConfig.DCTRL_BLOCK_CONFIRMATION_RATIO > 0) {
               if (wallHashList.size() + p._1.size() < VConfig.TX_WALL_MAX_CACHE_SIZE) {
                 p._1.map {
@@ -119,33 +101,27 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               }
             }
 
-            if (p._3 != null) {
-              p._3.onFinished(null);
+            if (walloutThreadCount.incrementAndGet() < VConfig.PARALL_SYNC_TX_WALLOUT) {
+              Daos.ddc.getExecutorService("synctx").submit(walloutRunner);
+            } else {
+              walloutThreadCount.decrementAndGet();
             }
-
-            p._1.clear();
-            p = poll();
           }
-          if (p == null) {
-            Thread.sleep(10);
-          }
-        } catch {
-          case ier: IllegalStateException =>
-            try {
-              Thread.sleep(1000)
-            } catch {
-              case t: Throwable =>
-            }
-          case t: Throwable =>
-            log.error("get error", t);
-        } finally {
+          p = poll();
+        }
+      } catch {
+        case ier: IllegalStateException =>
           try {
-            Thread.sleep(10)
+            Thread.sleep(1000)
           } catch {
             case t: Throwable =>
           }
-        }
+        case t: Throwable =>
+          log.error("get error", t);
+      } finally {
+        batchThreadCount.decrementAndGet();
       }
+      log.info("BatchRunner thread exit, processed=" + cc);
     }
 
   }
@@ -154,20 +130,31 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
     override def run() {
       running.set(true);
       Thread.currentThread().setName("VRFTx-ConfirmRunner-" + id);
-      while (running.get) {
-        try {
-          var h = confirmHashList.poll(10, TimeUnit.SECONDS);
-          while (h != null) {
-            Daos.txHelper.getTmConfirmQueue.increaseConfirm(h._1, h._2);
-            h = null;
-            //should sleep when too many tx to confirm.
-            h = confirmHashList.poll();
+      var cc = 0;
+      var totaltxcount = 0;
+      var txcount = 10;
+      try {
+        while (txcount > 0) {
+          try {
+            txcount = 0;
+            var h = confirmHashList.poll(10, TimeUnit.SECONDS);
+            while (h != null) {
+              txcount = txcount + 1;
+              Daos.txHelper.getTmConfirmQueue.increaseConfirm(h._1, h._2);
+              h = null;
+              //should sleep when too many tx to confirm.
+              h = confirmHashList.poll();
+            }
+            totaltxcount = totaltxcount + txcount;
+          } catch {
+            case t: Throwable =>
+              log.error("get error", t);
           }
-        } catch {
-          case t: Throwable =>
-            log.error("get error", t);
         }
+      } finally {
+        confirmThreadCount.decrementAndGet();
       }
+      log.info("confirmRunner thread exit, processed=" + cc + ",totaltx=" + totaltxcount);
     }
   }
 
@@ -185,10 +172,12 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
   }
   case class WalloutRunner(id: Int) extends Runnable {
     override def run() {
-      running.set(true);
-      Thread.currentThread().setName("VRFTx-WalloutRunner-" + id);
-      while (running.get) {
-        try {
+      var runcount = 100;
+      var cc = 0;
+      var totalRuncount = 0;
+      try {
+        while (runcount > 0) {
+          runcount = 0;
           var h = wallHashList.poll(10, TimeUnit.SECONDS);
           if (h != null) {
             val msgid = UUIDGenerator.generate();
@@ -205,34 +194,37 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 h = null;
               }
             }
-            if (syncTransaction.getTxHashCount > 0) {
-              VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),
-                getNormalNodesBits.clearBit(VCtrl.instance.network.root().node_idx), msgid)
-            }
+            runcount = syncTransaction.getTxDatasCount;
+            cc = cc + 1;
+            totalRuncount = totalRuncount + runcount;
+            VCtrl.instance.network.bwallMessage("BRTVRF", Left(syncTransaction.build()),
+              getNormalNodesBits.clearBit(VCtrl.instance.network.root().node_idx), msgid)
           }
-        } catch {
-          case t: Throwable =>
-            log.error("get error", t);
-        } finally {
-          //try {
-          //  Thread.sleep(10)
-          //} catch {
-          //  case t: Throwable =>
-          //}
         }
+      } finally {
+        walloutThreadCount.decrementAndGet();
       }
+      log.info("WalloutRunner thread exit, processed=" + cc + ",totaltx=" + totalRuncount);
     }
   }
 
-  for (i <- 1 to VConfig.PARALL_SYNC_TX_BATCHBS) {
-    new Thread(new BatchRunner(i)).start()
-  }
-  for (i <- 1 to VConfig.PARALL_SYNC_TX_CONFIRM) {
-    new Thread(new ConfirmRunner(i)).start()
-  }
-  for (i <- 1 to VConfig.PARALL_SYNC_TX_WALLOUT) {
-    new Thread(new WalloutRunner(i)).start()
-  }
+  val batchRunner = new BatchRunner(0);
+  val confirmRunner = new ConfirmRunner(0);
+  val walloutRunner = new WalloutRunner(0);
+
+  //  for (i <- 1 to VConfig.PARALL_SYNC_TX_BATCHBS) {
+  //    new Thread(new BatchRunner(i)).start()
+  //  }
+  //  for (i <- 1 to VConfig.PARALL_SYNC_TX_CONFIRM) {
+  //    new Thread(new ConfirmRunner(i)).start()
+  //  }
+  //  for (i <- 1 to VConfig.PARALL_SYNC_TX_WALLOUT) {
+  //    new Thread(new WalloutRunner(i)).start()
+  //  }
+
+  val batchThreadCount = new AtomicInteger(0);
+  val confirmThreadCount = new AtomicInteger(0);
+  val walloutThreadCount = new AtomicInteger(0);
 
   override def onPBPacket(pack: FramePacket, pbo: PSSyncTransaction, handler: CompleteHandler) = {
     var ret = PRetSyncTransaction.newBuilder();
@@ -266,9 +258,15 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
                 bits = bits.setBit(VCtrl.instance.network.root().node_idx);
-                log.info("recv_tx_count = "+pbo.getTxHashCount+",from="+pbo.getFromBcuid);
+                log.info("recv_tx_count = " + pbo.getTxHashCount + ",from=" + pbo.getFromBcuid);
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
+                
                 dbBatchSaveList.addElement(txarr)
+                if (batchThreadCount.incrementAndGet() < VConfig.PARALL_SYNC_TX_BATCHBS) {
+                  Daos.ddc.getExecutorService("synctx").submit(batchRunner);
+                } else {
+                  batchThreadCount.decrementAndGet();
+                }
               }
 
             case _ =>
@@ -283,6 +281,11 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 //                  tmpList.add((Daos.enc.bytesToHexStr(txHash.toByteArray()), bits))
                 confirmHashList.add((txHash.toByteArray(), bits));
               }
+              if (confirmThreadCount.incrementAndGet() < VConfig.PARALL_SYNC_TX_CONFIRM) {
+                Daos.ddc.getExecutorService("synctx").submit(confirmRunner);
+              } else {
+                confirmThreadCount.decrementAndGet();
+              }
             //                confirmHashList.addAll(tmpList)
             //              }
           }
@@ -294,9 +297,9 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         ret.setRetCode(1)
       } catch {
         case t: Throwable => {
-          log.error("error:" + t);
+          log.error("error:" + ",dao.ddc=" + Daos.ddc, t);
           ret.clear()
-          ret.setRetCode(-3).setRetMessage(t.getMessage)
+          ret.setRetCode(-3).setRetMessage("" + t.getMessage)
         }
       } finally {
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()))

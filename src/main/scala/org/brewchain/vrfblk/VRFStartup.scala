@@ -25,6 +25,8 @@ import org.brewchain.mcore.tools.url.URLHelper
 import org.brewchain.vrfblk.tasks.ChainKeySync
 import org.brewchain.vrfblk.tasks.ChainKeySyncHelper
 import org.brewchain.vrfblk.tasks.CoinbaseWitnessProcessor
+import org.brewchain.vrfblk.action.PSTransactionSyncService
+import org.brewchain.vrfblk.utils.PendingQueue
 
 @NActorProvider
 class VRFStartup extends PSMVRFNet[Message] {
@@ -95,6 +97,7 @@ class VRFBGLoader() extends Runnable with LogHelper {
 
     TxSync.instance = TransactionSync(VCtrl.network());
     
+    PSTransactionSyncService.dbBatchSaveList = new PendingQueue("recv-txs", Daos.ddc);
     
     Daos.ddc.scheduleWithFixedDelay(TxSync.instance, VConfig.INITDELAY_GOSSIP_SEC,
       Math.min(VConfig.TICK_DCTRL_MS_TX, VConfig.TXS_EPOCH_MS), TimeUnit.MILLISECONDS)
