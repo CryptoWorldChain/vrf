@@ -80,7 +80,7 @@ case class NotaryBlock(pbo: PSCoinbase) extends BlockMessage with PMNodeHelper w
           val stableBlock = Daos.chainHelper.getBlockByHash(Daos.enc.hexStrToBytes(blockhash));
           if (stableBlock != null ) {
             Daos.vrfvotedb.put(("stable-" + pbo.getBlockHeight).getBytes, Daos.enc.hexStrToBytes(blockhash));
-            Daos.chainHelper.tryStableBlock(stableBlock);
+            // Daos.chainHelper.tryStableBlock(stableBlock);
           }
         case n: NotConverge =>
         //log.info("cannot get converge for pbft vote:" + vs.get.size);
