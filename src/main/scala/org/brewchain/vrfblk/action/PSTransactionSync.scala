@@ -252,13 +252,13 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
         if (confirmNode != VCtrl.instance.network.noneNode) {
           bits = bits.or(BigInteger.ZERO.setBit(confirmNode.node_idx));
           totalRecvCount.addAndGet(pbo.getTxHashCount);
-
+         log.info("recv_tx_count = " + pbo.getTxHashCount + ",from=" + pbo.getFromBcuid);
           pbo.getSyncType match {
             case SyncType.ST_WALLOUT =>
               //              ArrayList[MultiTransaction.Builder]
               if (pbo.getTxDatasCount > 0) {
                 bits = bits.setBit(VCtrl.instance.network.root().node_idx);
-                log.info("recv_tx_count = " + pbo.getTxHashCount + ",from=" + pbo.getFromBcuid);
+                
                 val txarr = new TxArrays(pbo.getMessageid, pbo.toByteArray(), bits);
                 
                 dbBatchSaveList.addElement(txarr)
@@ -267,6 +267,8 @@ object PSTransactionSyncService extends LogHelper with PBUtils with LService[PSS
                 } else {
                   batchThreadCount.decrementAndGet();
                 }
+              }else{
+                 log.error("recv_tx_count is zero = " + pbo.getTxDatasCount + ",from=" + pbo.getFromBcuid);
               }
 
             case _ =>
